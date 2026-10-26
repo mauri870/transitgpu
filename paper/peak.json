@@ -1,0 +1,20 @@
+{
+ "device": "AMD Radeon RX 7900 XTX",
+ "runtime": "7.2.53211",
+ "fp32_tflops": 34.921840142680814,
+ "fp64_tflops": 1.1243030547992403,
+ "fp32_over_fp64": 31.06087810898689,
+ "copy_gb_per_s": 766.8195778014766,
+ "clock_mhz": {
+  "min": 2451.0,
+  "max": 2943.0
+ },
+ "kernel_seconds": {
+  "fp32": 0.21490423583984375,
+  "fp64": 0.2341014404296875,
+  "copy": 0.005601014137268066
+ },
+ "other_processes_on_the_device": [],
+ "spec_bandwidth_gb_per_s": 960.0,
+ "copy_share_of_spec": 0.7987703935432048
+}

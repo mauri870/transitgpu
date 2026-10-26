@@ -1,0 +1,12 @@
+paper/*.aux
+paper/*.log
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+dist/
+build/
+# the reports of a benchmark run (benchmarks/results.json is the one that is kept)
+bench*.json
+!benchmarks/results.json

@@ -1,0 +1,21 @@
+% written by scripts/binned_accuracy.py: 14 cases
+\begin{tabular}{lcrcr}
+\toprule
+case & binned period & binned $|\Delta\mathrm{SDE}|$ & fused-pl period & fused-pl $|\Delta\mathrm{SDE}|$ \\
+\midrule
+\texttt{syn\_earth} & same & 0.022 & same & 0.001 \\
+\texttt{syn\_earth\_gap} & different & 0.224 & same & 0.006 \\
+\texttt{syn\_earth\_dy} & \multicolumn{2}{c}{unequal errors, refused} & same & 0.004 \\
+\texttt{no\_fit} & same & 0.000 & same & 0.000 \\
+\texttt{k2\_box} & same & 0.615 & same & 0.006 \\
+\texttt{k2\_grazing} & same & 0.658 & same & 0.047 \\
+\texttt{k2\_3\_window} & same & 0.870 & same & 0.000 \\
+\texttt{k2\_3\_threads1} & same & 0.245 & same & 0.000 \\
+\texttt{short\_lc} & different & 0.209 & same & 0.000 \\
+\texttt{centered\_time} & same & 0.139 & same & 0.008 \\
+\texttt{custom\_nonlinear} & same & 0.172 & same & 0.007 \\
+\texttt{custom\_ecc\_squareroot} & same & 0.179 & same & 0.011 \\
+\texttt{narrow\_stellar} & \multicolumn{2}{c}{unequal errors, refused} & same & 0.065 \\
+\texttt{plato\_25s\_window} & same & 0.003 & same & 0.002 \\
+\bottomrule
+\end{tabular}

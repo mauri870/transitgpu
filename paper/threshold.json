@@ -1,0 +1,1274 @@
+{
+ "null": {
+  "red": {
+   "curves": 2000,
+   "above": 16,
+   "ties": 0,
+   "count": 16,
+   "of": 2000,
+   "share": 0.008,
+   "low": 0.004930296834729117,
+   "high": 0.012956077719725685,
+   "nominal": 0.02040816326530612,
+   "rank_above": {
+    "1": 16,
+    "2": 36,
+    "3": 62,
+    "4": 86,
+    "5": 107,
+    "6": 135,
+    "7": 162,
+    "8": 188,
+    "9": 219,
+    "10": 248
+   },
+   "rank_shares": {
+    "1": {
+     "count": 16,
+     "of": 2000,
+     "share": 0.008,
+     "low": 0.004930296834729117,
+     "high": 0.012956077719725685,
+     "nominal": 0.02040816326530612
+    },
+    "2": {
+     "count": 36,
+     "of": 2000,
+     "share": 0.018,
+     "low": 0.013029991411288699,
+     "high": 0.024818042196937343,
+     "nominal": 0.04081632653061224
+    },
+    "3": {
+     "count": 62,
+     "of": 2000,
+     "share": 0.031,
+     "low": 0.024257462094805032,
+     "high": 0.039540728283323626,
+     "nominal": 0.061224489795918366
+    },
+    "4": {
+     "count": 86,
+     "of": 2000,
+     "share": 0.043,
+     "low": 0.03495107248746569,
+     "high": 0.05280110875518845,
+     "nominal": 0.08163265306122448
+    },
+    "5": {
+     "count": 107,
+     "of": 2000,
+     "share": 0.0535,
+     "low": 0.044466187471550546,
+     "high": 0.0642457357775634,
+     "nominal": 0.10204081632653061
+    },
+    "6": {
+     "count": 135,
+     "of": 2000,
+     "share": 0.0675,
+     "low": 0.05731306234164127,
+     "high": 0.07934518358275244,
+     "nominal": 0.12244897959183673
+    },
+    "7": {
+     "count": 162,
+     "of": 2000,
+     "share": 0.081,
+     "low": 0.06983042845720366,
+     "high": 0.09377605718978121,
+     "nominal": 0.14285714285714285
+    },
+    "8": {
+     "count": 188,
+     "of": 2000,
+     "share": 0.094,
+     "low": 0.08197718058993625,
+     "high": 0.10757946182695124,
+     "nominal": 0.16326530612244897
+    },
+    "9": {
+     "count": 219,
+     "of": 2000,
+     "share": 0.1095,
+     "low": 0.09655586377005833,
+     "high": 0.12394135018017459,
+     "nominal": 0.1836734693877551
+    },
+    "10": {
+     "count": 248,
+     "of": 2000,
+     "share": 0.124,
+     "low": 0.11027238724857101,
+     "high": 0.1391692323296302,
+     "nominal": 0.20408163265306123
+    }
+   }
+  },
+  "variable": {
+   "curves": 2000,
+   "above": 1325,
+   "ties": 0,
+   "count": 1325,
+   "of": 2000,
+   "share": 0.6625,
+   "low": 0.6414825183003026,
+   "high": 0.6828944413234801,
+   "nominal": 0.02040816326530612,
+   "rank_above": {
+    "1": 1325,
+    "2": 1518,
+    "3": 1608,
+    "4": 1679,
+    "5": 1736,
+    "6": 1771,
+    "7": 1803,
+    "8": 1826,
+    "9": 1842,
+    "10": 1865
+   },
+   "rank_shares": {
+    "1": {
+     "count": 1325,
+     "of": 2000,
+     "share": 0.6625,
+     "low": 0.6414825183003026,
+     "high": 0.6828944413234801,
+     "nominal": 0.02040816326530612
+    },
+    "2": {
+     "count": 1518,
+     "of": 2000,
+     "share": 0.759,
+     "low": 0.7397708686834913,
+     "high": 0.777236100809184,
+     "nominal": 0.04081632653061224
+    },
+    "3": {
+     "count": 1608,
+     "of": 2000,
+     "share": 0.804,
+     "low": 0.7860265414133574,
+     "high": 0.8208078938212886,
+     "nominal": 0.061224489795918366
+    },
+    "4": {
+     "count": 1679,
+     "of": 2000,
+     "share": 0.8395,
+     "low": 0.8227641984958205,
+     "high": 0.8549341263797132,
+     "nominal": 0.08163265306122448
+    },
+    "5": {
+     "count": 1736,
+     "of": 2000,
+     "share": 0.868,
+     "low": 0.8524572321767167,
+     "high": 0.8821318210020651,
+     "nominal": 0.10204081632653061
+    },
+    "6": {
+     "count": 1771,
+     "of": 2000,
+     "share": 0.8855,
+     "low": 0.8707997784285139,
+     "high": 0.8987221780943674,
+     "nominal": 0.12244897959183673
+    },
+    "7": {
+     "count": 1803,
+     "of": 2000,
+     "share": 0.9015,
+     "low": 0.8876604196015243,
+     "high": 0.913800191407391,
+     "nominal": 0.14285714285714285
+    },
+    "8": {
+     "count": 1826,
+     "of": 2000,
+     "share": 0.913,
+     "low": 0.8998429920521517,
+     "high": 0.9245735268686007,
+     "nominal": 0.16326530612244897
+    },
+    "9": {
+     "count": 1842,
+     "of": 2000,
+     "share": 0.921,
+     "low": 0.9083551100032515,
+     "high": 0.9320307361605179,
+     "nominal": 0.1836734693877551
+    },
+    "10": {
+     "count": 1865,
+     "of": 2000,
+     "share": 0.9325,
+     "low": 0.9206548164172476,
+     "high": 0.9426869376583588,
+     "nominal": 0.20408163265306123
+    }
+   }
+  },
+  "white": {
+   "curves": 2000,
+   "above": 50,
+   "ties": 0,
+   "count": 50,
+   "of": 2000,
+   "share": 0.025,
+   "low": 0.019014423463091817,
+   "high": 0.0328067714827741,
+   "nominal": 0.02040816326530612,
+   "rank_above": {
+    "1": 50,
+    "2": 87,
+    "3": 120,
+    "4": 151,
+    "5": 197,
+    "6": 246,
+    "7": 282,
+    "8": 331,
+    "9": 377,
+    "10": 417
+   },
+   "rank_shares": {
+    "1": {
+     "count": 50,
+     "of": 2000,
+     "share": 0.025,
+     "low": 0.019014423463091817,
+     "high": 0.0328067714827741,
+     "nominal": 0.02040816326530612
+    },
+    "2": {
+     "count": 87,
+     "of": 2000,
+     "share": 0.0435,
+     "low": 0.03540128780100278,
+     "high": 0.05334897639433993,
+     "nominal": 0.04081632653061224
+    },
+    "3": {
+     "count": 120,
+     "of": 2000,
+     "share": 0.06,
+     "low": 0.05041119704492999,
+     "high": 0.07127580458913527,
+     "nominal": 0.061224489795918366
+    },
+    "4": {
+     "count": 151,
+     "of": 2000,
+     "share": 0.0755,
+     "low": 0.06471759446386058,
+     "high": 0.0879099787035501,
+     "nominal": 0.08163265306122448
+    },
+    "5": {
+     "count": 197,
+     "of": 2000,
+     "share": 0.0985,
+     "low": 0.08619980859260898,
+     "high": 0.11233958039847558,
+     "nominal": 0.10204081632653061
+    },
+    "6": {
+     "count": 246,
+     "of": 2000,
+     "share": 0.123,
+     "low": 0.10932424967345561,
+     "high": 0.13812120399936847,
+     "nominal": 0.12244897959183673
+    },
+    "7": {
+     "count": 282,
+     "of": 2000,
+     "share": 0.141,
+     "low": 0.12643487608710546,
+     "high": 0.1569415638825068,
+     "nominal": 0.14285714285714285
+    },
+    "8": {
+     "count": 331,
+     "of": 2000,
+     "share": 0.1655,
+     "low": 0.14985708426384262,
+     "high": 0.18242542038750928,
+     "nominal": 0.16326530612244897
+    },
+    "9": {
+     "count": 377,
+     "of": 2000,
+     "share": 0.1885,
+     "low": 0.1719623122888599,
+     "high": 0.20623200818616583,
+     "nominal": 0.1836734693877551
+    },
+    "10": {
+     "count": 417,
+     "of": 2000,
+     "share": 0.2085,
+     "low": 0.19126336247077955,
+     "high": 0.22685427611178863,
+     "nominal": 0.20408163265306123
+    }
+   }
+  }
+ },
+ "inverted": {
+  "red": {
+   "curves": 2000,
+   "above": 29,
+   "count": 29,
+   "of": 2000,
+   "share": 0.0145,
+   "low": 0.010114677318310235,
+   "high": 0.020746775621095875,
+   "thresholds_differ_by_more_than_10_percent": {
+    "count": 860,
+    "of": 2000,
+    "share": 0.43,
+    "low": 0.40845733228723485,
+    "high": 0.4518110543363664
+   }
+  },
+  "variable": {
+   "curves": 2000,
+   "above": 1255,
+   "count": 1255,
+   "of": 2000,
+   "share": 0.6275,
+   "low": 0.606085844056493,
+   "high": 0.6484253088790902,
+   "thresholds_differ_by_more_than_10_percent": {
+    "count": 1325,
+    "of": 2000,
+    "share": 0.6625,
+    "low": 0.6414825183003026,
+    "high": 0.6828944413234801
+   }
+  },
+  "white": {
+   "curves": 2000,
+   "above": 54,
+   "count": 54,
+   "of": 2000,
+   "share": 0.027,
+   "low": 0.020752396198536114,
+   "high": 0.03506113055808405,
+   "thresholds_differ_by_more_than_10_percent": {
+    "count": 899,
+    "of": 2000,
+    "share": 0.4495,
+    "low": 0.4278164929323719,
+    "high": 0.4713771288460833
+   }
+  }
+ },
+ "false_alarm_quantiles_of_a_threshold_of_48": {
+  "0.5": 0.014336801359812412,
+  "0.9": 0.046838116765212434,
+  "0.99": 0.09148242434831322
+ },
+ "injection": {
+  "red": {
+   "4": {
+    "cases": 250,
+    "right": 7,
+    "harmonic": 10,
+    "found_shuffle": 1,
+    "found_inverted": 0,
+    "found_shuffle_share": {
+     "count": 1,
+     "of": 250,
+     "share": 0.004,
+     "low": 0.0007064475262621977,
+     "high": 0.022305785806463974
+    },
+    "found_inverted_share": {
+     "count": 0,
+     "of": 250,
+     "share": 0.0,
+     "low": 8.673617379884035e-19,
+     "high": 0.015133299730570739
+    },
+    "threshold_raised_by_planet": 112,
+    "threshold_ratio_median": 0.9962288177361428,
+    "paired": 250
+   },
+   "6": {
+    "cases": 250,
+    "right": 87,
+    "harmonic": 9,
+    "found_shuffle": 10,
+    "found_inverted": 18,
+    "found_shuffle_share": {
+     "count": 10,
+     "of": 250,
+     "share": 0.04,
+     "low": 0.021869911852774326,
+     "high": 0.07205272389935076
+    },
+    "found_inverted_share": {
+     "count": 18,
+     "of": 250,
+     "share": 0.072,
+     "low": 0.046025569096756654,
+     "high": 0.11092853547261189
+    },
+    "threshold_raised_by_planet": 143,
+    "threshold_ratio_median": 1.0076939277061558,
+    "paired": 250
+   },
+   "8": {
+    "cases": 250,
+    "right": 211,
+    "harmonic": 3,
+    "found_shuffle": 113,
+    "found_inverted": 149,
+    "found_shuffle_share": {
+     "count": 113,
+     "of": 250,
+     "share": 0.452,
+     "low": 0.39149743902403245,
+     "high": 0.5139553577501024
+    },
+    "found_inverted_share": {
+     "count": 149,
+     "of": 250,
+     "share": 0.596,
+     "low": 0.534165359424995,
+     "high": 0.6549290470267354
+    },
+    "threshold_raised_by_planet": 156,
+    "threshold_ratio_median": 1.0319014389106833,
+    "paired": 250
+   },
+   "10": {
+    "cases": 250,
+    "right": 247,
+    "harmonic": 0,
+    "found_shuffle": 184,
+    "found_inverted": 220,
+    "found_shuffle_share": {
+     "count": 184,
+     "of": 250,
+     "share": 0.736,
+     "low": 0.6780850412994246,
+     "high": 0.7867720412277459
+    },
+    "found_inverted_share": {
+     "count": 220,
+     "of": 250,
+     "share": 0.88,
+     "low": 0.83386189171617,
+     "high": 0.9146368004885963
+    },
+    "threshold_raised_by_planet": 178,
+    "threshold_ratio_median": 1.0888183372364306,
+    "paired": 250
+   },
+   "14": {
+    "cases": 250,
+    "right": 250,
+    "harmonic": 0,
+    "found_shuffle": 223,
+    "found_inverted": 250,
+    "found_shuffle_share": {
+     "count": 223,
+     "of": 250,
+     "share": 0.892,
+     "low": 0.8474274411967048,
+     "high": 0.9247080518145278
+    },
+    "found_inverted_share": {
+     "count": 250,
+     "of": 250,
+     "share": 1.0,
+     "low": 0.9848667002694292,
+     "high": 0.9999999999999999
+    },
+    "threshold_raised_by_planet": 204,
+    "threshold_ratio_median": 1.2915354110636752,
+    "paired": 250
+   },
+   "20": {
+    "cases": 250,
+    "right": 250,
+    "harmonic": 0,
+    "found_shuffle": 224,
+    "found_inverted": 250,
+    "found_shuffle_share": {
+     "count": 224,
+     "of": 250,
+     "share": 0.896,
+     "low": 0.8519796588961751,
+     "high": 0.9280347677172128
+    },
+    "found_inverted_share": {
+     "count": 250,
+     "of": 250,
+     "share": 1.0,
+     "low": 0.9848667002694292,
+     "high": 0.9999999999999999
+    },
+    "threshold_raised_by_planet": 237,
+    "threshold_ratio_median": 1.5939629938141924,
+    "paired": 250
+   },
+   "by_period": {
+    "0.8": {
+     "cases": 300,
+     "right": 183,
+     "harmonic": 2,
+     "found_shuffle": 146,
+     "found_inverted": 141,
+     "found_shuffle_share": {
+      "count": 146,
+      "of": 300,
+      "share": 0.4866666666666667,
+      "low": 0.43063449555941596,
+      "high": 0.54303598367849
+     },
+     "found_inverted_share": {
+      "count": 141,
+      "of": 300,
+      "share": 0.47,
+      "low": 0.4142588112282184,
+      "high": 0.5264997670570701
+     },
+     "threshold_raised_by_planet": 166,
+     "threshold_ratio_median": 1.0036477567167035,
+     "paired": 300
+    },
+    "1.6": {
+     "cases": 300,
+     "right": 200,
+     "harmonic": 4,
+     "found_shuffle": 165,
+     "found_inverted": 164,
+     "found_shuffle_share": {
+      "count": 165,
+      "of": 300,
+      "share": 0.55,
+      "low": 0.4934256040783649,
+      "high": 0.6053100987794875
+     },
+     "found_inverted_share": {
+      "count": 164,
+      "of": 300,
+      "share": 0.5466666666666666,
+      "low": 0.49009847469408696,
+      "high": 0.6020548479732418
+     },
+     "threshold_raised_by_planet": 172,
+     "threshold_ratio_median": 1.0176135296021442,
+     "paired": 300
+    },
+    "3.2": {
+     "cases": 300,
+     "right": 209,
+     "harmonic": 6,
+     "found_shuffle": 185,
+     "found_inverted": 183,
+     "found_shuffle_share": {
+      "count": 185,
+      "of": 300,
+      "share": 0.6166666666666667,
+      "low": 0.5605031387181294,
+      "high": 0.6698801679501927
+     },
+     "found_inverted_share": {
+      "count": 183,
+      "of": 300,
+      "share": 0.61,
+      "low": 0.5537485675123909,
+      "high": 0.6634699787748842
+     },
+     "threshold_raised_by_planet": 203,
+     "threshold_ratio_median": 1.0601663536414687,
+     "paired": 300
+    },
+    "6.4": {
+     "cases": 300,
+     "right": 220,
+     "harmonic": 4,
+     "found_shuffle": 182,
+     "found_inverted": 192,
+     "found_shuffle_share": {
+      "count": 182,
+      "of": 300,
+      "share": 0.6066666666666667,
+      "low": 0.550375270835491,
+      "high": 0.6602608952612607
+     },
+     "found_inverted_share": {
+      "count": 192,
+      "of": 300,
+      "share": 0.64,
+      "low": 0.5842293027817257,
+      "high": 0.6922306652202609
+     },
+     "threshold_raised_by_planet": 227,
+     "threshold_ratio_median": 1.1878657281316487,
+     "paired": 300
+    },
+    "12.8": {
+     "cases": 300,
+     "right": 240,
+     "harmonic": 6,
+     "found_shuffle": 77,
+     "found_inverted": 207,
+     "found_shuffle_share": {
+      "count": 77,
+      "of": 300,
+      "share": 0.25666666666666665,
+      "low": 0.21053333688896256,
+      "high": 0.3089529092028227
+     },
+     "found_inverted_share": {
+      "count": 207,
+      "of": 300,
+      "share": 0.69,
+      "low": 0.635539195592947,
+      "high": 0.7396564752668917
+     },
+     "threshold_raised_by_planet": 262,
+     "threshold_ratio_median": 1.4267308613775667,
+     "paired": 300
+    }
+   }
+  },
+  "variable": {
+   "4": {
+    "cases": 250,
+    "right": 1,
+    "harmonic": 6,
+    "found_shuffle": 1,
+    "found_inverted": 1,
+    "found_shuffle_share": {
+     "count": 1,
+     "of": 250,
+     "share": 0.004,
+     "low": 0.0007064475262621977,
+     "high": 0.022305785806463974
+    },
+    "found_inverted_share": {
+     "count": 1,
+     "of": 250,
+     "share": 0.004,
+     "low": 0.0007064475262621977,
+     "high": 0.022305785806463974
+    },
+    "threshold_raised_by_planet": 132,
+    "threshold_ratio_median": 1.0043376976287273,
+    "paired": 250
+   },
+   "6": {
+    "cases": 250,
+    "right": 17,
+    "harmonic": 8,
+    "found_shuffle": 1,
+    "found_inverted": 10,
+    "found_shuffle_share": {
+     "count": 1,
+     "of": 250,
+     "share": 0.004,
+     "low": 0.0007064475262621977,
+     "high": 0.022305785806463974
+    },
+    "found_inverted_share": {
+     "count": 10,
+     "of": 250,
+     "share": 0.04,
+     "low": 0.021869911852774326,
+     "high": 0.07205272389935076
+    },
+    "threshold_raised_by_planet": 150,
+    "threshold_ratio_median": 1.0141102885861,
+    "paired": 250
+   },
+   "8": {
+    "cases": 250,
+    "right": 73,
+    "harmonic": 10,
+    "found_shuffle": 28,
+    "found_inverted": 48,
+    "found_shuffle_share": {
+     "count": 28,
+     "of": 250,
+     "share": 0.112,
+     "low": 0.07863430757199333,
+     "high": 0.15710913301892956
+    },
+    "found_inverted_share": {
+     "count": 48,
+     "of": 250,
+     "share": 0.192,
+     "low": 0.1479841107165345,
+     "high": 0.2453380019174971
+    },
+    "threshold_raised_by_planet": 171,
+    "threshold_ratio_median": 1.042571882565932,
+    "paired": 250
+   },
+   "10": {
+    "cases": 250,
+    "right": 151,
+    "harmonic": 7,
+    "found_shuffle": 79,
+    "found_inverted": 132,
+    "found_shuffle_share": {
+     "count": 79,
+     "of": 250,
+     "share": 0.316,
+     "low": 0.26152437059793265,
+     "high": 0.37604468370291744
+    },
+    "found_inverted_share": {
+     "count": 132,
+     "of": 250,
+     "share": 0.528,
+     "low": 0.46616258855479287,
+     "high": 0.5889899466602952
+    },
+    "threshold_raised_by_planet": 178,
+    "threshold_ratio_median": 1.0748698726096864,
+    "paired": 250
+   },
+   "14": {
+    "cases": 250,
+    "right": 217,
+    "harmonic": 0,
+    "found_shuffle": 164,
+    "found_inverted": 208,
+    "found_shuffle_share": {
+     "count": 164,
+     "of": 250,
+     "share": 0.656,
+     "low": 0.5951531872352563,
+     "high": 0.7121252232488057
+    },
+    "found_inverted_share": {
+     "count": 208,
+     "of": 250,
+     "share": 0.832,
+     "low": 0.7807100417867405,
+     "high": 0.8732414471921603
+    },
+    "threshold_raised_by_planet": 216,
+    "threshold_ratio_median": 1.2886740458362405,
+    "paired": 250
+   },
+   "20": {
+    "cases": 250,
+    "right": 244,
+    "harmonic": 2,
+    "found_shuffle": 209,
+    "found_inverted": 242,
+    "found_shuffle_share": {
+     "count": 209,
+     "of": 250,
+     "share": 0.836,
+     "low": 0.7850819155059117,
+     "high": 0.8767485070751446
+    },
+    "found_inverted_share": {
+     "count": 242,
+     "of": 250,
+     "share": 0.968,
+     "low": 0.9381375968618021,
+     "high": 0.9836976345903837
+    },
+    "threshold_raised_by_planet": 229,
+    "threshold_ratio_median": 1.6445121930609254,
+    "paired": 250
+   },
+   "by_period": {
+    "0.8": {
+     "cases": 300,
+     "right": 102,
+     "harmonic": 3,
+     "found_shuffle": 98,
+     "found_inverted": 95,
+     "found_shuffle_share": {
+      "count": 98,
+      "of": 300,
+      "share": 0.32666666666666666,
+      "low": 0.27607843857063874,
+      "high": 0.38163779152213984
+     },
+     "found_inverted_share": {
+      "count": 95,
+      "of": 300,
+      "share": 0.31666666666666665,
+      "low": 0.26662835031328325,
+      "high": 0.3713407392079249
+     },
+     "threshold_raised_by_planet": 180,
+     "threshold_ratio_median": 1.0143800001462924,
+     "paired": 300
+    },
+    "1.6": {
+     "cases": 300,
+     "right": 120,
+     "harmonic": 10,
+     "found_shuffle": 110,
+     "found_inverted": 109,
+     "found_shuffle_share": {
+      "count": 110,
+      "of": 300,
+      "share": 0.36666666666666664,
+      "low": 0.314141506111875,
+      "high": 0.42256328626718537
+     },
+     "found_inverted_share": {
+      "count": 109,
+      "of": 300,
+      "share": 0.36333333333333334,
+      "low": 0.3109540366156679,
+      "high": 0.4191683755728691
+     },
+     "threshold_raised_by_planet": 196,
+     "threshold_ratio_median": 1.022080833536569,
+     "paired": 300
+    },
+    "3.2": {
+     "cases": 300,
+     "right": 141,
+     "harmonic": 13,
+     "found_shuffle": 132,
+     "found_inverted": 132,
+     "found_shuffle_share": {
+      "count": 132,
+      "of": 300,
+      "share": 0.44,
+      "low": 0.38493919456182957,
+      "high": 0.4965779620087476
+     },
+     "found_inverted_share": {
+      "count": 132,
+      "of": 300,
+      "share": 0.44,
+      "low": 0.38493919456182957,
+      "high": 0.4965779620087476
+     },
+     "threshold_raised_by_planet": 217,
+     "threshold_ratio_median": 1.0698320293506258,
+     "paired": 300
+    },
+    "6.4": {
+     "cases": 300,
+     "right": 157,
+     "harmonic": 3,
+     "found_shuffle": 94,
+     "found_inverted": 142,
+     "found_shuffle_share": {
+      "count": 94,
+      "of": 300,
+      "share": 0.31333333333333335,
+      "low": 0.26348439718917394,
+      "high": 0.3679023121415107
+     },
+     "found_inverted_share": {
+      "count": 142,
+      "of": 300,
+      "share": 0.47333333333333333,
+      "low": 0.4175289975574689,
+      "high": 0.5298119609183433
+     },
+     "threshold_raised_by_planet": 240,
+     "threshold_ratio_median": 1.2077818237429532,
+     "paired": 300
+    },
+    "12.8": {
+     "cases": 300,
+     "right": 183,
+     "harmonic": 4,
+     "found_shuffle": 48,
+     "found_inverted": 163,
+     "found_shuffle_share": {
+      "count": 48,
+      "of": 300,
+      "share": 0.16,
+      "low": 0.12285354532480341,
+      "high": 0.2057436752418007
+     },
+     "found_inverted_share": {
+      "count": 163,
+      "of": 300,
+      "share": 0.5433333333333333,
+      "low": 0.4867738446108542,
+      "high": 0.5987970978659511
+     },
+     "threshold_raised_by_planet": 243,
+     "threshold_ratio_median": 1.5401269654164653,
+     "paired": 300
+    }
+   }
+  },
+  "white": {
+   "4": {
+    "cases": 250,
+    "right": 57,
+    "harmonic": 19,
+    "found_shuffle": 6,
+    "found_inverted": 7,
+    "found_shuffle_share": {
+     "count": 6,
+     "of": 250,
+     "share": 0.024,
+     "low": 0.011044777241457488,
+     "high": 0.05136212410204585
+    },
+    "found_inverted_share": {
+     "count": 7,
+     "of": 250,
+     "share": 0.028,
+     "low": 0.01362805852625796,
+     "high": 0.05665777641940082
+    },
+    "threshold_raised_by_planet": 100,
+    "threshold_ratio_median": 0.9857777108851891,
+    "paired": 250
+   },
+   "6": {
+    "cases": 250,
+    "right": 192,
+    "harmonic": 17,
+    "found_shuffle": 111,
+    "found_inverted": 120,
+    "found_shuffle_share": {
+     "count": 111,
+     "of": 250,
+     "share": 0.444,
+     "low": 0.3837198515381208,
+     "high": 0.5059750780317032
+    },
+    "found_inverted_share": {
+     "count": 120,
+     "of": 250,
+     "share": 0.48,
+     "low": 0.41884240875910395,
+     "high": 0.5417629232301189
+    },
+    "threshold_raised_by_planet": 124,
+    "threshold_ratio_median": 0.9982635221270433,
+    "paired": 250
+   },
+   "8": {
+    "cases": 250,
+    "right": 247,
+    "harmonic": 3,
+    "found_shuffle": 207,
+    "found_inverted": 235,
+    "found_shuffle_share": {
+     "count": 207,
+     "of": 250,
+     "share": 0.828,
+     "low": 0.7763472794809159,
+     "high": 0.8697252758958296
+    },
+    "found_inverted_share": {
+     "count": 235,
+     "of": 250,
+     "share": 0.94,
+     "low": 0.9033771069353895,
+     "high": 0.9633055893017082
+    },
+    "threshold_raised_by_planet": 162,
+    "threshold_ratio_median": 1.0515541025145287,
+    "paired": 250
+   },
+   "10": {
+    "cases": 250,
+    "right": 250,
+    "harmonic": 0,
+    "found_shuffle": 217,
+    "found_inverted": 247,
+    "found_shuffle_share": {
+     "count": 217,
+     "of": 250,
+     "share": 0.868,
+     "low": 0.8204199076765577,
+     "high": 0.9044419837217421
+    },
+    "found_inverted_share": {
+     "count": 247,
+     "of": 250,
+     "share": 0.988,
+     "low": 0.9653192193117143,
+     "high": 0.9959106801512486
+    },
+    "threshold_raised_by_planet": 192,
+    "threshold_ratio_median": 1.155576289172508,
+    "paired": 250
+   },
+   "14": {
+    "cases": 250,
+    "right": 250,
+    "harmonic": 0,
+    "found_shuffle": 221,
+    "found_inverted": 250,
+    "found_shuffle_share": {
+     "count": 221,
+     "of": 250,
+     "share": 0.884,
+     "low": 0.8383692325058395,
+     "high": 0.9180083933010822
+    },
+    "found_inverted_share": {
+     "count": 250,
+     "of": 250,
+     "share": 1.0,
+     "low": 0.9848667002694292,
+     "high": 0.9999999999999999
+    },
+    "threshold_raised_by_planet": 233,
+    "threshold_ratio_median": 1.3039537553522802,
+    "paired": 250
+   },
+   "20": {
+    "cases": 250,
+    "right": 250,
+    "harmonic": 0,
+    "found_shuffle": 229,
+    "found_inverted": 250,
+    "found_shuffle_share": {
+     "count": 229,
+     "of": 250,
+     "share": 0.916,
+     "low": 0.8750051332101869,
+     "high": 0.9444039614139783
+    },
+    "found_inverted_share": {
+     "count": 250,
+     "of": 250,
+     "share": 1.0,
+     "low": 0.9848667002694292,
+     "high": 0.9999999999999999
+    },
+    "threshold_raised_by_planet": 249,
+    "threshold_ratio_median": 1.384270598299707,
+    "paired": 250
+   },
+   "by_period": {
+    "0.8": {
+     "cases": 300,
+     "right": 251,
+     "harmonic": 7,
+     "found_shuffle": 226,
+     "found_inverted": 223,
+     "found_shuffle_share": {
+      "count": 226,
+      "of": 300,
+      "share": 0.7533333333333333,
+      "low": 0.7015546968662916,
+      "high": 0.7987061976134935
+     },
+     "found_inverted_share": {
+      "count": 223,
+      "of": 300,
+      "share": 0.7433333333333333,
+      "low": 0.6910470907971772,
+      "high": 0.7894666631110373
+     },
+     "threshold_raised_by_planet": 192,
+     "threshold_ratio_median": 1.0442374587438024,
+     "paired": 300
+    },
+    "1.6": {
+     "cases": 300,
+     "right": 246,
+     "harmonic": 11,
+     "found_shuffle": 224,
+     "found_inverted": 225,
+     "found_shuffle_share": {
+      "count": 224,
+      "of": 300,
+      "share": 0.7466666666666667,
+      "low": 0.694545883968659,
+      "high": 0.7925502501300793
+     },
+     "found_inverted_share": {
+      "count": 225,
+      "of": 300,
+      "share": 0.75,
+      "low": 0.698048403115165,
+      "high": 0.7956301111740967
+     },
+     "threshold_raised_by_planet": 200,
+     "threshold_ratio_median": 1.0597999929698543,
+     "paired": 300
+    },
+    "3.2": {
+     "cases": 300,
+     "right": 250,
+     "harmonic": 6,
+     "found_shuffle": 228,
+     "found_inverted": 230,
+     "found_shuffle_share": {
+      "count": 228,
+      "of": 300,
+      "share": 0.76,
+      "low": 0.7085788114876385,
+      "high": 0.8048468433731936
+     },
+     "found_inverted_share": {
+      "count": 230,
+      "of": 300,
+      "share": 0.7666666666666667,
+      "low": 0.7156186531529524,
+      "high": 0.8109717620889269
+     },
+     "threshold_raised_by_planet": 208,
+     "threshold_ratio_median": 1.083017528807233,
+     "paired": 300
+    },
+    "6.4": {
+     "cases": 300,
+     "right": 250,
+     "harmonic": 12,
+     "found_shuffle": 205,
+     "found_inverted": 220,
+     "found_shuffle_share": {
+      "count": 205,
+      "of": 300,
+      "share": 0.6833333333333333,
+      "low": 0.6286592607920752,
+      "high": 0.7333716496867168
+     },
+     "found_inverted_share": {
+      "count": 220,
+      "of": 300,
+      "share": 0.7333333333333333,
+      "low": 0.6805726054333048,
+      "high": 0.7801940079033394
+     },
+     "threshold_raised_by_planet": 228,
+     "threshold_ratio_median": 1.1869698154037591,
+     "paired": 300
+    },
+    "12.8": {
+     "cases": 300,
+     "right": 249,
+     "harmonic": 3,
+     "found_shuffle": 108,
+     "found_inverted": 211,
+     "found_shuffle_share": {
+      "count": 108,
+      "of": 300,
+      "share": 0.36,
+      "low": 0.3077693347797391,
+      "high": 0.4157706972182743
+     },
+     "found_inverted_share": {
+      "count": 211,
+      "of": 300,
+      "share": 0.7033333333333334,
+      "low": 0.6493365817983081,
+      "high": 0.7521886098236248
+     },
+     "threshold_raised_by_planet": 232,
+     "threshold_ratio_median": 1.2242707587285866,
+     "paired": 300
+    }
+   }
+  }
+ },
+ "variable_rotation": {
+  "curves": 2000,
+  "crossings": 1325,
+  "crossings_explained": {
+   "count": 1264,
+   "of": 1325,
+   "share": 0.9539622641509434,
+   "low": 0.9413061007541408,
+   "high": 0.9639937692640348
+  },
+  "crossings_not_explained": 61,
+  "not_crossing": 675,
+  "not_crossing_explained": {
+   "count": 434,
+   "of": 675,
+   "share": 0.642962962962963,
+   "low": 0.606102493759951,
+   "high": 0.6782054215492531
+  },
+  "ratios": [
+   0.3333333333333333,
+   0.5,
+   1,
+   2,
+   3
+  ],
+  "tolerance": 0.01
+ },
+ "real": {
+  "current_list": {
+   "stars": 12,
+   "rank_shares": {
+    "32069592:89": 0.9597989949748744,
+    "177237464:39": 0.5628140703517588,
+    "198161846:41": 0.8090452261306532,
+    "219852735:41": 0.914572864321608,
+    "462548689:20": 0.3417085427135678,
+    "122610285:97": 0.2562814070351759,
+    "101932572:2": 0.8793969849246231,
+    "167207589:39": 0.11557788944723618,
+    "441729317:41": 0.9698492462311558,
+    "219880727:21": 0.8793969849246231,
+    "177385959:1": 0.06532663316582915,
+    "38709037:39": 0.5778894472361809
+   },
+   "mean_rank_share": 0.6109715242881072,
+   "kolmogorov": 0.3090452261306532,
+   "p": 0.16449791010902273
+  },
+  "first_list": {
+   "stars": 8,
+   "rank_shares": {
+    "154926789:40": 0.49748743718592964,
+    "156198712:20": 0.3969849246231156,
+    "233722148:14": 0.7085427135678392,
+    "441717318:41": 0.9296482412060302,
+    "38696814:1": 0.864321608040201,
+    "25081575:1": 0.8944723618090452,
+    "382199165:89": 0.5678391959798995,
+    "198390801:20": 0.5527638190954773
+   },
+   "mean_rank_share": 0.6765075376884422,
+   "kolmogorov": 0.3969849246231156,
+   "p": 0.12004570668172972
+  },
+  "pooled": {
+   "stars": 20,
+   "rank_shares": {
+    "32069592:89": 0.9597989949748744,
+    "177237464:39": 0.5628140703517588,
+    "198161846:41": 0.8090452261306532,
+    "154926789:40": 0.49748743718592964,
+    "219852735:41": 0.914572864321608,
+    "156198712:20": 0.3969849246231156,
+    "233722148:14": 0.7085427135678392,
+    "441717318:41": 0.9296482412060302,
+    "38696814:1": 0.864321608040201,
+    "25081575:1": 0.8944723618090452,
+    "382199165:89": 0.5678391959798995,
+    "198390801:20": 0.5527638190954773,
+    "462548689:20": 0.3417085427135678,
+    "122610285:97": 0.2562814070351759,
+    "101932572:2": 0.8793969849246231,
+    "167207589:39": 0.11557788944723618,
+    "441729317:41": 0.9698492462311558,
+    "219880727:21": 0.8793969849246231,
+    "177385959:1": 0.06532663316582915,
+    "38709037:39": 0.5778894472361809
+   },
+   "mean_rank_share": 0.6371859296482413,
+   "kolmogorov": 0.264321608040201,
+   "p": 0.10174765255178239
+  }
+ }
+}

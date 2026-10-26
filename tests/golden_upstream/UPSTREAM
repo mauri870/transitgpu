@@ -1,0 +1,13 @@
+The definitions of the characterization cases of Transit Least Squares, the two Kepler K2 light curves they read, and the brute-force oracle of its core, copied unchanged.
+
+source:   https://github.com/hippke/tls
+commit:   7666720794a3cc064535055917500c96dbd90b52 (master on 2026-10-20; release 2.0.1 is on PyPI as transitleastsquares-2.0.1)
+licence:  MIT, Copyright (c) 2018 Michael Hippke (../../THIRD_PARTY/TLS-LICENSE)
+files:    tests/golden_cases.py          sha256 14b106121dcf49f082590fde4c23888157717df0e45057a2e96bed908a007887
+          tests/test_core_oracle.py      sha256 ce94d58f24fe177af49079141f202fdd34a19756b85faa8ab54d071a9d5766c8  (stored here as core_oracle.py, unchanged, not collected by pytest: its tests of TLS's own kernels are not run here)
+          tests/data/EPIC201367065.csv   sha256 5d4ca48676d274399e88af5a29bb14b6b630795301e89ba20bc4a7f6c9379302
+          tests/data/EPIC206154641.csv   sha256 f9085cb72d2667736c58c03ec75be9bb6bcb47be4e882656f88675ee025daa02
+not copied: the frozen results of TLS (tests/golden/*.npz, 8.7 MB). The test of transitgpu.tls runs TLS's exact backend on each case in the same session and compares transitgpu.tls with that.
+
+K2 data:  the two light curves (data/EPIC201367065.csv and data/EPIC206154641.csv, two columns, time and flux) are light curves of the stars with those EPIC identifiers from the Kepler mission's K2 phase, as the TLS repository holds them for its tests. They are data of a NASA mission, public through the Mikulski Archive for Space Telescopes (MAST, https://archive.stsci.edu/missions-and-data/k2), and the MIT licence above is that of the TLS code and not of the data. The campaign and the pipeline of each file are not stated by TLS's repository and are not stated here.
+acknowledgement (MAST's text for data of the Kepler and K2 missions): "This paper includes data collected by the Kepler mission and obtained from the MAST data archive at the Space Telescope Science Institute (STScI). Funding for the Kepler mission is provided by the NASA Science Mission Directorate. STScI is operated by the Association of Universities for Research in Astronomy, Inc., under NASA contract NAS 5-26555."

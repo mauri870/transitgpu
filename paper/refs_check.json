@@ -1,0 +1,300 @@
+[
+ {
+  "key": "HippkeHeller2019",
+  "source": "arXiv 1901.02015",
+  "problems": [],
+  "record": {
+   "title": "Transit Least Squares: Optimized transit detection algorithm to search for periodic transits of small planets",
+   "first": "hippke",
+   "year": 2019
+  }
+ },
+ {
+  "key": "Hu2026",
+  "source": "arXiv 2607.00348",
+  "problems": [],
+  "record": {
+   "title": "GTLS: A GPU-accelerated method for periodic transit detection",
+   "first": "hu",
+   "year": 2026
+  }
+ },
+ {
+  "key": "Kovacs2002",
+  "source": "arXiv astro-ph/0206099",
+  "problems": [
+   "first author: bib 'kov a cs' / record 'kov cs'"
+  ],
+  "record": {
+   "title": "A box-fitting algorithm in the search for periodic transits",
+   "first": "kov cs",
+   "year": 2002
+  }
+ },
+ {
+  "key": "Ofir2014",
+  "source": "arXiv 1307.7330",
+  "problems": [],
+  "record": {
+   "title": "Optimizing the search for transiting planets in long time series",
+   "first": "ofir",
+   "year": 2013
+  }
+ },
+ {
+  "key": "Smith2025",
+  "source": "arXiv 2503.20875",
+  "problems": [],
+  "record": {
+   "title": "CETRA: A fast, sensitive exoplanet transit detection algorithm implemented for GPUs",
+   "first": "smith",
+   "year": 2025
+  }
+ },
+ {
+  "key": "Thompson2018",
+  "source": "arXiv 1710.06758",
+  "problems": [],
+  "record": {
+   "title": "Planetary Candidates Observed by Kepler. VIII. A Fully Automated Catalog With Measured Completeness and Reliability Based on Data Release 25",
+   "first": "thompson",
+   "year": 2017
+  }
+ },
+ {
+  "key": "Kunimoto2023QLP",
+  "source": "arXiv 2302.01293",
+  "problems": [],
+  "record": {
+   "title": "QLP Data Release Notes 003: GPU-based Transit Search",
+   "first": "kunimoto",
+   "year": 2023
+  }
+ },
+ {
+  "key": "Kunimoto2023FA",
+  "source": "doi 10.3847/2515-5172/acb149",
+  "problems": [],
+  "record": {
+   "title": "False Alarms Revealed in a Planet Search of TESS Light Curves",
+   "first": "kunimoto",
+   "year": 2023,
+   "volume": "7",
+   "page": "7"
+  }
+ },
+ {
+  "key": "Kunimoto2025LEO",
+  "source": "arXiv 2509.10619",
+  "problems": [],
+  "record": {
+   "title": "LEO-Vetter: Fully Automated Flux- and Pixel-Level Vetting of TESS Planet Candidates to Support Occurrence Rates",
+   "first": "kunimoto",
+   "year": 2025
+  }
+ },
+ {
+  "key": "Paszke2019",
+  "source": "arXiv 1912.01703",
+  "problems": [],
+  "record": {
+   "title": "PyTorch: An Imperative Style, High-Performance Deep Learning Library",
+   "first": "paszke",
+   "year": 2019
+  }
+ },
+ {
+  "key": "Tillet2019",
+  "source": "doi 10.1145/3315508.3329973",
+  "problems": [],
+  "record": {
+   "title": "Triton: an intermediate language and compiler for tiled neural network computations",
+   "first": "tillet",
+   "year": 2019,
+   "volume": null,
+   "page": "10"
+  }
+ },
+ {
+  "key": "Lam2015",
+  "source": "doi 10.1145/2833157.2833162",
+  "problems": [
+   "title: bib 'Numba: A {LLVM}-based {P}ython {JIT} Compiler' / record 'Numba'"
+  ],
+  "record": {
+   "title": "Numba",
+   "first": "lam",
+   "year": 2015,
+   "volume": null,
+   "page": "1"
+  }
+ },
+ {
+  "key": "Astropy2013",
+  "source": "doi 10.1051/0004-6361/201322068",
+  "problems": [],
+  "record": {
+   "title": "Astropy: A community Python package for astronomy",
+   "first": "",
+   "year": 2013,
+   "volume": "558",
+   "page": "A33"
+  }
+ },
+ {
+  "key": "Astropy2018",
+  "source": "doi 10.3847/1538-3881/aabc4f",
+  "problems": [],
+  "record": {
+   "title": "The Astropy Project: Building an Open-science Project and Status of the v2.0 Core Package\n                    <sup>*</sup>",
+   "first": "",
+   "year": 2018,
+   "volume": "156",
+   "page": "123"
+  }
+ },
+ {
+  "key": "Astropy2022",
+  "source": "doi 10.3847/1538-4357/ac7c74",
+  "problems": [
+   "first author: bib 'collaboration' / record 'the astropy collaboration'"
+  ],
+  "record": {
+   "title": "The Astropy Project: Sustaining and Growing a Community-oriented Open-source Project and the Latest Major Release (v5.0) of the Core Package*",
+   "first": "the astropy collaboration",
+   "year": 2022,
+   "volume": "935",
+   "page": "167"
+  }
+ },
+ {
+  "key": "Kreidberg2015",
+  "source": "doi 10.1086/683602",
+  "problems": [
+   "title: bib 'batman: {BA}sic {T}ransit {M}odel c{A}lculatio{N} in {P}ython' / record '<tt>batman</tt>\n                    : BAsic Transit Model cAlculatioN in Python'"
+  ],
+  "record": {
+   "title": "<tt>batman</tt>\n                    : BAsic Transit Model cAlculatioN in Python",
+   "first": "kreidberg",
+   "year": 2015,
+   "volume": "127",
+   "page": "1161"
+  }
+ },
+ {
+  "key": "Hippke2019wotan",
+  "source": "doi 10.3847/1538-3881/ab3984",
+  "problems": [],
+  "record": {
+   "title": "<tt>W\u014dtan</tt>: Comprehensive Time-series Detrending in Python",
+   "first": "hippke",
+   "year": 2019,
+   "volume": "158",
+   "page": "143"
+  }
+ },
+ {
+  "key": "Ricker2015",
+  "source": "doi 10.1117/1.JATIS.1.1.014003",
+  "problems": [],
+  "record": {
+   "title": "Transiting Exoplanet Survey Satellite",
+   "first": "ricker",
+   "year": 2014,
+   "volume": "1",
+   "page": "1"
+  }
+ },
+ {
+  "key": "Howell2014",
+  "source": "doi 10.1086/676406",
+  "problems": [],
+  "record": {
+   "title": "The K2 Mission: Characterization and Early Results",
+   "first": "howell",
+   "year": 2014,
+   "volume": "126",
+   "page": "398"
+  }
+ },
+ {
+  "key": "Hellier2009",
+  "source": "doi 10.1038/nature08245",
+  "problems": [],
+  "record": {
+   "title": "An orbital period of 0.94\u2009days for the hot-Jupiter planet WASP-18b",
+   "first": "hellier",
+   "year": 2009,
+   "volume": "460",
+   "page": "1098"
+  }
+ },
+ {
+  "key": "HartmanBakos2016",
+  "source": "doi 10.1016/j.ascom.2016.05.006",
+  "problems": [],
+  "record": {
+   "title": "Vartools: A program for analyzing astronomical time-series data",
+   "first": "hartman",
+   "year": 2016,
+   "volume": "17",
+   "page": "1"
+  }
+ },
+ {
+  "key": "Akeson2013",
+  "source": "doi 10.1086/672273",
+  "problems": [],
+  "record": {
+   "title": "The NASA Exoplanet Archive: Data and Tools for Exoplanet Research",
+   "first": "akeson",
+   "year": 2013,
+   "volume": "125",
+   "page": "989"
+  }
+ },
+ {
+  "key": "Harris2020",
+  "source": "doi 10.1038/s41586-020-2649-2",
+  "problems": [],
+  "record": {
+   "title": "Array programming with NumPy",
+   "first": "harris",
+   "year": 2020,
+   "volume": "585",
+   "page": "357"
+  }
+ },
+ {
+  "key": "Jenkins2016",
+  "source": "doi 10.1117/12.2233418",
+  "problems": [],
+  "record": {
+   "title": "The TESS science processing operations center",
+   "first": "jenkins",
+   "year": 2016,
+   "volume": "9913",
+   "page": "99133E"
+  }
+ },
+ {
+  "key": "Hoffman2022cuvarbase",
+  "source": "no doi and no eprint",
+  "problems": [
+   "no doi and no eprint"
+  ],
+  "record": null
+ },
+ {
+  "key": "Pont2006",
+  "source": "doi 10.1111/j.1365-2966.2006.11012.x",
+  "problems": [],
+  "record": {
+   "title": "The effect of red noise on planetary transit detection",
+   "first": "pont",
+   "year": 2006,
+   "volume": "373",
+   "page": "231"
+  }
+ }
+]

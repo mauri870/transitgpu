@@ -1,0 +1,104 @@
+[
+ {
+  "points": 20000,
+  "wall_seconds": 2.493528785998933,
+  "device_seconds": 2.066294303999953,
+  "stages": {
+   "rest": 0.15659355299999728,
+   "fold": 0.364043189999953,
+   "scans": 0.2334471620000041,
+   "screening": 1.2029636260000016,
+   "correlations": 0.10924677299999687
+  },
+  "rest": [
+   [
+    0.059889158000018324,
+    "void at::native::vectorized_elementwise_kernel<4, at::native"
+   ],
+   [
+    0.0364276769999882,
+    "__amd_rocclr_copyBuffer.kd"
+   ],
+   [
+    0.029565666999998796,
+    "void at::native::elementwise_kernel_manual_unroll<128, 4, at"
+   ],
+   [
+    0.010616386999999674,
+    "__amd_rocclr_fillBufferAligned.kd"
+   ],
+   [
+    0.008588527999998673,
+    "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<"
+   ]
+  ]
+ },
+ {
+  "points": 100000,
+  "wall_seconds": 5.556896563008195,
+  "device_seconds": 4.962503572999912,
+  "stages": {
+   "rest": 0.20914140299991674,
+   "fold": 1.2304561580000033,
+   "scans": 1.15233824899999,
+   "screening": 1.6185804169999973,
+   "correlations": 0.7519873460000048
+  },
+  "rest": [
+   [
+    0.08909523799993954,
+    "void at::native::vectorized_elementwise_kernel<4, at::native"
+   ],
+   [
+    0.04218502299997103,
+    "__amd_rocclr_copyBuffer.kd"
+   ],
+   [
+    0.030741202000031595,
+    "void at::native::elementwise_kernel_manual_unroll<128, 4, at"
+   ],
+   [
+    0.02289235999999836,
+    "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<"
+   ],
+   [
+    0.011456091999989666,
+    "__amd_rocclr_fillBufferAligned.kd"
+   ]
+  ]
+ },
+ {
+  "points": 200000,
+  "wall_seconds": 10.782428827980766,
+  "device_seconds": 9.700765800000031,
+  "stages": {
+   "rest": 0.4184439189999002,
+   "fold": 2.4296107270001888,
+   "scans": 2.4009119559999714,
+   "screening": 2.4927004919999924,
+   "correlations": 1.9590987059999787
+  },
+  "rest": [
+   [
+    0.1834631090000103,
+    "void at::native::vectorized_elementwise_kernel<4, at::native"
+   ],
+   [
+    0.08534123700000236,
+    "__amd_rocclr_copyBuffer.kd"
+   ],
+   [
+    0.05653691699996655,
+    "void at::native::elementwise_kernel_manual_unroll<128, 4, at"
+   ],
+   [
+    0.04509235599998095,
+    "void at::native::reduce_kernel<512, 1, at::native::ReduceOp<"
+   ],
+   [
+    0.022239233999943302,
+    "__amd_rocclr_fillBufferAligned.kd"
+   ]
+  ]
+ }
+]

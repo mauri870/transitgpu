@@ -1,0 +1,10 @@
+direct evaluation: constant chi2 10000000000; template row 26 at start 2000 lowers it by 0.00052158
+no outlier                                 numba  template row  26  depth 0.999000  chi2 1.23130401701e-07
+no outlier                                 fused  template row  26  depth 0.999000  chi2 1.23130401702e-07
+no outlier                                 transitgpu template row  26  depth 0.999000  chi2 1.23130401701e-07
+outlier 1e5 at index 5970, after the dip   numba  template row  26  depth 0.999000  chi2 10000000000
+outlier 1e5 at index 5970, after the dip   fused  template row  26  depth 0.999000  chi2 10000000000
+outlier 1e5 at index 5970, after the dip   transitgpu template row  26  depth 0.999000  chi2 10000000000
+outlier 1e5 at index 30, before the dip    numba  template row   1  depth 0.000000  chi2 10000000000
+outlier 1e5 at index 30, before the dip    fused  template row   0  depth 0.000000  chi2 10000000000
+outlier 1e5 at index 30, before the dip    transitgpu template row  26  depth 0.999000  chi2 10000000000

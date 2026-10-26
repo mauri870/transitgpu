@@ -1,0 +1,218 @@
+{
+ "injected": 200,
+ "null": 200,
+ "signal_to_noise": [
+  8.0
+ ],
+ "searches": {
+  "box": {
+   "right_peak": 56,
+   "harmonic": 6,
+   "0.05": {
+    "threshold": 7.848603014111457,
+    "threshold_bootstrap": [
+     7.569074427808124,
+     7.9826035474735315
+    ],
+    "found": 7,
+    "n": 200,
+    "wilson": [
+     0.017055324637357105,
+     0.07047146086668134
+    ]
+   },
+   "0.01": {
+    "threshold": 8.030335450042893,
+    "threshold_bootstrap": [
+     7.898745387204057,
+     8.39550661866564
+    ],
+    "found": 3,
+    "n": 200,
+    "wilson": [
+     0.005114145184492387,
+     0.043166480556278884
+    ]
+   },
+   "seconds_median": 0.011971397994784638
+  },
+  "box_detrended": {
+   "right_peak": 126,
+   "harmonic": 5,
+   "0.05": {
+    "threshold": 8.965688619571724,
+    "threshold_bootstrap": [
+     8.374722119948295,
+     9.393395919253514
+    ],
+    "found": 77,
+    "n": 200,
+    "wilson": [
+     0.3203319691791383,
+     0.4540026121820756
+    ]
+   },
+   "0.01": {
+    "threshold": 10.468930695790595,
+    "threshold_bootstrap": [
+     9.28415294417963,
+     11.213547770428796
+    ],
+    "found": 52,
+    "n": 200,
+    "wilson": [
+     0.20413736892786316,
+     0.32490871391293097
+    ]
+   },
+   "seconds_median": 0.0121766254742397
+  },
+  "astropy": {
+   "right_peak": 57,
+   "harmonic": 6,
+   "0.05": {
+    "threshold": 7.918072507111808,
+    "threshold_bootstrap": [
+     7.704672259249245,
+     7.9974992905115005
+    ],
+    "found": 5,
+    "n": 200,
+    "wilson": [
+     0.010724561470787711,
+     0.05717914415161715
+    ]
+   },
+   "0.01": {
+    "threshold": 8.123026023451382,
+    "threshold_bootstrap": [
+     7.9457017924938835,
+     8.451600356253282
+    ],
+    "found": 3,
+    "n": 200,
+    "wilson": [
+     0.005114145184492387,
+     0.043166480556278884
+    ]
+   },
+   "seconds_median": 0.6722104259970365
+  },
+  "exact": {
+   "right_peak": 133,
+   "harmonic": 4,
+   "0.05": {
+    "threshold": 9.266199947816611,
+    "threshold_bootstrap": [
+     9.008504866183142,
+     9.813106085863799
+    ],
+    "found": 99,
+    "n": 200,
+    "wilson": [
+     0.4264572195415849,
+     0.5637312405175983
+    ]
+   },
+   "0.01": {
+    "threshold": 12.943534155634755,
+    "threshold_bootstrap": [
+     9.781406772264479,
+     14.298659373483835
+    ],
+    "found": 42,
+    "n": 200,
+    "wilson": [
+     0.15928329527863416,
+     0.271647388153992
+    ]
+   }
+  }
+ },
+ "paired": {
+  "0.05": {
+   "box_minus_exact": {
+    "estimate": -0.46,
+    "low": -0.5291783690641285,
+    "high": -0.392329311409337,
+    "only_first": 0,
+    "only_second": 92,
+    "n": 200
+   },
+   "box_detrended_minus_exact": {
+    "estimate": -0.11,
+    "low": -0.16674068322303964,
+    "high": -0.06089152256419922,
+    "only_first": 4,
+    "only_second": 26,
+    "n": 200
+   },
+   "astropy_minus_exact": {
+    "estimate": -0.47,
+    "low": -0.5390844266466637,
+    "high": -0.4020463337084357,
+    "only_first": 0,
+    "only_second": 94,
+    "n": 200
+   },
+   "astropy_minus_box": {
+    "estimate": -0.01,
+    "low": -0.03572248519732256,
+    "high": 0.009034465977504097,
+    "only_first": 0,
+    "only_second": 2,
+    "n": 200
+   },
+   "box_detrended_minus_box": {
+    "estimate": 0.35,
+    "low": 0.2872871593938664,
+    "high": 0.4183666423816299,
+    "only_first": 70,
+    "only_second": 0,
+    "n": 200
+   }
+  },
+  "0.01": {
+   "box_minus_exact": {
+    "estimate": -0.195,
+    "low": -0.25544164796546276,
+    "high": -0.14605441564471305,
+    "only_first": 0,
+    "only_second": 39,
+    "n": 200
+   },
+   "box_detrended_minus_exact": {
+    "estimate": 0.05,
+    "low": 0.004383096216571826,
+    "high": 0.10048230871866984,
+    "only_first": 16,
+    "only_second": 6,
+    "n": 200
+   },
+   "astropy_minus_exact": {
+    "estimate": -0.195,
+    "low": -0.25544164796546276,
+    "high": -0.14605441564471305,
+    "only_first": 0,
+    "only_second": 39,
+    "n": 200
+   },
+   "astropy_minus_box": {
+    "estimate": 0.0,
+    "low": -0.01884600592032088,
+    "high": 0.018846005920320888,
+    "only_first": 0,
+    "only_second": 0,
+    "n": 200
+   },
+   "box_detrended_minus_box": {
+    "estimate": 0.245,
+    "low": 0.18797284395891029,
+    "high": 0.3101803914768527,
+    "only_first": 50,
+    "only_second": 1,
+    "n": 200
+   }
+  }
+ }
+}

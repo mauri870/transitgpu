@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+title: "transitgpu"
+message: "If you use transitgpu, please cite the paper below, together with TLS (Hippke & Heller 2019) and BLS (Kovács et al. 2002)."
+type: software
+authors:
+  - family-names: "Meneguzzo"
+    given-names: "Mauri de Souza"
+repository-code: "https://github.com/mauri870/transitgpu"
+url: "https://github.com/mauri870/transitgpu"
+license: MIT
+version: "0.1.0"
+abstract: "A box least squares transit search and a Transit Least Squares search on a GPU, in PyTorch, for CUDA and ROCm."
+keywords:
+  - astronomy
+  - exoplanets
+  - transit search
+  - GPU
+preferred-citation:
+  type: article
+  title: "Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection"
+  authors:
+    - family-names: "Meneguzzo"
+      given-names: "Mauri de Souza"
+  status: preprint
+  year: 2026
+  url: "https://github.com/mauri870/transitgpu/blob/main/paper/main.pdf"
+references:
+  - type: article
+    authors:
+      - family-names: "Hippke"
+        given-names: "Michael"
+      - family-names: "Heller"
+        given-names: "René"
+    title: "Transit Least Squares: optimized transit detection algorithm to search for periodic transits of small planets"
+    journal: "Astronomy & Astrophysics"
+    volume: 623
+    start: "A39"
+    year: 2019
+  - type: article
+    authors:
+      - family-names: "Kovács"
+        given-names: "G."
+      - family-names: "Zucker"
+        given-names: "S."
+      - family-names: "Mazeh"
+        given-names: "T."
+    title: "A box-fitting algorithm in the search for periodic transits"
+    journal: "Astronomy & Astrophysics"
+    volume: 391
+    start: "369"
+    year: 2002

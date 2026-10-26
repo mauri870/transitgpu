@@ -1,0 +1,1939 @@
+{
+ "command": "uv run python benchmarks/bench.py --refuse-if-busy --rows gpu hybrid tls-gpu tls-gpu-binned tls-gpu-pl tls16 tls16-exact --repeats 7 --json main.json",
+ "hardware": {
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "logical_cpus": 32,
+  "gpu": "AMD Radeon RX 7900 XTX",
+  "gpu_runtime": "ROCm 7.2.53211"
+ },
+ "versions": {
+  "python": "3.12.13",
+  "numpy": "2.5.4",
+  "torch": "2.12.0+rocm7.2",
+  "astropy": "8.0.1",
+  "transitleastsquares": "2.0.1",
+  "numba": "0.68.0",
+  "triton": "3.7.0",
+  "batman": "2.5.3",
+  "wotan": "1.10"
+ },
+ "seed": 20260101,
+ "baseline_days": 1000.0,
+ "period_range_days": [
+  0.5,
+  14.0
+ ],
+ "planet": {
+  "period": 3.18,
+  "t0": 1.2,
+  "duration_hr": 2.5,
+  "depth_ppm": 3000.0
+ },
+ "noise_ppm": 1000.0,
+ "t0_fit_margin": 0.01,
+ "sizes": {
+  "20000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.26727946699247696,
+      0.26758324101683684,
+      0.267130874999566,
+      0.26658088801195845,
+      0.2663196860230528,
+      0.2655432260071393,
+      0.266836210998008
+     ],
+     "median": 0.266836210998008,
+     "build_seconds": 2.1245567789883353,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 2.9128364753567742e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 1.3341810549900402e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 2.62548828125,
+     "gpu_busy_mean_percent": 71.3,
+     "gpu_busy_largest_percent": 90.0,
+     "calls": 7
+    },
+    "hybrid": {
+     "seconds": [
+      0.451439004013082,
+      0.442914490995463,
+      0.44379390199901536,
+      0.4404291909886524,
+      0.4427524189813994,
+      0.44190189900109544,
+      0.44042519098729827
+     ],
+     "median": 0.4427524189813994,
+     "build_seconds": 0.41583599100704305,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 4.8331723447050925e-06,
+     "durations": "the box search over the grid, then TLS's own grid of 38 durations and its template on a window of 1% around each of 5 peaks, exact backend, on the device",
+     "seconds_per_point": 2.213762094906997e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 2.62548828125,
+     "gpu_busy_mean_percent": 67.8125,
+     "gpu_busy_largest_percent": 92.0,
+     "calls": 7
+    },
+    "tls-gpu": {
+     "seconds": [
+      2.831486943992786,
+      2.4814239330007695,
+      2.47987026599003,
+      2.4865745090064593,
+      2.478584783995757,
+      2.47980401100358,
+      2.481241460016463
+     ],
+     "median": 2.481241460016463,
+     "build_seconds": 0.9272684769821353,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 2.7085718995453e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 0.00012406207300082314,
+     "measured_at_points": 20000,
+     "load_at_start": 2.4951171875,
+     "gpu_busy_mean_percent": 93.23595505617978,
+     "gpu_busy_largest_percent": 98.0,
+     "calls": 7
+    },
+    "tls-gpu-binned": {
+     "seconds": [
+      1.0981736599933356,
+      1.0765246259979904,
+      1.0761056820047088,
+      1.0751290910120588,
+      1.0759048699983396,
+      1.0754320650012232,
+      1.0757666990102734
+     ],
+     "median": 1.0759048699983396,
+     "build_seconds": 0.6648136409930885,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.174478882616328e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; TLS's statistic with windows of fixed width in phase, on phase bins, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 5.3795243499916976e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 2.06982421875,
+     "gpu_busy_mean_percent": 80.89473684210526,
+     "gpu_busy_largest_percent": 100.0,
+     "calls": 7
+    },
+    "tls-gpu-pl": {
+     "seconds": [
+      1.1789044530014507,
+      1.171676016994752,
+      1.1726734179828782,
+      1.175368852011161,
+      1.171090791001916,
+      1.1705536739900708,
+      1.1710804910107981
+     ],
+     "median": 1.171676016994752,
+     "build_seconds": 0.234064424992539,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.2790245472450271e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the piecewise-linear statistic of TLS's default backend (fused-pl), on the device; T0 fit margin 0.01",
+     "seconds_per_point": 5.85838008497376e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 2.06396484375,
+     "gpu_busy_mean_percent": 90.51219512195122,
+     "gpu_busy_largest_percent": 99.0,
+     "calls": 7
+    },
+    "tls16": {
+     "seconds": [
+      1.4483397529984359,
+      1.4490322429919615,
+      1.4474897840118501,
+      1.453398637007922,
+      1.454470830009086,
+      1.5163233740022406,
+      1.4639489770052023
+     ],
+     "median": 1.453398637007922,
+     "build_seconds": 0.3551664989790879,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.5865584911719866e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 7.26699318503961e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 2.13427734375,
+     "gpu_busy_mean_percent": 6.313725490196078,
+     "gpu_busy_largest_percent": 35.0,
+     "calls": 7
+    },
+    "tls16-exact": {
+     "seconds": [
+      6.42957948698313,
+      6.430990206019487,
+      6.434193455992499,
+      6.422193481994327,
+      6.4365551990049426,
+      6.427661611989606,
+      6.426122055010637
+     ],
+     "median": 6.42957948698313,
+     "build_seconds": 0.7843013500096276,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 7.018655219560873e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.00032147897434915647,
+     "measured_at_points": 20000,
+     "load_at_start": 4.419921875,
+     "gpu_busy_mean_percent": 5.4222222222222225,
+     "gpu_busy_largest_percent": 24.0,
+     "calls": 7
+    },
+    "astropy": {
+     "seconds": [
+      37.3262900080008,
+      37.24227889301255,
+      37.231409141997574,
+      37.19682469998952,
+      37.1935656509886,
+      37.194474812975386,
+      37.16355372700491
+     ],
+     "median": 37.19682469998952,
+     "build_seconds": 0.2912653179955669,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.00040604784241367493,
+     "durations": "37 durations for every period (3389459 in all), 0.43 to 13.26 h, ratio 1.1; one thread, as astropy runs",
+     "seconds_per_point": 0.001859841234999476,
+     "measured_at_points": 20000,
+     "load_at_start": 2.06640625,
+     "gpu_busy_mean_percent": 4.8452655889145495,
+     "gpu_busy_largest_percent": 48.0,
+     "calls": 7
+    },
+    "tls1": {
+     "seconds": [
+      19.97652294501313,
+      20.197635777003597,
+      20.113616710004862,
+      20.17320264800219,
+      20.042678724013967,
+      20.167390807997435,
+      20.165575195016572
+     ],
+     "median": 20.165575195016572,
+     "build_seconds": 2.133839132002322,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0002201313785520383,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.0010082787597508287,
+     "measured_at_points": 20000,
+     "load_at_start": 1.1826171875,
+     "gpu_busy_mean_percent": 4.7974683544303796,
+     "gpu_busy_largest_percent": 5.0,
+     "calls": 7
+    },
+    "tls1-exact": {
+     "seconds": [
+      92.01446504698833,
+      91.2496275260055,
+      90.94257425400428,
+      90.82220984602463,
+      90.95418750701356,
+      91.18614983500447,
+      90.74994291400071
+     ],
+     "median": 90.95418750701356,
+     "build_seconds": 8.119131180021213,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0009928737706399462,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.004547709375350678,
+     "measured_at_points": 20000,
+     "load_at_start": 1.5458984375,
+     "gpu_busy_mean_percent": 4.802186177715091,
+     "gpu_busy_largest_percent": 8.0,
+     "calls": 7
+    },
+    "many": {
+     "seconds": [
+      6.895345363009255,
+      6.9027049919823185,
+      6.901570419984637,
+      6.90297084901249,
+      6.896581353008514,
+      6.894967725005699,
+      6.894148494000547
+     ],
+     "median": 6.896581353008514,
+     "build_seconds": 1.9999664129863959,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 5862848,
+     "seconds_per_trial_period": 1.1763193166543828e-06,
+     "durations": "the box search of 64 light curves of 20,000 points in one call, the durations of the box row",
+     "seconds_per_point": 0.00034482906765042574,
+     "measured_at_points": 20000,
+     "load_at_start": 17.22705078125,
+     "gpu_busy_mean_percent": 97.05809128630706,
+     "gpu_busy_largest_percent": 99.0,
+     "found_in_every_light_curve": true,
+     "calls": 7
+    },
+    "tls16-many": {
+     "seconds": [
+      92.39621522199013,
+      92.32459006001591,
+      92.33666963598807,
+      92.36847243798547,
+      92.43686909301323,
+      92.43675320601324,
+      92.28545452997787
+     ],
+     "median": 92.36847243798547,
+     "build_seconds": 0.3497941880195867,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 5862848,
+     "seconds_per_trial_period": 1.5754880979002946e-05,
+     "durations": "TLS's own grid of durations, its template; 64 power() calls one after another",
+     "seconds_per_point": 0.004618423621899273,
+     "measured_at_points": 20000,
+     "load_at_start": 9.41748046875,
+     "gpu_busy_mean_percent": 4.927549751243781,
+     "gpu_busy_largest_percent": 13.0,
+     "found_in_every_light_curve": true,
+     "calls": 7
+    }
+   }
+  },
+  "100000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.5113075859844685,
+      0.5040112969873007,
+      0.5073791789764073,
+      0.5038750749954488,
+      0.5051627920183819,
+      0.5047909569984768,
+      0.5042515410168562
+     ],
+     "median": 0.5047909569984768,
+     "build_seconds": 0.06004341100924648,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.510397207620343e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 5.047909569984768e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 11.2265625,
+     "gpu_busy_mean_percent": 82.94444444444444,
+     "gpu_busy_largest_percent": 96.0,
+     "calls": 7
+    },
+    "hybrid": {
+     "seconds": [
+      0.9679604480043054,
+      0.8845518020098098,
+      0.8735708789899945,
+      0.8556826009880751,
+      0.8515221209963784,
+      0.8736073689942714,
+      0.8552160660037771
+     ],
+     "median": 0.8735708789899945,
+     "build_seconds": 0.04584125799010508,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 9.536071249904424e-06,
+     "durations": "the box search over the grid, then TLS's own grid of 38 durations and its template on a window of 1% around each of 5 peaks, exact backend, on the device",
+     "seconds_per_point": 8.735708789899945e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 10.4873046875,
+     "gpu_busy_mean_percent": 76.0,
+     "gpu_busy_largest_percent": 96.0,
+     "calls": 7
+    },
+    "tls-gpu": {
+     "seconds": [
+      5.551507338997908,
+      5.548764334002044,
+      5.550958078005351,
+      5.542388841015054,
+      5.551230798009783,
+      5.548285587981809,
+      5.567212998023024
+     ],
+     "median": 5.550958078005351,
+     "build_seconds": 0.12688975501805544,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 6.059534836863287e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 5.550958078005351e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 9.8876953125,
+     "gpu_busy_mean_percent": 97.57731958762886,
+     "gpu_busy_largest_percent": 99.0,
+     "calls": 7
+    },
+    "tls-gpu-binned": {
+     "seconds": [
+      1.3298081399989314,
+      1.322170327999629,
+      1.321318826987408,
+      1.3243025639967527,
+      1.321672021993436,
+      1.3238318389921915,
+      1.3220296879881062
+     ],
+     "median": 1.322170327999629,
+     "build_seconds": 0.09886923499288969,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.4433070922523705e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; TLS's statistic with windows of fixed width in phase, on phase bins, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 1.3221703279996291e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 6.13720703125,
+     "gpu_busy_mean_percent": 83.84782608695652,
+     "gpu_busy_largest_percent": 100.0,
+     "calls": 7
+    },
+    "tls-gpu-pl": {
+     "seconds": [
+      3.848336269002175,
+      3.842829197004903,
+      3.8404173599847127,
+      3.843050105002476,
+      3.8407377710100263,
+      3.840224248007871,
+      3.8399777990125585
+     ],
+     "median": 3.8407377710100263,
+     "build_seconds": 0.053603153995936736,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 4.192624767768867e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the piecewise-linear statistic of TLS's default backend (fused-pl), on the device; T0 fit margin 0.01",
+     "seconds_per_point": 3.8407377710100264e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 5.58056640625,
+     "gpu_busy_mean_percent": 96.2074074074074,
+     "gpu_busy_largest_percent": 99.0,
+     "calls": 7
+    },
+    "tls16": {
+     "seconds": [
+      4.055387998989318,
+      4.058405530988239,
+      4.066787676012609,
+      4.090674042003229,
+      4.036264680995373,
+      4.056201188010164,
+      4.06308725598501
+     ],
+     "median": 4.058405530988239,
+     "build_seconds": 0.23816496500512585,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 4.430235168696976e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 4.058405530988239e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 4.43115234375,
+     "gpu_busy_mean_percent": 5.640845070422535,
+     "gpu_busy_largest_percent": 20.0,
+     "calls": 7
+    },
+    "tls16-exact": {
+     "seconds": [
+      12.42784590201336,
+      12.368682703003287,
+      12.357400575012434,
+      12.424558646976948,
+      12.424303684005281,
+      12.393764070002362,
+      12.390442857984453
+     ],
+     "median": 12.393764070002362,
+     "build_seconds": 0.3395470139803365,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.00013529276223435286,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.00012393764070002362,
+     "measured_at_points": 100000,
+     "load_at_start": 9.63330078125,
+     "gpu_busy_mean_percent": 5.404157043879907,
+     "gpu_busy_largest_percent": 28.0,
+     "calls": 7
+    },
+    "astropy": {
+     "seconds": [
+      51.517089461995056,
+      51.342240016994765,
+      51.43752352200681,
+      51.311168685002485,
+      51.35050585199497,
+      51.336257908988046,
+      51.34138134197565
+     ],
+     "median": 51.342240016994765,
+     "build_seconds": 0.17997641098918393,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0005604619736154962,
+     "durations": "37 durations for every period (3389459 in all), 0.43 to 13.26 h, ratio 1.1; one thread, as astropy runs",
+     "seconds_per_point": 0.0005134224001699477,
+     "measured_at_points": 100000,
+     "load_at_start": 1.25341796875,
+     "gpu_busy_mean_percent": 4.801450083658673,
+     "gpu_busy_largest_percent": 9.0,
+     "calls": 7
+    },
+    "tls1": {
+     "seconds": [
+      48.94099157201708,
+      49.21801384200808,
+      49.276737359003164,
+      48.922458230983466,
+      49.00106993099325,
+      49.115959371993085,
+      49.89134650400956
+     ],
+     "median": 49.115959371993085,
+     "build_seconds": 0.431097744993167,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.000536159456940988,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.0004911595937199309,
+     "measured_at_points": 100000,
+     "load_at_start": 1.1455078125,
+     "gpu_busy_mean_percent": 4.794771241830065,
+     "gpu_busy_largest_percent": 5.0,
+     "calls": 7
+    },
+    "tls1-exact": {
+     "seconds": [
+      165.74813284401898,
+      166.07729083500453,
+      167.821342826006,
+      165.50858552200953,
+      165.6206235300051,
+      165.3995828309853,
+      166.91204466900672
+     ],
+     "median": 165.74813284401898,
+     "build_seconds": 1.4359258059994318,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0018093391645182025,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.00165748132844019,
+     "measured_at_points": 100000,
+     "load_at_start": 1.13232421875,
+     "gpu_busy_mean_percent": 4.795306645632025,
+     "gpu_busy_largest_percent": 6.0,
+     "calls": 7
+    }
+   }
+  },
+  "200000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.5809025189955719,
+      0.578369119000854,
+      0.5769130709813908,
+      0.5793277310149278,
+      0.5766941379988566,
+      0.5788850760145579,
+      0.5812360639974941
+     ],
+     "median": 0.5788850760145579,
+     "build_seconds": 0.053699395997682586,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 6.319223159961115e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 2.8944253800727893e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 15.46533203125,
+     "gpu_busy_mean_percent": 85.0952380952381,
+     "gpu_busy_largest_percent": 97.0,
+     "calls": 7
+    },
+    "hybrid": {
+     "seconds": [
+      1.4439784090209287,
+      1.236256230971776,
+      1.1743086729838978,
+      1.2690705329878256,
+      1.2197880799940322,
+      1.162827684020158,
+      1.2605795989802573
+     ],
+     "median": 1.236256230971776,
+     "build_seconds": 0.039310290972935036,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.3495215769229163e-05,
+     "durations": "the box search over the grid, then TLS's own grid of 38 durations and its template on a window of 1% around each of 5 peaks, exact backend, on the device",
+     "seconds_per_point": 6.18128115485888e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 14.466796875,
+     "gpu_busy_mean_percent": 72.43181818181819,
+     "gpu_busy_largest_percent": 97.0,
+     "calls": 7
+    },
+    "tls-gpu": {
+     "seconds": [
+      10.748779954010388,
+      10.754840468027396,
+      10.76750706200255,
+      10.764194221002981,
+      10.758189837011741,
+      10.762171484006103,
+      10.766246841987595
+     ],
+     "median": 10.762171484006103,
+     "build_seconds": 0.05658333099563606,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.00011748197718521623,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 5.381085742003052e-05,
+     "measured_at_points": 200000,
+     "load_at_start": 12.5498046875,
+     "gpu_busy_mean_percent": 98.13829787234043,
+     "gpu_busy_largest_percent": 99.0,
+     "calls": 7
+    },
+    "tls-gpu-binned": {
+     "seconds": [
+      1.4245337019965518,
+      1.4213783229934052,
+      1.4223427750112023,
+      1.4257929080049507,
+      1.4225574379961472,
+      1.42091930899187,
+      1.4241973389871418
+     ],
+     "median": 1.4225574379961472,
+     "build_seconds": 0.0776279799756594,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.552891632731284e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; TLS's statistic with windows of fixed width in phase, on phase bins, on the device; T0 fit margin 0.01",
+     "seconds_per_point": 7.112787189980736e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 5.15625,
+     "gpu_busy_mean_percent": 84.18,
+     "gpu_busy_largest_percent": 100.0,
+     "calls": 7
+    },
+    "tls-gpu-pl": {
+     "seconds": [
+      6.449058525991859,
+      6.445483729999978,
+      6.44314854600816,
+      6.449100586003624,
+      6.446635041007539,
+      6.44786743199802,
+      6.450509620015509
+     ],
+     "median": 6.44786743199802,
+     "build_seconds": 0.03178360901074484,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 7.038618699442205e-05,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the piecewise-linear statistic of TLS's default backend (fused-pl), on the device; T0 fit margin 0.01",
+     "seconds_per_point": 3.22393371599901e-05,
+     "measured_at_points": 200000,
+     "load_at_start": 4.67041015625,
+     "gpu_busy_mean_percent": 97.01327433628319,
+     "gpu_busy_largest_percent": 99.0,
+     "calls": 7
+    },
+    "tls16": {
+     "seconds": [
+      10.94840968598146,
+      10.786846784001682,
+      10.927402811008506,
+      10.943222889996832,
+      10.734419616026571,
+      10.604699661984341,
+      10.728702405001968
+     ],
+     "median": 10.786846784001682,
+     "build_seconds": 0.2377869919873774,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0001177513376052232,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 5.3934233920008406e-05,
+     "measured_at_points": 200000,
+     "load_at_start": 3.2587890625,
+     "gpu_busy_mean_percent": 5.4361702127659575,
+     "gpu_busy_largest_percent": 25.0,
+     "calls": 7
+    },
+    "tls16-exact": {
+     "seconds": [
+      26.746359957993263,
+      26.70649893899099,
+      26.870884450996527,
+      26.6382182110101,
+      26.466602542990586,
+      26.635270687984303,
+      26.461137374019017
+     ],
+     "median": 26.6382182110101,
+     "build_seconds": 0.2840700809902046,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.00029078802068630233,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.0001331910910550505,
+     "measured_at_points": 200000,
+     "load_at_start": 13.47119140625,
+     "gpu_busy_mean_percent": 5.318279569892473,
+     "gpu_busy_largest_percent": 30.0,
+     "calls": 7
+    },
+    "astropy": {
+     "seconds": [
+      69.2020548429864,
+      69.07906501600519,
+      69.02101350398152,
+      69.17883243100368,
+      69.0710047580069,
+      69.1861959460075,
+      69.05241861398099
+     ],
+     "median": 69.07906501600519,
+     "build_seconds": 0.04271842198795639,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0007540806381172311,
+     "durations": "37 durations for every period (3389459 in all), 0.43 to 13.26 h, ratio 1.1; one thread, as astropy runs",
+     "seconds_per_point": 0.00034539532508002596,
+     "measured_at_points": 200000,
+     "load_at_start": 1.341796875,
+     "gpu_busy_mean_percent": 4.788971807628524,
+     "gpu_busy_largest_percent": 6.0,
+     "calls": 7
+    },
+    "tls1": {
+     "seconds": [
+      85.76281580500654,
+      84.1706641560013,
+      85.63340803197934,
+      84.18317507801112,
+      84.24898685800144,
+      86.05734108199249,
+      86.62872395999148
+     ],
+     "median": 85.63340803197934,
+     "build_seconds": 0.1562751070014201,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0009347910970993412,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.0004281670401598967,
+     "measured_at_points": 200000,
+     "load_at_start": 1.251953125,
+     "gpu_busy_mean_percent": 4.795031055900621,
+     "gpu_busy_largest_percent": 5.0,
+     "calls": 7
+    },
+    "tls1-exact": {
+     "seconds": [
+      277.3682670840062,
+      279.47932703600964,
+      276.9916504610155,
+      275.35691128499457,
+      276.00805395899806,
+      274.40930080699036,
+      278.18322130898014
+     ],
+     "median": 276.9916504610155,
+     "build_seconds": 0.5607517850003205,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 0.0030236952466625422,
+     "durations": "TLS's own grid of 38 durations (ratio 1.1, from 0.0036 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+     "seconds_per_point": 0.0013849582523050776,
+     "measured_at_points": 200000,
+     "load_at_start": 1.1640625,
+     "gpu_busy_mean_percent": 4.793784277879342,
+     "gpu_busy_largest_percent": 8.0,
+     "calls": 7
+    }
+   }
+  }
+ },
+ "block_shuffles": {
+  "note": "48 block-shuffled copies of a light curve searched together (the null of a star); the answer field of each row is the largest SDE of the shuffles",
+  "synthetic": {
+   "command": "uv run python benchmarks/bench.py --refuse-if-busy --rows gpu-shuffles --repeats 7 --json shuffles.json",
+   "hardware": {
+    "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+    "logical_cpus": 32,
+    "gpu": "AMD Radeon RX 7900 XTX",
+    "gpu_runtime": "ROCm 7.2.53211"
+   },
+   "versions": {
+    "python": "3.12.13",
+    "numpy": "2.5.4",
+    "torch": "2.12.0+rocm7.2",
+    "astropy": "8.0.1",
+    "transitleastsquares": "2.0.1",
+    "numba": "0.68.0"
+   },
+   "seed": 20260101,
+   "baseline_days": 1000.0,
+   "period_range_days": [
+    0.5,
+    14.0
+   ],
+   "planet": {
+    "period": 3.18,
+    "t0": 1.2,
+    "duration_hr": 2.5,
+    "depth_ppm": 3000.0
+   },
+   "noise_ppm": 1000.0,
+   "t0_fit_margin": 0.01,
+   "sizes": {
+    "20000": {
+     "periods": 91607,
+     "rows": {
+      "gpu-shuffles": {
+       "seconds": [
+        5.215726180002093,
+        5.201634155004285,
+        5.19363124499796,
+        5.218924205983058,
+        5.212205510993954,
+        5.203946686990093,
+        5.205473390989937
+       ],
+       "median": 5.205473390989937,
+       "build_seconds": 2.041273341019405,
+       "first_row_of_process": true,
+       "period_found_days": 10.248886711323514,
+       "trial_periods": 4397136,
+       "seconds_per_trial_period": 1.1838327017836011e-06,
+       "durations": "48 shuffled copies of one light curve, 1-day blocks, searched together on the grid; the answer column is the largest SDE of the shuffles, not a period",
+       "seconds_per_point": 0.00026027366954949684,
+       "measured_at_points": 20000,
+       "load_at_start": 14.982421875,
+       "gpu_busy_mean_percent": 96.5,
+       "gpu_busy_largest_percent": 99.0,
+       "calls": 7
+      }
+     }
+    },
+    "100000": {
+     "periods": 91607,
+     "rows": {
+      "gpu-shuffles": {
+       "seconds": [
+        7.0349377329985145,
+        6.945408330007922,
+        6.949732811015565,
+        6.95417240500683,
+        7.069164229003945,
+        6.9663604219967965,
+        6.951782355987234
+       ],
+       "median": 6.95417240500683,
+       "build_seconds": 0.036433911009225994,
+       "first_row_of_process": false,
+       "period_found_days": 10.673814547212856,
+       "trial_periods": 4397136,
+       "seconds_per_trial_period": 1.5815231562105037e-06,
+       "durations": "48 shuffled copies of one light curve, 1-day blocks, searched together on the grid; the answer column is the largest SDE of the shuffles, not a period",
+       "seconds_per_point": 6.954172405006829e-05,
+       "measured_at_points": 100000,
+       "load_at_start": 8.46142578125,
+       "gpu_busy_mean_percent": 97.13934426229508,
+       "gpu_busy_largest_percent": 100.0,
+       "calls": 7
+      }
+     }
+    },
+    "200000": {
+     "periods": 91607,
+     "rows": {
+      "gpu-shuffles": {
+       "seconds": [
+        9.865940877003595,
+        9.859660979011096,
+        9.854284892993746,
+        9.859881917975144,
+        9.858884212007979,
+        9.868741940008476,
+        9.870185454987222
+       ],
+       "median": 9.859881917975144,
+       "build_seconds": 0.03405054300674237,
+       "first_row_of_process": false,
+       "period_found_days": 12.268048481609537,
+       "trial_periods": 4397136,
+       "seconds_per_trial_period": 2.2423418147574113e-06,
+       "durations": "48 shuffled copies of one light curve, 1-day blocks, searched together on the grid; the answer column is the largest SDE of the shuffles, not a period",
+       "seconds_per_point": 4.9299409589875725e-05,
+       "measured_at_points": 200000,
+       "load_at_start": 4.68603515625,
+       "gpu_busy_mean_percent": 97.96811594202899,
+       "gpu_busy_largest_percent": 100.0,
+       "calls": 7
+      }
+     }
+    }
+   }
+  }
+ },
+ "gtls_benchmark_sizes": {
+  "note": "the box search on light curves of the sizes of the GTLS paper's benchmark (30-minute cadence, TLS's grid to half the baseline), in the session of the rows above",
+  "runs": [
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --sizes 72000 --baseline 1500 --period-max 750 --rows gpu --repeats 7 --json gtls72.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 1500.0,
+    "period_range_days": [
+     0.5,
+     750.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.01,
+    "sizes": {
+     "72000": {
+      "periods": 191837,
+      "rows": {
+       "gpu": {
+        "seconds": [
+         0.9621328329958487,
+         0.9524374949978665,
+         0.949551250989316,
+         0.9535490789858159,
+         0.950424711976666,
+         0.9484599779825658,
+         0.9512814519985113
+        ],
+        "median": 0.9512814519985113,
+        "build_seconds": 2.1298418799997307,
+        "first_row_of_process": true,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 4.958800711012533e-06,
+        "durations": "25.4 steps per period (4877290 in all), the limits of TLS's defaults, ratio 1.1",
+        "seconds_per_point": 1.3212242388868213e-05,
+        "measured_at_points": 72000,
+        "load_at_start": 2.8046875,
+        "gpu_busy_mean_percent": 84.47058823529412,
+        "gpu_busy_largest_percent": 96.0,
+        "calls": 7
+       }
+      }
+     }
+    }
+   },
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --sizes 144000 --baseline 3000 --period-max 1500 --rows gpu --repeats 7 --json gtls144.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 3000.0,
+    "period_range_days": [
+     0.5,
+     1500.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.01,
+    "sizes": {
+     "144000": {
+      "periods": 391781,
+      "rows": {
+       "gpu": {
+        "seconds": [
+         2.9132759209896903,
+         2.909011860989267,
+         2.914930054015713,
+         2.906393090990605,
+         2.9059564180206507,
+         2.913846534996992,
+         2.904278489993885
+        ],
+        "median": 2.909011860989267,
+        "build_seconds": 2.2260469409811776,
+        "first_row_of_process": true,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 7.425096829578941e-06,
+        "durations": "25.5 steps per period (9989682 in all), the limits of TLS's defaults, ratio 1.1",
+        "seconds_per_point": 2.020147125686991e-05,
+        "measured_at_points": 144000,
+        "load_at_start": 2.6005859375,
+        "gpu_busy_mean_percent": 90.29702970297029,
+        "gpu_busy_largest_percent": 98.0,
+        "calls": 7
+       }
+      }
+     }
+    }
+   }
+  ]
+ },
+ "gtls_input": {
+  "note": "the input of the GTLS paper's timing (30-minute cadence, TLS's grid from 0 to half the baseline): the runs of 1,500 and 3,000 days at TLS's T0 fit margin and of 1,500 days at the margin of GTLS (0.125), in the session of the rows above",
+  "runs": [
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --gtls-input 1500 --rows tls16-exact tls-gpu tls-gpu-binned gpu --repeats 7 --max-run-seconds 7200 --json gtls-input-1500.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 1500.0,
+    "period_range_days": [
+     0.0,
+     750.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.01,
+    "sizes": {
+     "72000": {
+      "periods": 191837,
+      "rows": {
+       "tls16-exact": {
+        "seconds": [
+         37.24991880200105,
+         37.467041043011704,
+         37.17473644099664,
+         37.14878751098877,
+         37.23722186801024,
+         37.20755653901142,
+         37.21049528600997
+        ],
+        "median": 37.21049528600997,
+        "build_seconds": 0.4550285330042243,
+        "first_row_of_process": true,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 0.00019396933483118467,
+        "durations": "TLS's own grid of 66 durations (ratio 1.1, from 0.0003 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+        "seconds_per_point": 0.0005168124345279163,
+        "measured_at_points": 72000,
+        "load_at_start": 2.126953125,
+        "gpu_busy_mean_percent": 4.92076923076923,
+        "gpu_busy_largest_percent": 13.0,
+        "calls": 7
+       },
+       "tls-gpu": {
+        "seconds": [
+         18.532055503019365,
+         18.18013019100181,
+         18.17931187900831,
+         18.173621438007103,
+         18.178265641996404,
+         18.18908078901586,
+         18.186685976019362
+        ],
+        "median": 18.18013019100181,
+        "build_seconds": 0.9210502999776509,
+        "first_row_of_process": false,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 9.47686326986025e-05,
+        "durations": "TLS's own grid of 66 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.01",
+        "seconds_per_point": 0.00025250180820835845,
+        "measured_at_points": 72000,
+        "load_at_start": 15.92138671875,
+        "gpu_busy_mean_percent": 98.10518053375196,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       },
+       "tls-gpu-binned": {
+        "seconds": [
+         6.217794288997538,
+         5.9775166350009385,
+         5.975325701001566,
+         5.9808552309987135,
+         5.968647575005889,
+         5.96881533798296,
+         5.979963977995794
+        ],
+        "median": 5.9775166350009385,
+        "build_seconds": 0.7073701759800315,
+        "first_row_of_process": false,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 3.115935213228386e-05,
+        "durations": "TLS's own grid of 66 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; TLS's statistic with windows of fixed width in phase, on phase bins, on the device; T0 fit margin 0.01",
+        "seconds_per_point": 8.302106437501304e-05,
+        "measured_at_points": 72000,
+        "load_at_start": 2.814453125,
+        "gpu_busy_mean_percent": 92.45454545454545,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       },
+       "gpu": {
+        "seconds": [
+         0.9670204620051663,
+         0.9573129740019795,
+         0.9570341299986467,
+         0.9577201089996379,
+         0.961687378003262,
+         0.9519459680013824,
+         0.9604175520071294
+        ],
+        "median": 0.9577201089996379,
+        "build_seconds": 1.771901878004428,
+        "first_row_of_process": false,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 4.992363876622538e-06,
+        "durations": "25.4 steps per period (4877290 in all), the limits of TLS's defaults, ratio 1.1",
+        "seconds_per_point": 1.3301668180550527e-05,
+        "measured_at_points": 72000,
+        "load_at_start": 2.5322265625,
+        "gpu_busy_mean_percent": 84.29411764705883,
+        "gpu_busy_largest_percent": 96.0,
+        "calls": 7
+       }
+      }
+     }
+    },
+    "input": {
+     "gtls": true,
+     "baseline_days": 1500.0,
+     "cadence_minutes": 30.0,
+     "points": 72000,
+     "period_range_days": [
+      0.0,
+      750.0
+     ],
+     "grid": "TLS 2.0.1 (Ofir 2014): R_star 1, M_star 1, oversampling 3, at least 2 transits; durations in ratios of 1.1",
+     "injected_box": {
+      "period": 3.18,
+      "t0": 1.2,
+      "duration_hr": 2.5,
+      "depth_ppm": 3000.0
+     },
+     "noise_ppm": 1000.0,
+     "t0_fit_margin": 0.01,
+     "source": "Hu et al. 2026, Sects. 2.2.1 and 3.4; GTLS at 74e449c: constants.py (OVERSAMPLING_FACTOR, N_TRANSITS_MIN, R_STAR, M_STAR, DURATION_GRID_STEP, T0_FIT_MARGIN) and validate.py (the period maximum, half the span)"
+    }
+   },
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --gtls-input 3000 --rows tls16-exact tls-gpu tls-gpu-binned gpu --repeats 7 --max-run-seconds 7200 --json gtls-input-3000.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 3000.0,
+    "period_range_days": [
+     0.0,
+     1500.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.01,
+    "sizes": {
+     "144000": {
+      "periods": 391781,
+      "rows": {
+       "tls16-exact": {
+        "seconds": [
+         127.55099446501117,
+         128.08640092998394,
+         128.06235132701113,
+         127.73288468099781,
+         127.83765562000917,
+         127.67411418398842,
+         127.8838691469864
+        ],
+        "median": 127.83765562000917,
+        "build_seconds": 0.43538291499135084,
+        "first_row_of_process": true,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 0.000326298762880306,
+        "durations": "TLS's own grid of 71 durations (ratio 1.1, from 0.0002 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.01",
+        "seconds_per_point": 0.0008877614973611749,
+        "measured_at_points": 144000,
+        "load_at_start": 3.7255859375,
+        "gpu_busy_mean_percent": 4.909172460192869,
+        "gpu_busy_largest_percent": 10.0,
+        "calls": 7
+       },
+       "tls-gpu": {
+        "seconds": [
+         54.977090915024746,
+         56.95319888001541,
+         57.038278110994725,
+         57.12512307698489,
+         57.0659862299799,
+         57.04861715898733,
+         57.057129462016746
+        ],
+        "median": 57.04861715898733,
+        "build_seconds": 0.9078020860033575,
+        "first_row_of_process": false,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 0.00014561353705000327,
+        "durations": "TLS's own grid of 71 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.01",
+        "seconds_per_point": 0.0003961709524929675,
+        "measured_at_points": 144000,
+        "load_at_start": 15.1806640625,
+        "gpu_busy_mean_percent": 98.34947049924357,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       },
+       "tls-gpu-binned": {
+        "seconds": [
+         14.24634406901896,
+         14.021580995002296,
+         14.020478552003624,
+         14.003517265984556,
+         14.014865614997689,
+         14.008297907013912,
+         14.003413177008042
+        ],
+        "median": 14.014865614997689,
+        "build_seconds": 0.6792123870109208,
+        "first_row_of_process": false,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 3.577219317679441e-05,
+        "durations": "TLS's own grid of 71 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; TLS's statistic with windows of fixed width in phase, on phase bins, on the device; T0 fit margin 0.01",
+        "seconds_per_point": 9.732545565970617e-05,
+        "measured_at_points": 144000,
+        "load_at_start": 1.1923828125,
+        "gpu_busy_mean_percent": 93.91188524590164,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       },
+       "gpu": {
+        "seconds": [
+         2.924848700989969,
+         2.9040899270039517,
+         2.9153186439943966,
+         2.9043330700078513,
+         2.902312045014696,
+         2.906820560019696,
+         2.902545757999178
+        ],
+        "median": 2.9043330700078513,
+        "build_seconds": 1.8169416159798857,
+        "first_row_of_process": false,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 7.41315446641836e-06,
+        "durations": "25.5 steps per period (9989682 in all), the limits of TLS's defaults, ratio 1.1",
+        "seconds_per_point": 2.01689796528323e-05,
+        "measured_at_points": 144000,
+        "load_at_start": 2.00537109375,
+        "gpu_busy_mean_percent": 90.42574257425743,
+        "gpu_busy_largest_percent": 98.0,
+        "calls": 7
+       }
+      }
+     }
+    },
+    "input": {
+     "gtls": true,
+     "baseline_days": 3000.0,
+     "cadence_minutes": 30.0,
+     "points": 144000,
+     "period_range_days": [
+      0.0,
+      1500.0
+     ],
+     "grid": "TLS 2.0.1 (Ofir 2014): R_star 1, M_star 1, oversampling 3, at least 2 transits; durations in ratios of 1.1",
+     "injected_box": {
+      "period": 3.18,
+      "t0": 1.2,
+      "duration_hr": 2.5,
+      "depth_ppm": 3000.0
+     },
+     "noise_ppm": 1000.0,
+     "t0_fit_margin": 0.01,
+     "source": "Hu et al. 2026, Sects. 2.2.1 and 3.4; GTLS at 74e449c: constants.py (OVERSAMPLING_FACTOR, N_TRANSITS_MIN, R_STAR, M_STAR, DURATION_GRID_STEP, T0_FIT_MARGIN) and validate.py (the period maximum, half the span)"
+    }
+   },
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --gtls-input 1500 --t0-fit-margin 0.125 --rows tls16-exact tls-gpu --repeats 7 --max-run-seconds 7200 --json gtls-input-1500-margin.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 1500.0,
+    "period_range_days": [
+     0.0,
+     750.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.125,
+    "sizes": {
+     "72000": {
+      "periods": 191837,
+      "rows": {
+       "tls16-exact": {
+        "seconds": [
+         9.110064501001034,
+         9.14010955800768,
+         9.16004534199601,
+         9.10802259700722,
+         9.11339353400399,
+         9.111502030020347,
+         9.101402986998437
+        ],
+        "median": 9.111502030020347,
+        "build_seconds": 0.25488699399284087,
+        "first_row_of_process": true,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 4.749606191725447e-05,
+        "durations": "TLS's own grid of 66 durations (ratio 1.1, from 0.0003 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.125",
+        "seconds_per_point": 0.00012654863930583815,
+        "measured_at_points": 72000,
+        "load_at_start": 2.12890625,
+        "gpu_busy_mean_percent": 4.981191222570533,
+        "gpu_busy_largest_percent": 16.0,
+        "calls": 7
+       },
+       "tls-gpu": {
+        "seconds": [
+         7.9874493689858355,
+         7.54718504101038,
+         7.54332633301965,
+         7.546666844980791,
+         7.536288037983468,
+         7.541674623993458,
+         7.541058075992623
+        ],
+        "median": 7.54332633301965,
+        "build_seconds": 0.7832419680198655,
+        "first_row_of_process": false,
+        "period_found_days": 3.179970990260427,
+        "trial_periods": 191837,
+        "seconds_per_trial_period": 3.932154033382324e-05,
+        "durations": "TLS's own grid of 66 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.125",
+        "seconds_per_point": 0.00010476842129193958,
+        "measured_at_points": 72000,
+        "load_at_start": 11.390625,
+        "gpu_busy_mean_percent": 95.18796992481202,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       }
+      }
+     }
+    },
+    "input": {
+     "gtls": true,
+     "baseline_days": 1500.0,
+     "cadence_minutes": 30.0,
+     "points": 72000,
+     "period_range_days": [
+      0.0,
+      750.0
+     ],
+     "grid": "TLS 2.0.1 (Ofir 2014): R_star 1, M_star 1, oversampling 3, at least 2 transits; durations in ratios of 1.1",
+     "injected_box": {
+      "period": 3.18,
+      "t0": 1.2,
+      "duration_hr": 2.5,
+      "depth_ppm": 3000.0
+     },
+     "noise_ppm": 1000.0,
+     "t0_fit_margin": 0.125,
+     "source": "Hu et al. 2026, Sects. 2.2.1 and 3.4; GTLS at 74e449c: constants.py (OVERSAMPLING_FACTOR, N_TRANSITS_MIN, R_STAR, M_STAR, DURATION_GRID_STEP, T0_FIT_MARGIN) and validate.py (the period maximum, half the span)"
+    }
+   },
+   {
+    "command": "uv run python benchmarks/bench.py --refuse-if-busy --gtls-input 3000 --t0-fit-margin 0.125 --rows tls16-exact tls-gpu --repeats 7 --max-run-seconds 7200 --json gtls-input-3000-margin.json",
+    "hardware": {
+     "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+     "logical_cpus": 32,
+     "gpu": "AMD Radeon RX 7900 XTX",
+     "gpu_runtime": "ROCm 7.2.53211"
+    },
+    "versions": {
+     "python": "3.12.13",
+     "numpy": "2.5.4",
+     "torch": "2.12.0+rocm7.2",
+     "astropy": "8.0.1",
+     "transitleastsquares": "2.0.1",
+     "numba": "0.68.0"
+    },
+    "seed": 20260101,
+    "baseline_days": 3000.0,
+    "period_range_days": [
+     0.0,
+     1500.0
+    ],
+    "planet": {
+     "period": 3.18,
+     "t0": 1.2,
+     "duration_hr": 2.5,
+     "depth_ppm": 3000.0
+    },
+    "noise_ppm": 1000.0,
+    "t0_fit_margin": 0.125,
+    "sizes": {
+     "144000": {
+      "periods": 391781,
+      "rows": {
+       "tls16-exact": {
+        "seconds": [
+         44.64978388501913,
+         44.14905835498939,
+         44.10740531099145,
+         44.28326378398924,
+         44.26859435002552,
+         44.15879146201769,
+         44.0571678050037
+        ],
+        "median": 44.15879146201769,
+        "build_seconds": 0.35031797000556253,
+        "first_row_of_process": true,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 0.00011271294795311077,
+        "durations": "TLS's own grid of 71 durations (ratio 1.1, from 0.0002 to 0.1200 of the period), limited for each period to the stellar limits; its limb-darkened template, not a box; T0 fit margin 0.125",
+        "seconds_per_point": 0.0003066582740417895,
+        "measured_at_points": 144000,
+        "load_at_start": 5.30615234375,
+        "gpu_busy_mean_percent": 4.9176928062216465,
+        "gpu_busy_largest_percent": 11.0,
+        "calls": 7
+       },
+       "tls-gpu": {
+        "seconds": [
+         25.600919668999268,
+         25.34866252800566,
+         25.374054418993182,
+         25.392087240004912,
+         25.383732539979974,
+         25.38229039197904,
+         25.41464094899129
+        ],
+        "median": 25.383732539979974,
+        "build_seconds": 0.6814095349982381,
+        "first_row_of_process": false,
+        "period_found_days": 3.1799980680409305,
+        "trial_periods": 391781,
+        "seconds_per_trial_period": 6.479061654337493e-05,
+        "durations": "TLS's own grid of 71 durations (ratio 1.1), limited for each period to the stellar limits; its limb-darkened template; the exact statistic of TLS, on the device; T0 fit margin 0.125",
+        "seconds_per_point": 0.0001762759204165276,
+        "measured_at_points": 144000,
+        "load_at_start": 16.1845703125,
+        "gpu_busy_mean_percent": 97.865990990991,
+        "gpu_busy_largest_percent": 100.0,
+        "calls": 7
+       }
+      }
+     }
+    },
+    "input": {
+     "gtls": true,
+     "baseline_days": 3000.0,
+     "cadence_minutes": 30.0,
+     "points": 144000,
+     "period_range_days": [
+      0.0,
+      1500.0
+     ],
+     "grid": "TLS 2.0.1 (Ofir 2014): R_star 1, M_star 1, oversampling 3, at least 2 transits; durations in ratios of 1.1",
+     "injected_box": {
+      "period": 3.18,
+      "t0": 1.2,
+      "duration_hr": 2.5,
+      "depth_ppm": 3000.0
+     },
+     "noise_ppm": 1000.0,
+     "t0_fit_margin": 0.125,
+     "source": "Hu et al. 2026, Sects. 2.2.1 and 3.4; GTLS at 74e449c: constants.py (OVERSAMPLING_FACTOR, N_TRANSITS_MIN, R_STAR, M_STAR, DURATION_GRID_STEP, T0_FIT_MARGIN) and validate.py (the period maximum, half the span)"
+    }
+   }
+  ]
+ },
+ "cold_first_call": {
+  "definition": "A cold call is the first call of a fresh process, measured as the warm-up call of the row (build_seconds of a row that is the first of its process). With the compiled caches kept, the process finds the Triton kernels and the torch extension of the HIP kernel on disk; with the caches cleared, the call compiles them, including the hipcc build of the HIP kernel.",
+  "caches_kept": {
+   "gpu": 2.712281228014035,
+   "hybrid": 2.6232518029864877,
+   "many": 2.179966374009382,
+   "tls-gpu-binned": 1.1779807460261509,
+   "tls-gpu-pl": 0.8439066759892739,
+   "tls-gpu": 1.418359478993807
+  },
+  "caches_cleared": {
+   "gpu": 2.865424121002434,
+   "many": 18.065912063990254,
+   "tls-gpu": 2.2557269259996247
+  }
+ },
+ "session": [
+  {
+   "part": "cold-gpu",
+   "edge": "start",
+   "time": "2026-10-26T04:56:28Z",
+   "load": 2.9267578125,
+   "memory_available_kib": 22750368
+  },
+  {
+   "part": "cold-gpu",
+   "edge": "end",
+   "time": "2026-10-26T04:56:33Z",
+   "load": 2.7724609375,
+   "memory_available_kib": 21879632
+  },
+  {
+   "part": "cold-hybrid",
+   "edge": "start",
+   "time": "2026-10-26T04:56:33Z",
+   "load": 2.7724609375,
+   "memory_available_kib": 22149968
+  },
+  {
+   "part": "cold-hybrid",
+   "edge": "end",
+   "time": "2026-10-26T04:56:38Z",
+   "load": 2.63037109375,
+   "memory_available_kib": 21552224
+  },
+  {
+   "part": "cold-tls-gpu",
+   "edge": "start",
+   "time": "2026-10-26T04:56:38Z",
+   "load": 2.63037109375,
+   "memory_available_kib": 21858732
+  },
+  {
+   "part": "cold-tls-gpu",
+   "edge": "end",
+   "time": "2026-10-26T04:56:44Z",
+   "load": 3.56494140625,
+   "memory_available_kib": 21480316
+  },
+  {
+   "part": "cold-tls-gpu-binned",
+   "edge": "start",
+   "time": "2026-10-26T04:56:44Z",
+   "load": 3.56494140625,
+   "memory_available_kib": 21792296
+  },
+  {
+   "part": "cold-tls-gpu-binned",
+   "edge": "end",
+   "time": "2026-10-26T04:56:48Z",
+   "load": 3.56494140625,
+   "memory_available_kib": 21794476
+  },
+  {
+   "part": "cold-tls-gpu-pl",
+   "edge": "start",
+   "time": "2026-10-26T04:56:48Z",
+   "load": 3.56494140625,
+   "memory_available_kib": 22080928
+  },
+  {
+   "part": "cold-tls-gpu-pl",
+   "edge": "end",
+   "time": "2026-10-26T04:56:51Z",
+   "load": 4.48095703125,
+   "memory_available_kib": 21425260
+  },
+  {
+   "part": "cold-many",
+   "edge": "start",
+   "time": "2026-10-26T04:56:51Z",
+   "load": 4.48095703125,
+   "memory_available_kib": 21706492
+  },
+  {
+   "part": "cold-many",
+   "edge": "end",
+   "time": "2026-10-26T04:57:03Z",
+   "load": 4.10546875,
+   "memory_available_kib": 21870524
+  },
+  {
+   "part": "cold-cleared-gpu",
+   "edge": "start",
+   "time": "2026-10-26T04:57:03Z",
+   "load": 4.10546875,
+   "memory_available_kib": 22185316
+  },
+  {
+   "part": "cold-cleared-gpu",
+   "edge": "end",
+   "time": "2026-10-26T04:57:08Z",
+   "load": 3.9365234375,
+   "memory_available_kib": 21788192
+  },
+  {
+   "part": "cold-cleared-tls-gpu",
+   "edge": "start",
+   "time": "2026-10-26T04:57:08Z",
+   "load": 3.9365234375,
+   "memory_available_kib": 22085980
+  },
+  {
+   "part": "cold-cleared-tls-gpu",
+   "edge": "end",
+   "time": "2026-10-26T04:57:15Z",
+   "load": 3.48486328125,
+   "memory_available_kib": 21504592
+  },
+  {
+   "part": "cold-cleared-many",
+   "edge": "start",
+   "time": "2026-10-26T04:57:15Z",
+   "load": 3.48486328125,
+   "memory_available_kib": 21795416
+  },
+  {
+   "part": "cold-cleared-many",
+   "edge": "end",
+   "time": "2026-10-26T04:57:42Z",
+   "load": 2.76708984375,
+   "memory_available_kib": 21772712
+  },
+  {
+   "part": "main",
+   "edge": "start",
+   "time": "2026-10-26T04:57:42Z",
+   "load": 2.76708984375,
+   "memory_available_kib": 22075296
+  },
+  {
+   "part": "main",
+   "edge": "end",
+   "time": "2026-10-26T05:09:30Z",
+   "load": 17.22705078125,
+   "memory_available_kib": 21458480
+  },
+  {
+   "part": "many",
+   "edge": "start",
+   "time": "2026-10-26T05:09:30Z",
+   "load": 17.22705078125,
+   "memory_available_kib": 21752368
+  },
+  {
+   "part": "many",
+   "edge": "end",
+   "time": "2026-10-26T05:10:23Z",
+   "load": 8.84423828125,
+   "memory_available_kib": 21978240
+  },
+  {
+   "part": "many-cpu",
+   "edge": "start",
+   "time": "2026-10-26T05:10:23Z",
+   "load": 8.84423828125,
+   "memory_available_kib": 22263384
+  },
+  {
+   "part": "many-cpu",
+   "edge": "end",
+   "time": "2026-10-26T05:21:11Z",
+   "load": 14.982421875,
+   "memory_available_kib": 22260812
+  },
+  {
+   "part": "shuffles",
+   "edge": "start",
+   "time": "2026-10-26T05:21:11Z",
+   "load": 14.982421875,
+   "memory_available_kib": 22541160
+  },
+  {
+   "part": "shuffles",
+   "edge": "end",
+   "time": "2026-10-26T05:23:49Z",
+   "load": 2.8046875,
+   "memory_available_kib": 22003092
+  },
+  {
+   "part": "gtls72",
+   "edge": "start",
+   "time": "2026-10-26T05:23:49Z",
+   "load": 2.8046875,
+   "memory_available_kib": 22295644
+  },
+  {
+   "part": "gtls72",
+   "edge": "end",
+   "time": "2026-10-26T05:24:00Z",
+   "load": 2.6005859375,
+   "memory_available_kib": 21924280
+  },
+  {
+   "part": "gtls144",
+   "edge": "start",
+   "time": "2026-10-26T05:24:00Z",
+   "load": 2.6005859375,
+   "memory_available_kib": 22213348
+  },
+  {
+   "part": "gtls144",
+   "edge": "end",
+   "time": "2026-10-26T05:24:25Z",
+   "load": 2.126953125,
+   "memory_available_kib": 21984212
+  },
+  {
+   "part": "gtls-input-1500",
+   "edge": "start",
+   "time": "2026-10-26T05:24:25Z",
+   "load": 2.126953125,
+   "memory_available_kib": 22268940
+  },
+  {
+   "part": "gtls-input-1500",
+   "edge": "end",
+   "time": "2026-10-26T05:31:48Z",
+   "load": 2.56982421875,
+   "memory_available_kib": 21547924
+  },
+  {
+   "part": "gtls-input-3000",
+   "edge": "start",
+   "time": "2026-10-26T05:31:48Z",
+   "load": 2.56982421875,
+   "memory_available_kib": 21825608
+  },
+  {
+   "part": "gtls-input-3000",
+   "edge": "end",
+   "time": "2026-10-26T05:55:24Z",
+   "load": 2.12890625,
+   "memory_available_kib": 21556168
+  },
+  {
+   "part": "gtls-input-1500-margin",
+   "edge": "start",
+   "time": "2026-10-26T05:55:24Z",
+   "load": 2.12890625,
+   "memory_available_kib": 21830412
+  },
+  {
+   "part": "gtls-input-1500-margin",
+   "edge": "end",
+   "time": "2026-10-26T05:57:24Z",
+   "load": 5.68115234375,
+   "memory_available_kib": 21674500
+  },
+  {
+   "part": "gtls-input-3000-margin",
+   "edge": "start",
+   "time": "2026-10-26T05:57:24Z",
+   "load": 5.68115234375,
+   "memory_available_kib": 21953432
+  },
+  {
+   "part": "gtls-input-3000-margin",
+   "edge": "end",
+   "time": "2026-10-26T06:05:34Z",
+   "load": 1.81494140625,
+   "memory_available_kib": 21814060
+  },
+  {
+   "part": "profile_split",
+   "edge": "start",
+   "time": "2026-10-26T06:05:34Z",
+   "load": 1.81494140625,
+   "memory_available_kib": 22098768
+  },
+  {
+   "part": "profile_split",
+   "edge": "end",
+   "time": "2026-10-26T06:07:34Z",
+   "load": 1.37548828125,
+   "memory_available_kib": 18391968
+  },
+  {
+   "part": "screening_stats",
+   "edge": "start",
+   "time": "2026-10-26T06:07:34Z",
+   "load": 1.37548828125,
+   "memory_available_kib": 18694152
+  },
+  {
+   "part": "screening_stats",
+   "edge": "end",
+   "time": "2026-10-26T06:07:37Z",
+   "load": 2.06640625,
+   "memory_available_kib": 21633064
+  },
+  {
+   "part": "slow20",
+   "edge": "start",
+   "time": "2026-10-26T06:07:37Z",
+   "load": 2.06640625,
+   "memory_available_kib": 21947420
+  },
+  {
+   "part": "slow20",
+   "edge": "end",
+   "time": "2026-10-26T06:25:08Z",
+   "load": 1.25341796875,
+   "memory_available_kib": 22277152
+  },
+  {
+   "part": "slow",
+   "edge": "start",
+   "time": "2026-10-26T06:25:08Z",
+   "load": 1.25341796875,
+   "memory_available_kib": 22553576
+  },
+  {
+   "part": "slow",
+   "edge": "end",
+   "time": "2026-10-26T07:46:38Z",
+   "load": 1.28564453125,
+   "memory_available_kib": 22104424
+  }
+ ],
+ "session_note": "every row is the median of 7 timed runs, with the minimum and the maximum, on one machine with the same package versions, in one session that started 2026-10-26T04:56:28Z UTC (load average 2.9) and ended at 2026-10-26T07:46:38Z UTC. Every part ran pinned to cores 0-15 on an otherwise idle machine with nothing else on the GPU: no part was stopped, resumed or run beside another job. load_at_start in a row is the one-minute load average when the row starts, so it still contains the previous row's work and is not the load of an idle machine. The versions of triton, batman and wotan were not recorded by bench.py in this session; they are those of the environment that ran it, read from that environment by importlib.metadata (triton-rocm 3.7.0, batman-package 2.5.3, wotan 1.10) and equal to the versions that the lock file of that environment pins, which did not change between 2026-10-26T00:59 local and the end of the session."
+}
