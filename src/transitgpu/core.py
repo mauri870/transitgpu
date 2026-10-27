@@ -490,6 +490,9 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
       weights: one weight per point of the time axis (or one row per flux), relative to the median weight, for
         example 1 / variance for sectors of unequal scatter. Equal weights give the unweighted search. Each weight is
         rounded to a multiple of 1/WEIGHT_UNIT (1/64) of the median weight and clipped to between 1/64 and 64 times it.
+        A weight of zero masks its point, which is dropped as a point with no flux is. With one flux and a matrix of
+        weights of one row for each result, the flux is searched once for each row, from one fold of the times;
+        each result is that of a search of the flux with that row.
       oversampling_factor, n_transits_min: arguments of TLS's period grid (its constants when None); used only
         without `periods`.
       bumps: also search for bumps (a window whose mean is above the whole's) from the same fold and the same sums, with
@@ -510,7 +513,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     With `bumps`, `bump` holds those fields for the bumps; its centers, widths and spectrum are those of the bumps.
 
     Raise ValueError for a flux with nothing to search, a cut that leaves fewer than two periods, an unknown
-    precision, and weights that are not finite and positive or whose integer sums could overflow.
+    precision, and weights that are not finite or are negative or whose integer sums could overflow.
     """
     import torch
 
@@ -525,6 +528,10 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     fluxes = [np.asarray(flux, dtype=float) for flux in fluxes]
     if not fluxes:
         return []
+    if weights is not None:
+        weights = np.asarray(weights, dtype=float)
+        if weights.ndim == 2 and len(fluxes) == 1 and weights.shape[0] > 1:  # one flux and a row of weights for each result
+            fluxes = fluxes * weights.shape[0]
     for k, flux in enumerate(fluxes):
         if flux.shape != time.shape:
             raise ValueError(f"flux {k} does not have the length of the time axis ({flux.size} against {time.size}): the fluxes of a search of many are on one time axis")
@@ -564,8 +571,11 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             row = {"finite": finite, "level": level, "sigma2": float(np.var(flux[finite])), "n": int(finite.sum()), "quantized": quantized, "weight": torch.as_tensor(finite, dtype=torch.int64, device=device), "packed_total": None}
         else:
             given = weights[index][on_axis]
-            if not np.all(np.isfinite(given[finite])) or np.any(given[finite] <= 0):
-                raise ValueError(f"flux {index}: weights must be finite and above zero at every point with a flux" if labeled else "weights must be finite and above zero at every point with a flux")
+            if not np.all(np.isfinite(given[finite])) or np.any(given[finite] < 0):
+                raise ValueError(f"flux {index}: weights must be finite and not negative at every point with a flux" if labeled else "weights must be finite and not negative at every point with a flux")
+            finite = finite & (given > 0)  # a weight of zero masks the point: it is dropped as a point with no flux is
+            if finite.sum() < 2 * MINIMUM_POINTS:
+                raise ValueError(f"flux {index}: fewer than {2 * MINIMUM_POINTS} points have a weight above zero" if labeled else f"fewer than {2 * MINIMUM_POINTS} points have a weight above zero")
             integer = np.where(finite, np.clip(np.round(WEIGHT_UNIT * given / np.median(given[finite])), 1, MAXIMUM_WEIGHT), 0).astype(np.int64)
             total = int(integer.sum())
             level = float((integer * np.where(finite, flux, 0.0)).sum() / total)

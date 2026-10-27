@@ -1,0 +1,258 @@
+{
+ "command": "uv run python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-weights gpu-weights-separate --repeats 7 --json bench-weights.json",
+ "hardware": {
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "logical_cpus": 32,
+  "gpu": "AMD Radeon RX 7900 XTX",
+  "gpu_runtime": "ROCm 7.2.53211"
+ },
+ "versions": {
+  "python": "3.13.12",
+  "numpy": "2.5.4",
+  "torch": "2.12.0+rocm7.2",
+  "astropy": "8.0.2",
+  "transitleastsquares": "2.0.1",
+  "numba": "0.68.0",
+  "triton": "3.7.0",
+  "batman": "2.5.3",
+  "wotan": "1.10"
+ },
+ "seed": 20260101,
+ "baseline_days": 1000.0,
+ "period_range_days": [
+  0.5,
+  14.0
+ ],
+ "planet": {
+  "period": 3.18,
+  "t0": 1.2,
+  "duration_hr": 2.5,
+  "depth_ppm": 3000.0
+ },
+ "noise_ppm": 1000.0,
+ "t0_fit_margin": 0.01,
+ "sizes": {
+  "20000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.241206559992861,
+      0.23874390899436548,
+      0.24316216399893165,
+      0.23629606899339706,
+      0.2379159599659033,
+      0.2376021050149575,
+      0.23802350100595504
+     ],
+     "median": 0.23802350100595504,
+     "build_seconds": 2.030439699010458,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 2.598311275404227e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 1.1901175050297752e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.1533203125,
+     "gpu_busy_mean_percent": 67.33333333333333,
+     "gpu_busy_largest_percent": 85.0
+    },
+    "gpu-weights": {
+     "seconds": [
+      0.8167204969795421,
+      0.8203807919635437,
+      0.8246380729833618,
+      0.8200751280528493,
+      0.8234040979878046,
+      0.8225090379710309,
+      0.8222664240165614
+     ],
+     "median": 0.8222664240165614,
+     "build_seconds": 0.6127572429832071,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 1.7952043490487874e-06,
+     "durations": "one call with 5 weight vectors, each masking 60 points, from one fold of the times",
+     "seconds_per_point": 4.1113321200828065e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.1533203125,
+     "gpu_busy_mean_percent": 89.89655172413794,
+     "gpu_busy_largest_percent": 98.0
+    },
+    "gpu-weights-separate": {
+     "seconds": [
+      1.1886918550007977,
+      1.224217340000905,
+      1.1921403069864027,
+      1.3027351190103218,
+      1.1998473810381256,
+      1.2097205820027739,
+      1.1935375039465725
+     ],
+     "median": 1.1998473810381256,
+     "build_seconds": 0.039001137018203735,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 2.6195539228183996e-06,
+     "durations": "5 separate searches, one for each weight vector",
+     "seconds_per_point": 5.999236905190628e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.22119140625,
+     "gpu_busy_mean_percent": 74.78571428571429,
+     "gpu_busy_largest_percent": 86.0
+    }
+   }
+  },
+  "100000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.4723137660184875,
+      0.4643026770208962,
+      0.4643262269673869,
+      0.4613702319911681,
+      0.4677321389899589,
+      0.4709687580470927,
+      0.4768754109973088
+     ],
+     "median": 0.4677321389899589,
+     "build_seconds": 0.04796194698428735,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.1058558733498416e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 4.677321389899589e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 2.5361328125,
+     "gpu_busy_mean_percent": 85.11764705882354,
+     "gpu_busy_largest_percent": 96.0
+    },
+    "gpu-weights": {
+     "seconds": [
+      1.8560629350249656,
+      1.8543710130034015,
+      1.857096657040529,
+      1.8592122229747474,
+      1.854574134980794,
+      1.8546265159966424,
+      1.856654161005281
+     ],
+     "median": 1.8560629350249656,
+     "build_seconds": 0.02644684398546815,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 4.052229491250593e-06,
+     "durations": "one call with 5 weight vectors, each masking 60 points, from one fold of the times",
+     "seconds_per_point": 1.8560629350249654e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 2.4130859375,
+     "gpu_busy_mean_percent": 95.6,
+     "gpu_busy_largest_percent": 99.0
+    },
+    "gpu-weights-separate": {
+     "seconds": [
+      2.3489511890220456,
+      2.3540239019785076,
+      2.3586450580041856,
+      2.3614176709670573,
+      2.37397483503446,
+      2.356215526990127,
+      2.3616645940346643
+     ],
+     "median": 2.3586450580041856,
+     "build_seconds": 0.009618728014174849,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 5.149486519598252e-06,
+     "durations": "5 separate searches, one for each weight vector",
+     "seconds_per_point": 2.3586450580041855e-05,
+     "measured_at_points": 100000,
+     "load_at_start": 2.275390625,
+     "gpu_busy_mean_percent": 86.97560975609755,
+     "gpu_busy_largest_percent": 96.0
+    }
+   }
+  },
+  "200000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.5432702719699591,
+      0.543936149973888,
+      0.550400119042024,
+      0.5518330470076762,
+      0.55011317494791,
+      0.5472853610408492,
+      0.5487962099723518
+     ],
+     "median": 0.5487962099723518,
+     "build_seconds": 0.045315844006836414,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.990767189978406e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 2.743981049861759e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 1.9921875,
+     "gpu_busy_mean_percent": 87.05,
+     "gpu_busy_largest_percent": 97.0
+    },
+    "gpu-weights": {
+     "seconds": [
+      2.209933058009483,
+      2.203205596015323,
+      2.2101984299952164,
+      2.2057050860021263,
+      2.2104200429748744,
+      2.220933251956012,
+      2.201967238972429
+     ],
+     "median": 2.209933058009483,
+     "build_seconds": 0.01471294998191297,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 4.824812640976089e-06,
+     "durations": "one call with 5 weight vectors, each masking 60 points, from one fold of the times",
+     "seconds_per_point": 1.1049665290047415e-05,
+     "measured_at_points": 200000,
+     "load_at_start": 1.9931640625,
+     "gpu_busy_mean_percent": 95.93589743589743,
+     "gpu_busy_largest_percent": 99.0
+    },
+    "gpu-weights-separate": {
+     "seconds": [
+      2.7167403330095112,
+      2.7543650820152834,
+      2.7476857400033623,
+      2.817670324991923,
+      2.728127709997352,
+      2.7383528260397725,
+      2.7163656360353343
+     ],
+     "median": 2.7383528260397725,
+     "build_seconds": 0.005821561033371836,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 458035,
+     "seconds_per_trial_period": 5.97847943069803e-06,
+     "durations": "5 separate searches, one for each weight vector",
+     "seconds_per_point": 1.3691764130198862e-05,
+     "measured_at_points": 200000,
+     "load_at_start": 1.8466796875,
+     "gpu_busy_mean_percent": 87.80208333333333,
+     "gpu_busy_largest_percent": 97.0
+    }
+   }
+  }
+ }
+}

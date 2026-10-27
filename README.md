@@ -73,6 +73,8 @@ SDE       2.3
 
 With errors, each point is weighted by 1/dy², rounded to multiples of 1/64 of the median weight and clipped to between 1/64 and 64 times it.
 
+A weight of 0 masks its point. To search one light curve with several sets of weights, for example one mask for each of several events, give `transitgpu.search_many(t, [y], 0.5, 14.0, weights=weights)` a matrix with one row of weights for each result; each result is that of a search with that row, and a batch of five takes 0.7 to 0.8 of the time of five separate searches (the fourth table under Performance).
+
 For TLS, change the import:
 
 ```python
@@ -172,6 +174,20 @@ uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-b
 ```
 
 `tests/test_bench.py` checks that this table equals the output of `bench.bumps_table` on `benchmarks/results-bumps.json`.
+
+The fourth table times one light curve searched with five weight vectors, each with a weight of 0 at 60 points (a mask), on the input of the first table. `search_many` with one flux and a matrix of weights, one row for each result, folds the times once and gives for each row the result of the search with that row; a separate search folds them again. Its three rows are from one session of 2026-10-27 on the same machine, with ROCm 7.2.53211, Python 3.13.12, numpy 2.5.4, torch 2.12.0+rocm7.2 and triton 3.7.0, the GPU to itself. Each cell is the median of seven runs in seconds, with the first and third quartiles in brackets. `benchmarks/results-weights.json` has every run.
+
+| search of one light curve with weight vectors | 20,000 points | 100,000 points | 200,000 points |
+| --- | --- | --- | --- |
+| `transitgpu.search`, one search | 0.238 (0.238–0.240) | 0.468 (0.464–0.472) | 0.549 (0.546–0.550) |
+| `transitgpu.search_many`, one flux and 5 weight vectors in one call | 0.822 (0.820–0.823) | 1.86 (1.85–1.86) | 2.21 (2.20–2.21) |
+| 5 `transitgpu.search` calls, one for each weight vector | 1.20 (1.19–1.22) | 2.36 (2.36–2.36) | 2.74 (2.72–2.75) |
+
+```
+uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-weights gpu-weights-separate --repeats 7 --json bench-weights.json
+```
+
+`tests/test_bench.py` checks that this table equals the output of `bench.weights_table` on `benchmarks/results-weights.json`.
 
 ## Tests
 

@@ -37,7 +37,8 @@ GTLS_ROWS = ("tls16-exact", "tls-gpu")  # the row set of --gtls-input: TLS 2.0.1
 NOISE_PPM = 1000.0
 SEED = 20260101
 ROWS = ("gpu", "cpu1", "cpu16", "astropy", "tls1", "tls16", "tls1-exact", "tls16-exact", "tls-gpu", "tls-gpu-binned", "tls-gpu-pl", "hybrid")
-EXTRA_ROWS = ("gpu-shuffles", "many", "tls16-many", "gpu-bumps", "gpu-two")  # run only when named
+EXTRA_ROWS = ("gpu-shuffles", "many", "tls16-many", "gpu-bumps", "gpu-two", "gpu-weights", "gpu-weights-separate")  # run only when named
+WEIGHT_VECTORS = 5  # the weight vectors of the rows gpu-weights and gpu-weights-separate; each masks 60 points of the light curve
 BUILT = []  # the rows built so far in this process
 THROUGHPUT_CURVES = 64  # the light curves of the rows many and tls16-many
 
@@ -245,6 +246,35 @@ def row_bumps(time_axis, flux, periods, both):
     return Row(two, lambda found: found["period_days"], len(periods), "two separate searches, of the flux and of the negated flux")
 
 
+def weight_vectors(points):
+    """WEIGHT_VECTORS rows of weights, each of 1 with a weight of 0 at 60 points drawn from the seed: a mask of 60 points for each vector."""
+    generator = np.random.default_rng(SEED)
+    rows = np.ones((WEIGHT_VECTORS, points))
+    for row in rows:
+        row[generator.choice(points, 60, replace=False)] = 0.0
+    return rows
+
+
+def row_weights(time_axis, flux, periods, together):
+    """One flux searched with WEIGHT_VECTORS weight vectors: one `search_many` call with the matrix of weights (`together`), or one `search` call for each vector."""
+    import torch
+
+    from transitgpu import core
+
+    if not torch.cuda.is_available():
+        return None
+    rows = weight_vectors(time_axis.size)
+    warm = slice(0, 4000)
+    warm_rows = weight_vectors(4000)
+    if together:
+        core.search_many(time_axis[warm], [flux[warm]], PERIOD_MIN, PERIOD_MAX, device="cuda", weights=warm_rows)
+        return Row(lambda: core.search_many(time_axis, [flux], PERIOD_MIN, PERIOD_MAX, periods=periods, device="cuda", weights=rows), lambda found: found[0]["period_days"], len(periods) * WEIGHT_VECTORS,
+                   f"one call with {WEIGHT_VECTORS} weight vectors, each masking 60 points, from one fold of the times")
+    core.search(time_axis[warm], flux[warm], PERIOD_MIN, PERIOD_MAX, device="cuda", weights=warm_rows[0])
+    return Row(lambda: [core.search(time_axis, flux, PERIOD_MIN, PERIOD_MAX, periods=periods, device="cuda", weights=row) for row in rows], lambda found: found[0]["period_days"], len(periods) * WEIGHT_VECTORS,
+               f"{WEIGHT_VECTORS} separate searches, one for each weight vector")
+
+
 def row_astropy(time_axis, flux, periods, _device, _threads):
     """astropy takes one list of durations for all periods: the geometric grid of ratio 1.1 from the shortest to the longest duration that TLS allows over the periods, cut where a duration is not under the shortest period."""
     try:
@@ -407,6 +437,8 @@ BUILDERS = {
     "many": lambda t, f, p: row_many(t, p),
     "tls16-many": lambda t, f, p: row_tls_many(t, p),
     "gpu-bumps": lambda t, f, p: row_bumps(t, f, p, True),
+    "gpu-weights": lambda t, f, p: row_weights(t, f, p, True),
+    "gpu-weights-separate": lambda t, f, p: row_weights(t, f, p, False),
     "gpu-two": lambda t, f, p: row_bumps(t, f, p, False),
 }
 LABELS = {
@@ -415,6 +447,7 @@ LABELS = {
     "tls1": "TLS, default backend (fused-pl), 1 thread", "tls16": "TLS, default backend (fused-pl), 16 threads", "tls1-exact": "TLS, exact backend (fused), 1 thread", "tls16-exact": "TLS, exact backend (fused), 16 threads",
     "tls-gpu": "transitgpu.tls exact (gpu), on the GPU", "tls-gpu-binned": "transitgpu.tls binned (gpu-binned), on the GPU", "tls-gpu-pl": "transitgpu.tls piecewise-linear (gpu-pl), on the GPU",
     "hybrid": "transitgpu.bls_tls_hybrid (GPU), 5 peaks, window 1%, exact backend",
+    "gpu-weights": "transitgpu on the GPU, 5 weight vectors in one call", "gpu-weights-separate": "transitgpu on the GPU, 5 weight vectors as 5 searches",
     "gpu-bumps": "transitgpu on the GPU, dips and bumps in one search", "gpu-two": "transitgpu on the GPU, two separate searches (flux and negated flux)",
     "many": "transitgpu.search_many on the GPU, 64 light curves in one call", "tls16-many": "TLS, default backend (fused-pl), 16 threads, 64 light curves one after another",
 }
@@ -542,6 +575,22 @@ def bumps_table(results):
     sizes = list(results["sizes"])
     lines = ["| search of one light curve | " + " | ".join(f"{int(points):,} points" for points in sizes) + " |", "| --- |" + " --- |" * len(sizes)]
     for label, name in BUMPS_ROWS:
+        cells = []
+        for points in sizes:
+            row = results["sizes"][points]["rows"][name]
+            cells.append(f"{three_figures(row['median'])} ({three_figures(quartiles(row['seconds'])[0])}–{three_figures(quartiles(row['seconds'])[1])})")
+        lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    return "\n".join(lines)
+
+
+WEIGHTS_ROWS = (("`transitgpu.search`, one search", "gpu"), ("`transitgpu.search_many`, one flux and 5 weight vectors in one call", "gpu-weights"), ("5 `transitgpu.search` calls, one for each weight vector", "gpu-weights-separate"))
+
+
+def weights_table(results):
+    """The table of the README for the weight vectors, from its own results file (one session): the median of each size with its quartiles, three significant figures in every cell."""
+    sizes = list(results["sizes"])
+    lines = ["| search of one light curve with weight vectors | " + " | ".join(f"{int(points):,} points" for points in sizes) + " |", "| --- |" + " --- |" * len(sizes)]
+    for label, name in WEIGHTS_ROWS:
         cells = []
         for points in sizes:
             row = results["sizes"][points]["rows"][name]

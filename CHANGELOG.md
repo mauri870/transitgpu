@@ -8,6 +8,8 @@
 
 ### Changed
 
+- `search_many` with one flux and a matrix of weights, one row for each result, searches the flux once for each row from one fold of the times, and each result is that of a search of the flux with that row. A weight of zero now masks its point, which is dropped as a point with no flux is; before it was refused, and a negative or non-finite weight still is.
+  A batch of five vectors takes 0.69 to 0.81 of the time of five separate searches (20,000 to 200,000 points) and not the time of one: each vector pays its own accumulation, 1,159 ms of the 1,531 ms of kernel time of five vectors at 100,000 points against 247 of 323 ms for one, because the weights differ and the one-pass kernels add the flux and the count of every point for every vector. The HIP kernel, which needs one set of weights, bounds a kernel that took them per vector at 0.40 of the batch's time at 100,000 points; it is not built, since a search with several sets of weights is rare next to the searches of many fluxes with one set, which share the fold already.
 - The best boxes of a batch of periods are updated by one compiled function and not by about twenty eager passes: a search launches about half the kernels and takes 6% less time at 100,000 points; the numbers are the same to the bit.
 - torch's limit of compiled variants of a function is raised to 64 when it is lower, and never lowered. At torch's default of 8, a process that used more combinations of options than that ran the scorer eagerly for the rest of its life, which changes the float32 statistic in its seventh digit.
 
