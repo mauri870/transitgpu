@@ -9,7 +9,7 @@ that reproduce the grids and the boxes of a search and the Transit Least Squares
 
 The names in `__all__` keep their meaning and signatures between releases; `transitgpu.core`, `transitgpu.hybrid`
 and `transitgpu.tls` hold the implementation and may change. Besides the arguments of the public searches, `search`
-and `search_many` take `template`, `cuts`, `precision` and `weights` (see `search_many`). `WindowBackend`,
+and `search_many` take `template`, `cuts`, `precision`, `weights` and `bumps` (see `search_many`). `WindowBackend`,
 `refine_peak` and `tls_hybrid` need Transit Least Squares (the extra `tls`) and are imported on first use;
 `tls_hybrid` is the module whose `refine_peak` the hybrid search calls, for a caller that times or replaces it.
 """

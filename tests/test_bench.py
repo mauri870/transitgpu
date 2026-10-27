@@ -130,6 +130,19 @@ def test_the_performance_table_of_the_readme_is_the_table_built_from_the_results
     assert "\n".join(readme[start:end]) == bench.throughput_table(results)
 
 
+def test_the_bumps_table_of_the_readme_is_the_table_built_from_its_own_results_file_of_one_session(bench):
+    """The third table of the README's Performance section is built from benchmarks/results-bumps.json, a file of its own: its rows are from one session and no other session's rows are in it."""
+    root = BENCH.parents[1]
+    results = json.loads((root / "benchmarks" / "results-bumps.json").read_text())
+    assert set(row for size in results["sizes"].values() for row in size["rows"]) == {"gpu", "gpu-bumps", "gpu-two"}, "the three rows of the table and no other"
+    assert all(len(row["seconds"]) == 7 for size in results["sizes"].values() for row in size["rows"].values()), "seven runs in every row"
+    readme = (root / "README.md").read_text().splitlines()
+    start = next(i for i, line in enumerate(readme) if line.startswith("| search of one light curve |"))
+    end = next(i for i in range(start, len(readme)) if not readme[i].startswith("|"))
+    assert "\n".join(readme[start:end]) == bench.bumps_table(results)
+    assert results["command"] in "\n".join(readme).replace("uv run --group rocm python", "uv run python"), "the README gives the command that made the file"
+
+
 def test_the_figures_of_the_table_have_three_significant_figures_and_the_same_form_in_every_cell(bench):
     """Edge cases of the format: a round number keeps its zeros (15.0, not 15), a number over 100 has no decimals, and one under 1 has three figures."""
     assert [bench.three_figures(value) for value in (15.0, 93.96, 291.78, 0.27711, 2.15, 5.74, 1234.0)] == ["15.0", "94.0", "292", "0.277", "2.15", "5.74", "1230"]

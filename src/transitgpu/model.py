@@ -55,11 +55,13 @@ class Results:
     """The results of a search, with the attributes of TLS's results.
 
     `box` holds the center and the width in days of the best box of each period when the search was asked for them,
-    and `fields` is the dict that transitgpu.search returns.
+    `fields` is the dict that transitgpu.search returns, and `bump` is the Results of the best brightening (a depth
+    above 1) when the search was asked for bumps, None otherwise.
     """
 
     def __init__(self, found, boxes=False, t=None, y=None):
         self.fields = found
+        self.bump = Results(found["bump"], boxes, t, y) if "bump" in found else None
         self.periods = found["periods"]
         self.power = found["power"]
         self.SDE = found["sde"]
@@ -113,20 +115,21 @@ class box_search:
             raise ValueError(f"dy must have the shape of t; got {self.dy.shape} and {self.t.shape}")
 
     def power(self, period_min=None, period_max=None, oversampling_factor=None, n_transits_min=None, duration_grid_step=core.DURATION_STEP, minimum_bins=core.MINIMUM_BINS,
-              use_threads=None, show_progress_bar=False, verbose=False, device=None, boxes=False):
+              use_threads=None, show_progress_bar=False, verbose=False, device=None, boxes=False, bumps=False):
         """Search the periods of TLS's grid from period_min to period_max days and return Results.
 
         period_min defaults to 0.5 d and period_max to half the time span. oversampling_factor and n_transits_min are
         the arguments of TLS's period grid, duration_grid_step is the ratio of consecutive durations, minimum_bins the
         number of bins across the shortest duration of a period, device a torch device name (by default the first
-        GPU), and boxes=True adds the best box of each period to the results. use_threads, show_progress_bar and
+        GPU), boxes=True adds the best box of each period to the results, and bumps=True also searches for brightenings from
+        the same fold: the results then have `bump`, the Results of that search. use_threads, show_progress_bar and
         verbose are accepted for TLS's interface and ignored. Raise RuntimeError without a GPU or for the device "cpu".
         """
         require_device(device)
-        return self._power(period_min, period_max, oversampling_factor, n_transits_min, duration_grid_step, minimum_bins, use_threads, show_progress_bar, verbose, device, boxes)
+        return self._power(period_min, period_max, oversampling_factor, n_transits_min, duration_grid_step, minimum_bins, use_threads, show_progress_bar, verbose, device, boxes, bumps)
 
     def _power(self, period_min=None, period_max=None, oversampling_factor=None, n_transits_min=None, duration_grid_step=core.DURATION_STEP, minimum_bins=core.MINIMUM_BINS,
-              use_threads=None, show_progress_bar=False, verbose=False, device=None, boxes=False):
+              use_threads=None, show_progress_bar=False, verbose=False, device=None, boxes=False, bumps=False):
         """Return `power(...)` without the GPU check: on the CPU by default when there is no GPU."""
         if period_min is None:
             period_min = 0.5
@@ -135,5 +138,5 @@ class box_search:
             period_max = float((self.t[keep].max() - self.t[keep].min()) / 2)
         weights = None if self.dy is None else 1.0 / self.dy**2
         found = core.search(self.t, self.y, period_min, period_max, spectrum=True, device=device, minimum_bins=minimum_bins, duration_step=duration_grid_step, boxes=boxes, weights=weights,
-                            oversampling_factor=oversampling_factor, n_transits_min=n_transits_min)
+                            oversampling_factor=oversampling_factor, n_transits_min=n_transits_min, bumps=bumps)
         return Results(found, boxes=boxes, t=self.t, y=self.y)

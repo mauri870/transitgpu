@@ -59,6 +59,25 @@ PRECISION = {"statistic": "float32"}
 PRECISION_CHOICES = {"statistic": ("float64", "float32")}
 
 
+# torch.compile keeps this many compiled variants of a function and runs it eagerly after that, silently; the eager scorer
+# computes the float32 statistic differently from the compiled one (a relative 1e-7), so two searches of a long process
+# would differ. A scorer is compiled once for each combination of the statistic's precision, weights or none, and dips
+# only or dips and bumps: 8 combinations, which hold 17 compiled entries (measured over every combination of bumps,
+# precision, weights, one flux or many, a spectrum, cuts, at two sizes). The limit is raised to this number with a margin
+# of almost 4 and never lowered. Name in torch 2.12, with `cache_size_limit` as its alias:
+# https://github.com/pytorch/pytorch/blob/v2.12.0/torch/_dynamo/config.py (`recompile_limit`)
+RECOMPILE_LIMIT = 64
+
+
+def raise_recompile_limit():
+    """Raise torch's limit of compiled variants per function to RECOMPILE_LIMIT; a higher limit that the caller set stays. Older torch names it `cache_size_limit`."""
+    import torch._dynamo.config as config
+
+    name = "recompile_limit" if hasattr(config, "recompile_limit") else "cache_size_limit"
+    if getattr(config, name) < RECOMPILE_LIMIT:
+        setattr(config, name, RECOMPILE_LIMIT)
+
+
 # The compiled fold_index: None until its first use on a GPU, False when compilation is not available.
 _COMPILED = None
 
@@ -259,6 +278,7 @@ def fold(t, p, bins, shifts=None):
     import torch
 
     if t.device.type != "cpu" and _COMPILED is not False:
+        raise_recompile_limit()
         try:
             if _COMPILED is None:
                 _COMPILED = torch.compile(fold_index, dynamic=True)
@@ -275,14 +295,16 @@ def fold(t, p, bins, shifts=None):
 _SCORE_COMPILED = None
 
 
-def score_steps(s2, c2, position, width, ok, n_points, bins, single=False, packed_total=None):
+def score_steps(s2, c2, position, width, ok, n_points, bins, single=False, packed_total=None, bumps=False):
     """Return the best box of each period at each duration step, as (statistic, start bin) tensors of rows x steps.
 
     `s2` and `c2` are the cumulative sums of the flux and the counts of the bins, with the first bins repeated at the
     end so that a window wraps around the phase. A window is scored as inside^2 / (n (1 - n / N)) when it is a dip
     with at least MINIMUM_POINTS points inside and outside it, and 0 otherwise. With `packed_total` (the sum of all the
     weights) the counts are packed (PACK_SHIFT): the raw counts are held to MINIMUM_POINTS and the statistic is the
-    weighted one, inside^2 / (W_in (1 - W_in / W)). `single` computes the statistic in float32.
+    weighted one, inside^2 / (W_in (1 - W_in / W)). `single` computes the statistic in float32. With `bumps` the best
+    window that is a bump (a mean above the whole's) is scored from the same sums, with the same statistic, and the
+    result is (statistic, start bin, bump statistic, bump start bin); the first two are those of `bumps=False`.
     """
     import torch
 
@@ -301,10 +323,14 @@ def score_steps(s2, c2, position, width, ok, n_points, bins, single=False, packe
         enough = (raw >= MINIMUM_POINTS) & (raw <= n_points - MINIMUM_POINTS)
         total = packed_total
     statistic = torch.where((inside_exact < 0) & enough & ok.unsqueeze(2), inside * inside / (number * (1 - number / total)), torch.zeros_like(inside))
-    return statistic.max(dim=2)
+    if not bumps:
+        return statistic.max(dim=2)
+    raised = torch.where((inside_exact > 0) & enough & ok.unsqueeze(2), inside * inside / (number * (1 - number / total)), torch.zeros_like(inside))
+    dip, bump = statistic.max(dim=2), raised.max(dim=2)
+    return dip.values, dip.indices, bump.values, bump.indices
 
 
-def score(s2, c2, position, width, ok, n_points, bins, single=False, packed_total=None):
+def score(s2, c2, position, width, ok, n_points, bins, single=False, packed_total=None, bumps=False):
     """Return `score_steps(...)`, compiled by torch.compile into one kernel on a GPU.
 
     The compiled kernel orders the floating-point operations differently, so the z-scores differ from the eager
@@ -315,16 +341,60 @@ def score(s2, c2, position, width, ok, n_points, bins, single=False, packed_tota
     import torch
 
     if s2.device.type != "cpu" and _SCORE_COMPILED is not False:
+        raise_recompile_limit()
         try:
             if _SCORE_COMPILED is None:
                 _SCORE_COMPILED = torch.compile(score_steps, dynamic=True)
-            return _SCORE_COMPILED(s2, c2, position, width, ok, n_points, bins, single, packed_total)
+            return _SCORE_COMPILED(s2, c2, position, width, ok, n_points, bins, single, packed_total, bumps)
         except torch.OutOfMemoryError:
             raise
         except Exception as error:
             warnings.warn(f"torch.compile of the scoring failed ({type(error).__name__}: {error}); using the slower eager passes", stacklevel=2)
             _SCORE_COMPILED = False
-    return score_steps(s2, c2, position, width, ok, n_points, bins, single, packed_total)
+    return score_steps(s2, c2, position, width, ok, n_points, bins, single, packed_total, bumps)
+
+
+# The compiled advance_winner: None until its first use on a GPU, False when compilation is not available.
+_ADVANCE_COMPILED = None
+
+
+def advance_winner(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed):
+    """Return the best box of each period so far after one chunk of duration steps, as (statistic, start bin, width, sum, count) tensors of one value per period.
+
+    `value_of_step` and `where_of_step` are the best box of each period at each step of the chunk (`score_steps`), `width` the widths of those steps, `s2` and `c2` the cumulative sums, and `packed` says that the counts
+    hold weights (PACK_SHIFT). The best step of a chunk is the first of its maxima and a later chunk wins only if strictly better, so the result does not depend on the size of the chunk. The sum and the count of
+    the chosen box are read from the cumulative sums, as the scorer computed them.
+    """
+    import torch
+
+    value, step = value_of_step.double().max(dim=1)
+    where = where_of_step.gather(1, step.unsqueeze(1)).squeeze(1)
+    chosen_width = width.gather(1, step.unsqueeze(1)).squeeze(1)
+    chosen_end = where + chosen_width
+    better = value > winner
+    inside_count = c2[rows_index, chosen_end] - c2[rows_index, where]
+    return (torch.where(better, value, winner), torch.where(better, where, start), torch.where(better, chosen_width, width_of),
+            torch.where(better, (s2[rows_index, chosen_end] - s2[rows_index, where]).double() * QUANTUM, sum_in),
+            torch.where(better, (inside_count & ((1 << PACK_SHIFT) - 1) if packed else inside_count).double(), number_in))
+
+
+def advance(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed):
+    """Return `advance_winner(...)`, compiled by torch.compile into a few kernels on a GPU (the eager passes launch about twenty); the integers are the same and so are the doubles, which are products and differences of exact values."""
+    global _ADVANCE_COMPILED
+    import torch
+
+    if s2.device.type != "cpu" and _ADVANCE_COMPILED is not False:
+        raise_recompile_limit()
+        try:
+            if _ADVANCE_COMPILED is None:
+                _ADVANCE_COMPILED = torch.compile(advance_winner, dynamic=True)
+            return _ADVANCE_COMPILED(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed)
+        except torch.OutOfMemoryError:
+            raise
+        except Exception as error:
+            warnings.warn(f"torch.compile of the update of the best boxes failed ({type(error).__name__}: {error}); using the slower eager passes", stacklevel=2)
+            _ADVANCE_COMPILED = False
+    return advance_winner(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed)
 
 
 def duration_fractions(periods):
@@ -392,7 +462,7 @@ def _check(time, flux):
     check_integer_range(np.abs(flux - flux.mean()).max(), time.size)
 
 
-def search_many(time, fluxes, period_min, period_max, spectrum=False, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, duration_hours=None, labeled=True, boxes=False, cuts=None, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None):
+def search_many(time, fluxes, period_min, period_max, spectrum=False, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, duration_hours=None, labeled=True, boxes=False, cuts=None, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False):
     """Search each flux of `fluxes`, all on the time axis `time`, and return a list with one result dict per flux.
 
     The fluxes share one grid of trial periods (`periods`, else TLS's grid for the first flux), so their SDEs are
@@ -422,6 +492,10 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         rounded to a multiple of 1/WEIGHT_UNIT (1/64) of the median weight and clipped to between 1/64 and 64 times it.
       oversampling_factor, n_transits_min: arguments of TLS's period grid (its constants when None); used only
         without `periods`.
+      bumps: also search for bumps (a window whose mean is above the whole's) from the same fold and the same sums, with
+        the same grid and statistic. Each result then has a `bump` entry, a result dict of the same fields that equals the
+        result of a search of the negated flux: its SDE is a z-score over the best bump statistic of each period, and its
+        depth is negative for a brightening.
 
     Each result holds plain floats (periods in days, durations in hours, depths in ppm):
       period_days, t0_days: the best period and the center of one transit of its best box.
@@ -432,6 +506,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
       period_min_searched_days, period_max_searched_days.
       periods, power (with spectrum=True): the trial periods and their z-scores, whose maximum is the SDE.
       centers, widths_days (with boxes=True): the center and the width, in days, of the best box of every period.
+
+    With `bumps`, `bump` holds those fields for the bumps; its centers, widths and spectrum are those of the bumps.
 
     Raise ValueError for a flux with nothing to search, a cut that leaves fewer than two periods, an unknown
     precision, and weights that are not finite and positive or whose integer sums could overflow.
@@ -500,9 +576,9 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             row = {"finite": finite, "level": level, "sigma2": float(WEIGHT_UNIT * (integer * centered**2).sum() / total), "n": int(finite.sum()), "quantized": quantized, "weight": packed, "packed_total": total}
         rows_of.append(row)
     count = len(fluxes)
-    best, best_sum = np.zeros((count, periods.size)), np.zeros((count, periods.size))
-    best_start, best_width = np.zeros((count, periods.size), dtype=np.int64), np.zeros((count, periods.size), dtype=np.int64)
-    best_bins, best_number = np.ones(periods.size, dtype=np.int64), np.ones((count, periods.size))
+    found_by_side = [{"best": np.zeros((count, periods.size)), "sum": np.zeros((count, periods.size)), "start": np.zeros((count, periods.size), dtype=np.int64),
+                      "width": np.zeros((count, periods.size), dtype=np.int64), "number": np.ones((count, periods.size))} for _ in range(2 if bumps else 1)]  # the dips, then the bumps
+    best_bins = np.ones(periods.size, dtype=np.int64)
 
     # The number of phase bins depends on the period alone (a power of two from its shortest duration). The periods
     # with the same number of bins are searched together, `batch` at a time.
@@ -552,11 +628,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
                 else:
                     c2 = c2_shared
 
-                winner = torch.zeros(rows, dtype=torch.float64, device=device)
-                winner_start = torch.zeros(rows, dtype=torch.int64, device=device)
-                winner_width = torch.ones(rows, dtype=torch.int64, device=device)
-                winner_sum = torch.zeros(rows, dtype=torch.float64, device=device)
-                winner_number = torch.ones(rows, dtype=torch.float64, device=device)
+                states = [{"winner": torch.zeros(rows, dtype=torch.float64, device=device), "start": torch.zeros(rows, dtype=torch.int64, device=device), "width": torch.ones(rows, dtype=torch.int64, device=device),
+                           "sum": torch.zeros(rows, dtype=torch.float64, device=device), "number": torch.ones(rows, dtype=torch.float64, device=device)} for _ in range(2 if bumps else 1)]  # the dips, then the bumps
                 # The duration steps are scored a chunk at a time, as (rows x steps x bins) tensors, so that the dozen
                 # small kernels of a step are launched once per chunk and not once per step. The best step of a chunk
                 # is the first of its maxima and a later chunk wins only if strictly better, so the result does not
@@ -564,31 +637,27 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
                 for first_step in range(0, steps_total, chunk):
                     width = widths_device[:, first_step:first_step + chunk]
                     ok = valid_device[:, first_step:first_step + chunk]
-                    value_of_step, where_of_step = score(s2, c2, position, width, ok, n_points, bins, single, row["packed_total"])
-                    value_of_step = value_of_step.double()
-                    value, step = value_of_step.max(dim=1)
-                    where = where_of_step.gather(1, step.unsqueeze(1)).squeeze(1)
-                    better = value > winner
-                    winner = torch.where(better, value, winner)
-                    winner_start = torch.where(better, where, winner_start)
-                    winner_width = torch.where(better, width.gather(1, step.unsqueeze(1)).squeeze(1), winner_width)
-                    chosen_end = where + width.gather(1, step.unsqueeze(1)).squeeze(1)  # the sum and count of the best box, as the scorer computed them
-                    winner_sum = torch.where(better, (s2[rows_index, chosen_end] - s2[rows_index, where]).double() * QUANTUM, winner_sum)
-                    inside_count = c2[rows_index, chosen_end] - c2[rows_index, where]
-                    winner_number = torch.where(better, (inside_count if row["packed_total"] is None else inside_count & ((1 << PACK_SHIFT) - 1)).double(), winner_number)
-                results.append(torch.stack([winner, winner_start.double(), winner_width.double(), winner_sum, winner_number]))  # kept on the device: one copy per batch
-            read = torch.stack(results).cpu().numpy()  # fluxes x 5 x rows; the starts and widths are integers below 2**53, exact in float64
+                    scored = score(s2, c2, position, width, ok, n_points, bins, single, row["packed_total"], bumps)
+                    for state, side in zip(states, range(len(states))):
+                        state["winner"], state["start"], state["width"], state["sum"], state["number"] = advance(
+                            state["winner"], state["start"], state["width"], state["number"], state["sum"], scored[2 * side], scored[2 * side + 1], width, s2, c2, rows_index, row["packed_total"] is not None)
+                results.append(torch.stack([torch.stack([state["winner"], state["start"].double(), state["width"].double(), state["sum"], state["number"]]) for state in states]))  # kept on the device: one copy per batch
+            read = torch.stack(results).cpu().numpy()  # fluxes x sides x 5 x rows; the starts and widths are integers below 2**53, exact in float64
             for k, row in enumerate(rows_of):
-                best[k, index] = read[k, 0] / row["sigma2"]
-                best_start[k, index] = read[k, 1].astype(np.int64)
-                best_width[k, index] = read[k, 2].astype(np.int64)
-                best_sum[k, index] = read[k, 3]
-                best_number[k, index] = read[k, 4]
+                for side, arrays in enumerate(found_by_side):
+                    arrays["best"][k, index] = read[k, side, 0] / row["sigma2"]
+                    arrays["start"][k, index] = read[k, side, 1].astype(np.int64)
+                    arrays["width"][k, index] = read[k, side, 2].astype(np.int64)
+                    arrays["sum"][k, index] = read[k, side, 3]
+                    arrays["number"][k, index] = read[k, side, 4]
             best_bins[index] = bins
 
-    def result(k, row, end):
-        """Return the result of flux k over the first `end` periods of the grid."""
+    def result(k, row, end, side=0):
+        """Return the result of flux k over the first `end` periods of the grid: of its dips (side 0), or of its bumps (side 1), which is the result of a search of the negated flux."""
         kept = time_axis[row["finite"]]
+        best, best_sum, best_start, best_width, best_number = (found_by_side[side][name] for name in ("best", "sum", "start", "width", "number"))
+        sign = 1.0 if side == 0 else -1.0  # the negated flux has the level and the sums of opposite sign
+        level, box_sum = sign * row["level"], sign * best_sum
         statistic, grid = best[k, :end], periods[:end]
         deviation = statistic.std()
         power = (statistic - statistic.mean()) / deviation if deviation > 0 else np.zeros_like(statistic)
@@ -599,7 +668,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         # best_sum is the flux in the box minus the mean of all the points, the box included; the mean in the box minus
         # the mean outside it is best_sum / (n (1 - n / N)).
         share = 1 - best_number[k, top] / (row["n"] if row["packed_total"] is None else row["packed_total"])
-        depth = float(-best_sum[k, top] / best_number[k, top] / share / row["level"] * 1e6)
+        depth = float(-box_sum[k, top] / best_number[k, top] / share / level * 1e6)
         found = {
             "period_min_searched_days": float(grid.min()),
             "period_max_searched_days": float(grid.max()),
@@ -612,7 +681,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             "depth_ppm": depth,
             "depth_mean_ppm": depth,
             "sde": float(power[top]),
-            "snr": float(depth * 1e-6 * row["level"] / (np.sqrt(row["sigma2"]) / np.sqrt(best_number[k, top] * share))),  # its square is the statistic searched
+            "snr": float(depth * 1e-6 * level / (np.sqrt(row["sigma2"]) / np.sqrt(best_number[k, top] * share))),  # its square is the statistic searched
             "transit_count": int(np.floor((kept.max() - first) / period)) + 1,
         }
         if spectrum:
@@ -621,6 +690,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         if boxes:  # the center of one transit (the others are a period apart) and the width of the best box, in days
             found["centers"] = (best_start[k, :end] + best_width[k, :end] / 2) / best_bins[:end] * grid
             found["widths_days"] = best_width[k, :end] / best_bins[:end] * grid
+        if bumps and side == 0:
+            found["bump"] = result(k, row, end, side=1)
         return found
 
     if ends is None:
@@ -628,9 +699,9 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     return [[result(k, row, end) for end in ends] for k, row in enumerate(rows_of)]
 
 
-def search(time, flux, period_min, period_max, spectrum=False, threads=1, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, boxes=False, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None):
+def search(time, flux, period_min, period_max, spectrum=False, threads=1, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, boxes=False, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False):
     """Search one flux and return its result dict: `search_many(time, [flux], ...)[0]` with unlabeled errors.
 
     See `search_many` for the arguments and the fields of the result. `threads` is accepted and ignored.
     """
-    return search_many(time, [flux], period_min, period_max, spectrum=spectrum, device=device, batch=batch, minimum_bins=minimum_bins, duration_step=duration_step, periods=periods, labeled=False, boxes=boxes, template=template, precision=precision, weights=weights, oversampling_factor=oversampling_factor, n_transits_min=n_transits_min)[0]
+    return search_many(time, [flux], period_min, period_max, spectrum=spectrum, device=device, batch=batch, minimum_bins=minimum_bins, duration_step=duration_step, periods=periods, labeled=False, boxes=boxes, template=template, precision=precision, weights=weights, oversampling_factor=oversampling_factor, n_transits_min=n_transits_min, bumps=bumps)[0]

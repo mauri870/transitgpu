@@ -18,7 +18,7 @@ N evenly spaced points over 1,000 days (`--baseline`), flat flux with 1,000 ppm 
 | `tls1`, `tls16` | TLS 2.0.1, default backend `fused-pl`, 1 and 16 threads |
 | `tls1-exact`, `tls16-exact` | TLS 2.0.1, exact backend `fused`, 1 and 16 threads |
 | `many`, `tls16-many` | 64 light curves on one time axis: one `search_many` call, and TLS (`fused-pl`, 16 threads) one curve at a time; only run when named, with `--sizes 20000` |
-| `gpu-shuffles` | 48 block-shuffled copies of one light curve in one call; only run when named |
+| `gpu-shuffles`, `gpu-bumps`, `gpu-two` | 48 block-shuffled copies in one call; dips and bumps in one search or in two; only run when named |
 
 ## Timed region
 

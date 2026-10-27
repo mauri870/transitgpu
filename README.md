@@ -58,6 +58,19 @@ SDE       10.6
 
 The NASA Exoplanet Archive lists WASP-18 b at 0.94145 d.
 
+Add `bumps=True` to search for brightenings too, from the same fold, in about 3 to 8% more time (the table under Performance). `results.bump` holds the results of the best brightening; `transitgpu.search(t, y, 0.5, 5.0, bumps=True)["bump"]` is the same as a dict. Its SDE is the z-score of the best bump statistic of each period, and its depth is above 1 for a brightening.
+
+```python
+results = transitgpu.box_search(t, y, dy).power(period_min=0.5, period_max=5.0, bumps=True)
+print(f"bump      {results.bump.period:.5f} d")
+print(f"SDE       {results.bump.SDE:.1f}")
+```
+
+```text
+bump      1.41188 d
+SDE       2.3
+```
+
 With errors, each point is weighted by 1/dy², rounded to multiples of 1/64 of the median weight and clipped to between 1/64 and 64 times it.
 
 For TLS, change the import:
@@ -145,6 +158,20 @@ uv run --group rocm python -c "import json, sys; sys.path.insert(0, 'benchmarks'
 ```
 
 `tests/test_bench.py` checks that the two tables above equal that output.
+
+The third table times the dips and the bumps of one light curve, on the input of the first table. Its three rows are from one session of 2026-10-27 on the same machine, with ROCm 7.2.53211, Python 3.13.12, numpy 2.5.4, torch 2.12.0+rocm7.2 and triton 3.7.0, the GPU to itself. Each cell is the median of seven runs in seconds, with the first and third quartiles in brackets. `benchmarks/results-bumps.json` has every run.
+
+| search of one light curve | 20,000 points | 100,000 points | 200,000 points |
+| --- | --- | --- | --- |
+| `transitgpu.search`, dips only | 0.237 (0.237–0.241) | 0.468 (0.464–0.470) | 0.544 (0.540–0.545) |
+| `transitgpu.search` with `bumps=True`, dips and bumps in one search | 0.255 (0.254–0.257) | 0.489 (0.483–0.490) | 0.560 (0.556–0.561) |
+| two `transitgpu.search` calls, of the flux and of the negated flux | 0.476 (0.475–0.477) | 0.940 (0.936–0.951) | 1.10 (1.09–1.10) |
+
+```
+uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-bumps gpu-two --repeats 7 --json bench-bumps-final.json
+```
+
+`tests/test_bench.py` checks that this table equals the output of `bench.bumps_table` on `benchmarks/results-bumps.json`.
 
 ## Tests
 

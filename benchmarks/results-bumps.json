@@ -1,0 +1,258 @@
+{
+ "command": "uv run python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-bumps gpu-two --repeats 7 --json bench-bumps-final.json",
+ "hardware": {
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "logical_cpus": 32,
+  "gpu": "AMD Radeon RX 7900 XTX",
+  "gpu_runtime": "ROCm 7.2.53211"
+ },
+ "versions": {
+  "python": "3.13.12",
+  "numpy": "2.5.4",
+  "torch": "2.12.0+rocm7.2",
+  "astropy": "8.0.2",
+  "transitleastsquares": "2.0.1",
+  "numba": "0.68.0",
+  "triton": "3.7.0",
+  "batman": "2.5.3",
+  "wotan": "1.10"
+ },
+ "seed": 20260101,
+ "baseline_days": 1000.0,
+ "period_range_days": [
+  0.5,
+  14.0
+ ],
+ "planet": {
+  "period": 3.18,
+  "t0": 1.2,
+  "duration_hr": 2.5,
+  "depth_ppm": 3000.0
+ },
+ "noise_ppm": 1000.0,
+ "t0_fit_margin": 0.01,
+ "sizes": {
+  "20000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.24307036102982238,
+      0.2448008519713767,
+      0.23973814997589216,
+      0.2372225889703259,
+      0.23665323201566935,
+      0.2373720610048622,
+      0.23686297499807552
+     ],
+     "median": 0.2373720610048622,
+     "build_seconds": 2.051746755023487,
+     "first_row_of_process": true,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 2.5912000284351873e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 1.186860305024311e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.2333984375,
+     "gpu_busy_mean_percent": 67.11111111111111,
+     "gpu_busy_largest_percent": 83.0
+    },
+    "gpu-bumps": {
+     "seconds": [
+      0.2527973490068689,
+      0.25317619397537783,
+      0.2550507470150478,
+      0.2543820989667438,
+      0.2568115089670755,
+      0.2573525449843146,
+      0.2564726150012575
+     ],
+     "median": 0.2550507470150478,
+     "build_seconds": 0.39390765398275107,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 2.7841840363187072e-06,
+     "durations": "one search of the dips and the bumps, from one fold and one set of bin sums",
+     "seconds_per_point": 1.2752537350752391e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.2333984375,
+     "gpu_busy_mean_percent": 69.66666666666667,
+     "gpu_busy_largest_percent": 90.0
+    },
+    "gpu-two": {
+     "seconds": [
+      0.4769036390352994,
+      0.4756003419752233,
+      0.670591436966788,
+      0.4743612169986591,
+      0.47776764997979626,
+      0.4741781660122797,
+      0.47518383798887953
+     ],
+     "median": 0.4756003419752233,
+     "build_seconds": 0.07555079302983359,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.191746722141575e-06,
+     "durations": "two separate searches, of the flux and of the negated flux",
+     "seconds_per_point": 2.3780017098761164e-05,
+     "measured_at_points": 20000,
+     "load_at_start": 1.2333984375,
+     "gpu_busy_mean_percent": 73.6470588235294,
+     "gpu_busy_largest_percent": 83.0
+    }
+   }
+  },
+  "100000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.4616341429646127,
+      0.45907036104472354,
+      0.4677903880365193,
+      0.4700415150146,
+      0.4720598600106314,
+      0.4673584920237772,
+      0.469476989004761
+     ],
+     "median": 0.4677903880365193,
+     "build_seconds": 0.04799204703886062,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.106491731379909e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 4.6779038803651926e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 1.294921875,
+     "gpu_busy_mean_percent": 86.52941176470588,
+     "gpu_busy_largest_percent": 96.0
+    },
+    "gpu-bumps": {
+     "seconds": [
+      0.4897033359738998,
+      0.4840432460187003,
+      0.4823317260015756,
+      0.4826944399974309,
+      0.48895893699955195,
+      0.48996141902171075,
+      0.49280931398971006
+     ],
+     "median": 0.48895893699955195,
+     "build_seconds": 0.010162624006625265,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.3375717685280814e-06,
+     "durations": "one search of the dips and the bumps, from one fold and one set of bin sums",
+     "seconds_per_point": 4.889589369995519e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 1.27099609375,
+     "gpu_busy_mean_percent": 85.23529411764706,
+     "gpu_busy_largest_percent": 96.0
+    },
+    "gpu-two": {
+     "seconds": [
+      0.9486684760195203,
+      0.9327049810090102,
+      0.9280041140154935,
+      0.9387095650308765,
+      0.9537785890279338,
+      0.9530479100067168,
+      0.9403767649782822
+     ],
+     "median": 0.9403767649782822,
+     "build_seconds": 0.01893650199053809,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.0265337419392429e-05,
+     "durations": "two separate searches, of the flux and of the negated flux",
+     "seconds_per_point": 9.403767649782822e-06,
+     "measured_at_points": 100000,
+     "load_at_start": 1.27099609375,
+     "gpu_busy_mean_percent": 86.3030303030303,
+     "gpu_busy_largest_percent": 96.0
+    }
+   }
+  },
+  "200000": {
+   "periods": 91607,
+   "rows": {
+    "gpu": {
+     "seconds": [
+      0.5437031169421971,
+      0.5454932479769923,
+      0.545226014975924,
+      0.5463850700180046,
+      0.5386550049879588,
+      0.5358833009959199,
+      0.5419460750417784
+     ],
+     "median": 0.5437031169421971,
+     "build_seconds": 0.043671683000866324,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 5.935169986378739e-06,
+     "durations": "24.0 steps per period (2199276 in all), the limits of TLS's defaults, ratio 1.1",
+     "seconds_per_point": 2.7185155847109856e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 1.3095703125,
+     "gpu_busy_mean_percent": 87.89473684210526,
+     "gpu_busy_largest_percent": 97.0
+    },
+    "gpu-bumps": {
+     "seconds": [
+      0.561113748990465,
+      0.563553189043887,
+      0.5602700099698268,
+      0.5596587419859134,
+      0.5568378170137294,
+      0.5552186080021784,
+      0.5561195390182547
+     ],
+     "median": 0.5596587419859134,
+     "build_seconds": 0.0051242519984953105,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 6.109344722411097e-06,
+     "durations": "one search of the dips and the bumps, from one fold and one set of bin sums",
+     "seconds_per_point": 2.798293709929567e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 1.28466796875,
+     "gpu_busy_mean_percent": 88.85,
+     "gpu_busy_largest_percent": 97.0
+    },
+    "gpu-two": {
+     "seconds": [
+      1.0957174660288729,
+      1.1004473440116271,
+      1.0898471740074456,
+      1.0883134250179864,
+      1.1071625260519795,
+      1.1090451900381595,
+      1.0898946149973199
+     ],
+     "median": 1.0957174660288729,
+     "build_seconds": 0.009493705001659691,
+     "first_row_of_process": false,
+     "period_found_days": 3.179957089289243,
+     "trial_periods": 91607,
+     "seconds_per_trial_period": 1.196106701484464e-05,
+     "durations": "two separate searches, of the flux and of the negated flux",
+     "seconds_per_point": 5.478587330144364e-06,
+     "measured_at_points": 200000,
+     "load_at_start": 1.28466796875,
+     "gpu_busy_mean_percent": 88.56410256410257,
+     "gpu_busy_largest_percent": 97.0
+    }
+   }
+  }
+ }
+}
