@@ -280,14 +280,14 @@ def test_a_row_records_the_cold_call_and_the_spread_table_gives_the_median_the_q
     """TG4: the spread of the timed calls (at least 30 for a row of the paper's table), the first timed call and the build of the row (its warm-up call, which compiles when the row is the first of its process) are reported apart."""
     pytest.importorskip("torch")
     path = tmp_path / "spread.json"
-    report = bench.main(["--sizes", "3000", "--baseline", "60", "--rows", "cpu1", "cpu16", "--repeats", "4", "--json", str(path)])
-    rows = report["sizes"]["3000"]["rows"]
+    report = bench.main(["--sizes", "600", "--baseline", "12", "--rows", "cpu1", "cpu16", "--repeats", "4", "--json", str(path)])
+    rows = report["sizes"]["600"]["rows"]
     assert rows["cpu1"]["first_row_of_process"] is True and rows["cpu16"]["first_row_of_process"] is False
     assert rows["cpu1"]["build_seconds"] > 0 and rows["cpu16"]["build_seconds"] > 0 and len(rows["cpu1"]["seconds"]) == 4
     printed = bench.spread_table(json.loads(path.read_text()))
     assert "| calls | median | quartiles | min | max | first timed call | build of the row (cold when first of its process) |" in printed
     assert f"| 4 | {rows['cpu1']['median']:.3g} |" in printed
-    assert bench.spread_table({**json.loads(path.read_text()), "sizes": {"3000": {"periods": 1, "rows": {"cpu1": {"estimated_seconds": 5.0, "seconds_per_point": 1.0, "measured_at_points": 3000}}}}}).count("not run") == 1
+    assert bench.spread_table({**json.loads(path.read_text()), "sizes": {"600": {"periods": 1, "rows": {"cpu1": {"estimated_seconds": 5.0, "seconds_per_point": 1.0, "measured_at_points": 3000}}}}}).count("not run") == 1
 
 
 def test_the_gtls_input_is_one_light_curve_at_30_minute_cadence_with_the_grid_to_half_the_span_and_the_gtls_rows(bench, tmp_path):

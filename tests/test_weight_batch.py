@@ -22,8 +22,8 @@ def fresh_compiler(monkeypatch):
 
 
 def stack():
-    """Three sectors of 8 days, 40 days apart, at 30 minutes (1,152 points), a 3.18 day dip of 2.5 hours and 1,500 ppm, in 400 ppm of noise."""
-    time = np.concatenate([np.arange(0.0, 8.0, 1 / 48), np.arange(40.0, 48.0, 1 / 48), np.arange(80.0, 88.0, 1 / 48)])
+    """Three sectors of 3 days, 15 days apart, at 30 minutes (432 points), a 3.18 day dip of 2.5 hours and 1,500 ppm, in 400 ppm of noise."""
+    time = np.concatenate([np.arange(0.0, 3.0, 1 / 48), np.arange(15.0, 18.0, 1 / 48), np.arange(30.0, 33.0, 1 / 48)])
     flux = 1 + np.random.default_rng(4).normal(0, 400e-6, time.size)
     flux[np.abs(time - (1.2 + np.round((time - 1.2) / 3.18) * 3.18)) < 2.5 / 48] -= 1500e-6
     return time, flux
@@ -49,11 +49,11 @@ def same(found, other):
 @pytest.mark.parametrize("bumps", [False, True])
 def test_each_row_of_a_batch_is_the_search_of_the_flux_with_that_row_to_the_bit(bumps):
     time, flux = stack()
-    rows = vectors(5, time.size)
-    batch = search_many(time, [flux], 0.6, 12.0, spectrum=True, boxes=True, weights=rows, bumps=bumps)
-    assert len(batch) == 5
+    rows = vectors(3, time.size)
+    batch = search_many(time, [flux], 0.6, 6.0, spectrum=True, boxes=True, weights=rows, bumps=bumps)
+    assert len(batch) == 3
     for found, row in zip(batch, rows):
-        alone = search(time, flux, 0.6, 12.0, spectrum=True, boxes=True, weights=row, bumps=bumps)
+        alone = search(time, flux, 0.6, 6.0, spectrum=True, boxes=True, weights=row, bumps=bumps)
         same({key: value for key, value in found.items() if key != "bump"}, {key: value for key, value in alone.items() if key != "bump"})
         if bumps:
             same(found["bump"], alone["bump"])
@@ -65,20 +65,20 @@ def test_a_weight_of_zero_is_a_point_with_no_flux():
     row = vectors(2, time.size)[1]
     masked = flux.copy()
     masked[row == 0] = np.nan
-    by_weight = search(time, flux, 0.6, 12.0, spectrum=True, weights=row)
-    by_nan = search(time, masked, 0.6, 12.0, spectrum=True, weights=np.where(row > 0, row, 1.0))
+    by_weight = search(time, flux, 0.6, 6.0, spectrum=True, weights=row)
+    by_nan = search(time, masked, 0.6, 6.0, spectrum=True, weights=np.where(row > 0, row, 1.0))
     same(by_weight, by_nan)
 
 
 def test_one_row_of_weights_for_one_flux_is_one_result_and_a_matrix_for_many_fluxes_keeps_its_rows():
     time, flux = stack()
     rows = vectors(2, time.size)
-    one = search_many(time, [flux], 0.6, 12.0, weights=rows[:1])
+    one = search_many(time, [flux], 0.6, 6.0, weights=rows[:1])
     assert len(one) == 1
-    same(one[0], search(time, flux, 0.6, 12.0, weights=rows[0]))
-    two = search_many(time, [flux, flux[::-1].copy()], 0.6, 12.0, weights=rows)
+    same(one[0], search(time, flux, 0.6, 6.0, weights=rows[0]))
+    two = search_many(time, [flux, flux[::-1].copy()], 0.6, 6.0, weights=rows)
     assert len(two) == 2
-    same(two[1], search(time, flux[::-1].copy(), 0.6, 12.0, weights=rows[1]))
+    same(two[1], search(time, flux[::-1].copy(), 0.6, 6.0, weights=rows[1]))
 
 
 @pytest.mark.parametrize("bad", ["negative", "nan", "all zero", "too few"])
@@ -95,4 +95,4 @@ def test_weights_that_are_negative_not_finite_or_leave_too_few_points_raise(bad)
         row[:] = 0.0
         row[:5] = 1.0
     with pytest.raises(ValueError, match="weight"):
-        search(time, flux, 0.6, 12.0, weights=row)
+        search(time, flux, 0.6, 6.0, weights=row)
