@@ -2,6 +2,8 @@
 
 transitgpu is a parallel search for alien worlds: Box Least Squares (BLS) and Transit Least Squares (TLS) for exoplanet transit detection, accelerated on the GPU with PyTorch for CUDA and ROCm.
 
+If you use transitgpu, please cite [Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection](paper/main.pdf).
+
 Tested on one AMD GPU (gfx1100, ROCm 7.2); not yet tested on NVIDIA. On other devices the package uses only its Triton kernels, which Triton also compiles for NVIDIA GPUs; its one HIP kernel, a faster accumulation of the box search, runs only on ROCm and uses no AMD-specific instruction.
 
 ## Why
@@ -196,10 +198,6 @@ From a clone, run `uv run --group rocm pytest`, or use `--group cu128` or `--gro
 ## Attribution
 
 The box statistic is that of Kovács, Zucker and Mazeh (2002, A&A 391, 369). The template search is Transit Least Squares (Hippke and Heller 2019, A&A 623, A39) and its period grid is Ofir (2014, A&A 561, A138). The layout of the search on a GPU follows GTLS (Hu et al. 2026, arXiv:2607.00348).
-
-## Citation
-
-If you use transitgpu, please cite [Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection](paper/main.pdf).
 
 ## Licence
 

@@ -94,12 +94,15 @@ def test_the_paper_is_in_the_repository_and_in_neither_the_wheel_nor_the_source_
     assert "paper" not in targets["sdist"]["include"], "the sdist is the list of what it carries, and the paper is not in it"
 
 
-def test_the_readme_has_a_citation_section_that_links_the_paper_and_the_citation_file_and_a_licence_section_after_it():
+def test_the_readme_links_the_paper_once_right_after_its_first_paragraph_and_ends_with_the_licence():
     text = (ROOT / "README.md").read_text()
-    assert text.index("## Attribution") < text.index("## Citation") < text.index("## Licence")
-    citation = text[text.index("## Citation"):text.index("## Licence")]
-    assert "(paper/main.pdf)" in citation and "Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection" in citation
-    assert "Hippke" not in citation and "Kovács" not in citation, "the references of the methods are given once, in Attribution"
+    title = "Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection"
+    opening = text[:text.index("## Why")]
+    assert f"[{title}](paper/main.pdf)" in opening, "the paper is cited in the opening, before the first section"
+    assert text.count("(paper/main.pdf)") == 1, "the paper is linked once"
+    assert "## Citation" not in text
+    assert "Hippke" not in opening and "Kovács" not in opening, "the references of the methods are given once, in Attribution"
+    assert text.index("## Attribution") < text.index("## Licence")
     assert text.rstrip().endswith("`THIRD_PARTY/TLS-LICENSE`.") and "MIT licensed" in text[text.index("## Licence"):]
 
 
