@@ -586,8 +586,14 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             row = {"finite": finite, "level": level, "sigma2": float(WEIGHT_UNIT * (integer * centered**2).sum() / total), "n": int(finite.sum()), "quantized": quantized, "weight": packed, "packed_total": total}
         rows_of.append(row)
     count = len(fluxes)
-    found_by_side = [{"best": np.zeros((count, periods.size)), "sum": np.zeros((count, periods.size)), "start": np.zeros((count, periods.size), dtype=np.int64),
-                      "width": np.zeros((count, periods.size), dtype=np.int64), "number": np.ones((count, periods.size))} for _ in range(2 if bumps else 1)]  # the dips, then the bumps
+    compact = not boxes  # without boxes the fields of the best box are read at the best period of each cut only, so they are kept for that period and not for every one
+    sides = 2 if bumps else 1  # the dips, then the bumps
+    found_by_side = [{"best": np.zeros((count, periods.size))} for _ in range(sides)]
+    if not compact:
+        for arrays in found_by_side:
+            arrays.update(sum=np.zeros((count, periods.size)), start=np.zeros((count, periods.size), dtype=np.int64), width=np.zeros((count, periods.size), dtype=np.int64), number=np.ones((count, periods.size)))
+    ends_of = [periods.size] if ends is None else ends
+    tops = [[[None] * len(ends_of) for _ in range(count)] for _ in range(sides)]  # (statistic, period index, start, width, sum, number) of the best period of each flux over the periods up to each end
     best_bins = np.ones(periods.size, dtype=np.int64)
 
     # The number of phase bins depends on the period alone (a power of two from its shortest duration). The periods
@@ -655,51 +661,68 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             read = torch.stack(results).cpu().numpy()  # fluxes x sides x 5 x rows; the starts and widths are integers below 2**53, exact in float64
             for k, row in enumerate(rows_of):
                 for side, arrays in enumerate(found_by_side):
-                    arrays["best"][k, index] = read[k, side, 0] / row["sigma2"]
-                    arrays["start"][k, index] = read[k, side, 1].astype(np.int64)
-                    arrays["width"][k, index] = read[k, side, 2].astype(np.int64)
-                    arrays["sum"][k, index] = read[k, side, 3]
-                    arrays["number"][k, index] = read[k, side, 4]
+                    values = read[k, side, 0] / row["sigma2"]
+                    arrays["best"][k, index] = values
+                    if not compact:
+                        arrays["start"][k, index] = read[k, side, 1].astype(np.int64)
+                        arrays["width"][k, index] = read[k, side, 2].astype(np.int64)
+                        arrays["sum"][k, index] = read[k, side, 3]
+                        arrays["number"][k, index] = read[k, side, 4]
+                        continue
+                    for slot, end in enumerate(ends_of):  # index is ascending: the first maximum of the periods before the end, and a later batch wins only with a larger statistic or an earlier period at the same one
+                        inside = int(np.searchsorted(index, end))
+                        if inside == 0:
+                            continue
+                        local = int(np.argmax(values[:inside]))
+                        kept = tops[side][k][slot]
+                        if kept is None or values[local] > kept[0] or (values[local] == kept[0] and index[local] < kept[1]):
+                            tops[side][k][slot] = (values[local], int(index[local]), int(read[k, side, 1][local]), int(read[k, side, 2][local]), float(read[k, side, 3][local]), float(read[k, side, 4][local]))
             best_bins[index] = bins
 
     def result(k, row, end, side=0):
         """Return the result of flux k over the first `end` periods of the grid: of its dips (side 0), or of its bumps (side 1), which is the result of a search of the negated flux."""
         kept = time_axis[row["finite"]]
-        best, best_sum, best_start, best_width, best_number = (found_by_side[side][name] for name in ("best", "sum", "start", "width", "number"))
+        arrays = found_by_side[side]
         sign = 1.0 if side == 0 else -1.0  # the negated flux has the level and the sums of opposite sign
-        level, box_sum = sign * row["level"], sign * best_sum
-        statistic, grid = best[k, :end], periods[:end]
+        level = sign * row["level"]
+        statistic, grid = arrays["best"][k, :end], periods[:end]
         deviation = statistic.std()
         power = (statistic - statistic.mean()) / deviation if deviation > 0 else np.zeros_like(statistic)
         top = int(np.argmax(statistic))
+        if compact:
+            _, kept_top, box_start, box_width, box_sum, box_number = tops[side][k][ends_of.index(end)]
+            assert kept_top == top, f"the best period kept while searching ({kept_top}) is not the best of the spectrum ({top})"
+        else:
+            box_start, box_width, box_sum, box_number = (arrays[name][k, top] for name in ("start", "width", "sum", "number"))
+        box_sum = sign * box_sum
         period = float(grid[top])
-        center = (best_start[k, top] + best_width[k, top] / 2) / best_bins[top] * period
+        center = (box_start + box_width / 2) / best_bins[top] * period
         first = center + np.ceil((kept.min() - center) / period) * period
         # best_sum is the flux in the box minus the mean of all the points, the box included; the mean in the box minus
         # the mean outside it is best_sum / (n (1 - n / N)).
-        share = 1 - best_number[k, top] / (row["n"] if row["packed_total"] is None else row["packed_total"])
-        depth = float(-box_sum[k, top] / best_number[k, top] / share / level * 1e6)
+        share = 1 - box_number / (row["n"] if row["packed_total"] is None else row["packed_total"])
+        depth = float(-box_sum / box_number / share / level * 1e6)
         found = {
             "period_min_searched_days": float(grid.min()),
             "period_max_searched_days": float(grid.max()),
             "period_days": period,
             "period_uncertainty_days": float(period_uncertainty(grid, power)),  # TLS's half width at half maximum of the highest peak
             "t0_days": float(first),
-            "duration_hr": float(best_width[k, top] / best_bins[top] * period * 24),
-            "duration_corrected_hr": float(best_width[k, top] / best_bins[top] * period * 24),
+            "duration_hr": float(box_width / best_bins[top] * period * 24),
+            "duration_corrected_hr": float(box_width / best_bins[top] * period * 24),
             "fill_factor": 1.0,
             "depth_ppm": depth,
             "depth_mean_ppm": depth,
             "sde": float(power[top]),
-            "snr": float(depth * 1e-6 * level / (np.sqrt(row["sigma2"]) / np.sqrt(best_number[k, top] * share))),  # its square is the statistic searched
+            "snr": float(depth * 1e-6 * level / (np.sqrt(row["sigma2"]) / np.sqrt(box_number * share))),  # its square is the statistic searched
             "transit_count": int(np.floor((kept.max() - first) / period)) + 1,
         }
         if spectrum:
             found["periods"] = grid
             found["power"] = power
         if boxes:  # the center of one transit (the others are a period apart) and the width of the best box, in days
-            found["centers"] = (best_start[k, :end] + best_width[k, :end] / 2) / best_bins[:end] * grid
-            found["widths_days"] = best_width[k, :end] / best_bins[:end] * grid
+            found["centers"] = (arrays["start"][k, :end] + arrays["width"][k, :end] / 2) / best_bins[:end] * grid
+            found["widths_days"] = arrays["width"][k, :end] / best_bins[:end] * grid
         if bumps and side == 0:
             found["bump"] = result(k, row, end, side=1)
         return found
