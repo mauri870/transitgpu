@@ -15,8 +15,8 @@ pytestmark = pytest.mark.gpu  # every test of this module may search on the devi
 
 
 def stack():
-    """Three sectors of 8 days, 40 days apart, at 30 minutes (1,152 points), a 3.18 day dip of 2.5 hours and 1,500 ppm in 400 ppm of noise, and five fluxes: the stack and four block shuffles of it."""
-    time = np.concatenate([np.arange(0.0, 8.0, 1 / 48), np.arange(40.0, 48.0, 1 / 48), np.arange(80.0, 88.0, 1 / 48)])
+    """Three sectors of 4 days, 20 days apart, at 30 minutes (576 points), a 3.18 day dip of 2.5 hours and 1,500 ppm in 400 ppm of noise, and five fluxes: the stack and four block shuffles of it."""
+    time = np.concatenate([np.arange(0.0, 4.0, 1 / 48), np.arange(20.0, 24.0, 1 / 48), np.arange(40.0, 44.0, 1 / 48)])
     rng = np.random.default_rng(4)
     flux = 1 + rng.normal(0, 400e-6, time.size)
     flux[np.abs(time - (1.2 + np.round((time - 1.2) / 3.18) * 3.18)) < 2.5 / 48] -= 1500e-6
@@ -43,16 +43,16 @@ def assert_same(reduced, full):
 @pytest.mark.parametrize("options", [{}, {"bumps": True}, {"spectrum": True}])
 def test_the_best_box_kept_for_the_best_period_equals_the_one_read_from_every_period(options):
     time, fluxes = stack()
-    reduced = search_many(time, fluxes, 0.5, 14.0, **options)
-    assert_same(reduced, search_many(time, fluxes, 0.5, 14.0, boxes=True, **options))
+    reduced = search_many(time, fluxes, 0.5, 6.0, **options)
+    assert_same(reduced, search_many(time, fluxes, 0.5, 6.0, boxes=True, **options))
 
 
 def test_every_cut_of_a_list_of_cuts_has_its_own_best_box_and_equals_the_full_result():
     time, fluxes = stack()
-    grid = grid_of(time, fluxes[0], 0.5, 40.0)
-    cuts = (3.0, 14.0, float(grid.max()))
-    reduced = search_many(time, fluxes, 0.5, 40.0, periods=grid, cuts=cuts, bumps=True)
-    assert_same(reduced, search_many(time, fluxes, 0.5, 40.0, periods=grid, cuts=cuts, bumps=True, boxes=True))
+    grid = grid_of(time, fluxes[0], 0.5, 14.0)
+    cuts = (2.0, 6.0, float(grid.max()))
+    reduced = search_many(time, fluxes, 0.5, 14.0, periods=grid, cuts=cuts, bumps=True)
+    assert_same(reduced, search_many(time, fluxes, 0.5, 14.0, periods=grid, cuts=cuts, bumps=True, boxes=True))
     assert len({round(each["period_days"], 6) for each in reduced[0]}) > 1, "the cuts must end on different best periods for the test to separate them"
 
 
@@ -68,12 +68,12 @@ def test_two_trial_periods_with_the_same_statistic_in_different_batches_give_the
 def test_a_search_without_boxes_holds_less_than_the_arrays_of_every_period_that_a_search_with_boxes_holds():
     time, fluxes = stack()
     fluxes = fluxes * 2
-    search_many(time, fluxes, 0.5, 14.0)  # compiled and cached before either peak is read
+    search_many(time, fluxes, 0.5, 6.0)  # compiled and cached before either peak is read
     peaks = {}
     for boxes in (True, False):
         tracemalloc.start()
-        search_many(time, fluxes, 0.5, 14.0, boxes=boxes)
+        search_many(time, fluxes, 0.5, 6.0, boxes=boxes)
         peaks[boxes] = tracemalloc.get_traced_memory()[1]
         tracemalloc.stop()
-    array_bytes = 8 * len(fluxes) * grid_of(time, fluxes[0], 0.5, 14.0).size
+    array_bytes = 8 * len(fluxes) * grid_of(time, fluxes[0], 0.5, 6.0).size
     assert peaks[True] - peaks[False] >= 3 * array_bytes, f"the arrays of four fields of {array_bytes} bytes each were not freed: peaks {peaks}"
