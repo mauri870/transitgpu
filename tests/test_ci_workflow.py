@@ -4,7 +4,6 @@ A structure check on a text file, which a data archive of the package's own form
 from pathlib import Path
 
 import pytest
-
 import yaml
 
 WORKFLOW = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "ci.yml"
@@ -46,3 +45,9 @@ def test_the_actions_are_pinned_to_a_major_version_uv_has_a_version_and_the_job_
     setup = [step for step in steps if step["uses"].startswith("astral-sh/setup-uv@")]
     assert len(setup) == 1 and setup[0]["with"]["version"] == "0.11.2" and setup[0]["with"]["enable-cache"] is True
     assert workflow["permissions"] == {"contents": "read"} and workflow["jobs"]["test"]["timeout-minutes"] <= 60
+
+
+def test_the_lint_job_runs_ruff_from_the_locked_dev_group_without_installing_the_package():
+    job = load()["jobs"]["lint"]
+    assert [step["run"] for step in job["steps"] if "run" in step] == ["uv run --only-dev ruff check"]
+    assert job["runs-on"] == "ubuntu-latest" and job["timeout-minutes"] <= 10
