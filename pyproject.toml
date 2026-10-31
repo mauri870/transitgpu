@@ -43,7 +43,10 @@ bench = ["astropy", "transitleastsquares==2.0.1"]
 test = ["pytest", "scipy", "astropy", "pyyaml", "batman-package", "wotan==1.10", "transitleastsquares==2.0.1"]
 # validation/: the injection-recovery evaluation (wotan flattens the red, variable and real light curves with a biweight filter of 3 days)
 validation = ["batman-package==2.5.3", "wotan==1.10", "astropy", "transitleastsquares==2.0.1", "scipy"]
-dev = [{ include-group = "test" }]
+dev = [
+    { include-group = "test" },
+    "ruff>=0.17.3",
+]
 # the build of torch for each kind of accelerator; exactly one is chosen: `uv sync --group rocm`. They are dependency groups and not extras, which a wheel would publish with a requirement that names no build of torch. The rocm group pins the versions of torch and triton that the measurements of the paper were made with; the other two were not measured
 cpu = ["torch>=2.5"]
 cu128 = ["torch>=2.5"]
@@ -103,3 +106,7 @@ explicit = true
 name = "pytorch-rocm"
 url = "https://download.pytorch.org/whl/rocm7.2"
 explicit = true
+
+[tool.ruff.lint]
+# Rules with findings in the tree; new rules apply in full. Remove a code when its findings are fixed.
+ignore = ["B018", "B023", "BLE001", "C401", "C408", "F822", "F841", "PERF102", "PLC3002", "PLW1510", "RUF007", "RUF046", "RUF059", "SIM115"]

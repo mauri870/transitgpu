@@ -51,7 +51,8 @@ def test_the_metadata_names_the_author_the_addresses_and_the_lower_bounds_the_co
     assert any(classifier == "Programming Language :: Python :: 3.12" for classifier in project["classifiers"]) and project["requires-python"] == ">=3.12"
     assert set(project["optional-dependencies"]) == {"tls", "examples", "bench"}, "the extras are what a user installs; the tests and the builds of torch are dependency groups, which a wheel does not publish"
     groups = metadata["dependency-groups"]
-    assert {"dev", "test"} <= set(groups) <= {"dev", "test", "validation", "cpu", "cu128", "rocm"} and groups["dev"] == [{"include-group": "test"}]  # cpu, cu128 and rocm are added by the export
+    assert {"dev", "test"} <= set(groups) <= {"dev", "test", "validation", "cpu", "cu128", "rocm"}  # cpu, cu128 and rocm are added by the export
+    assert {"include-group": "test"} in groups["dev"] and any(str(entry).startswith("ruff") for entry in groups["dev"])
 
 
 def test_the_sdist_carries_what_a_reader_needs_to_run_the_tests_and_the_examples():
