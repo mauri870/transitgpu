@@ -11,10 +11,10 @@ import pytest
 torch = pytest.importorskip("torch")
 sys.path.insert(0, str(Path(__file__).parent / "golden_upstream"))
 oracle = pytest.importorskip("core_oracle")
-import transitleastsquares.tls_constants as C  # noqa: E402
-from transitleastsquares.backends import SearchProblem  # noqa: E402
+import transitleastsquares.tls_constants as C
+from transitleastsquares.backends import SearchProblem
 
-from transitgpu.tls.window import WindowBackend  # noqa: E402
+from transitgpu.tls.window import WindowBackend
 
 pytestmark = pytest.mark.gpu
 PERIODS = [2.3, 1.7, 4.11, 0.93, 0.61]

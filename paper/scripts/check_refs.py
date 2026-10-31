@@ -7,8 +7,8 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-import xml.etree.ElementTree as ElementTree
 from pathlib import Path
+from xml.etree import ElementTree
 
 HERE = Path(__file__).resolve().parent.parent
 HEADERS = {"User-Agent": "transitgpu-reference-check (mailto:mauri870@gmail.com)"}

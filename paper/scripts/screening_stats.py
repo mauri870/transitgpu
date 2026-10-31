@@ -7,7 +7,10 @@ the screened search's own (the exact gain of the deepest box of each duration am
 `transitgpu.tls.window` takes it). Each stage is counted against the starts of the stage before it, and the starts
 that survive all three bounds are checked against those that the screening kernel keeps for the same batch.
 """
-import argparse, importlib.util, json, warnings
+import argparse
+import importlib.util
+import json
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -17,13 +20,13 @@ warnings.filterwarnings("ignore")
 _spec = importlib.util.spec_from_file_location("transitgpu_bench", Path(__file__).resolve().parents[2] / "benchmarks" / "bench.py")
 bench = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bench)
-from transitleastsquares import transitleastsquares  # noqa: E402
-from transitleastsquares.validate import validate_args  # noqa: E402
+from transitleastsquares import transitleastsquares
+from transitleastsquares.validate import validate_args
 
-from transitgpu.tls import window as W  # noqa: E402
-from transitgpu.tls.fold import phase_order, phases  # noqa: E402
-from transitgpu.tls.prefix import prefix_arrays  # noqa: E402
-from transitgpu.tls.screen import SEED_COARSEN, SIGNAL_DEPTH, Screen  # noqa: E402
+from transitgpu.tls import window as W
+from transitgpu.tls.fold import phase_order, phases
+from transitgpu.tls.prefix import prefix_arrays
+from transitgpu.tls.screen import SEED_COARSEN, SIGNAL_DEPTH, Screen
 
 BUCKETS = ((0, 64, "under 64"), (64, 128, "64 to 127"), (128, 256, "128 to 255"), (256, 512, "256 to 511"), (512, 1024, "512 to 1,023"), (1024, 2048, "1,024 to 2,047"), (2048, 4096, "2,048 to 4,095"), (4096, 1 << 30, "4,096 or more"))
 RANGES = ((0.5, 1.0), (1.0, 2.0), (2.0, 5.0), (5.0, 14.0))

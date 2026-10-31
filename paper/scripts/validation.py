@@ -54,6 +54,7 @@ def main():
     parser.add_argument("--out", type=Path, default=HERE.parent / "validation_table.tex")
     arguments = parser.parse_args()
     import golden_cases
+
     import transitgpu.tls  # noqa: F401  (registers the backend "gpu")
 
     worst = {}

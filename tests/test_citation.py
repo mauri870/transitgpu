@@ -15,13 +15,13 @@ STATUSES = {"abstract", "advance-online", "in-preparation", "in-press", "preprin
 
 
 def title_of_the_paper():
-    match = re.search(r"^\\title\{(.*)\}\s*$", (ROOT / "paper" / "main.tex").read_text(), re.M)
+    match = re.search(r"^\\title\{(.*)\}\s*$", (ROOT / "paper" / "main.tex").read_text(), re.MULTILINE)
     assert match, "main.tex has a \\title on one line"
     return match.group(1).replace("\\\\ ", " ")  # a line break of the title is a space of the citation
 
 
 def title_of(bibliography, key):
-    entry = re.search(r"@\w+\{" + key + r",(.*?)\n@", bibliography + "\n@", re.S).group(1)
+    entry = re.search(r"@\w+\{" + key + r",(.*?)\n@", bibliography + "\n@", re.DOTALL).group(1)
     return re.sub(r"[{}]", "", re.search(r"title = \{(.*)\},?\n", entry).group(1))
 
 

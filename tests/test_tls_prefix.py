@@ -4,7 +4,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitgpu.tls.prefix import CHUNK, prefix_arrays, prefix_arrays_torch  # noqa: E402
+from transitgpu.tls.prefix import CHUNK, prefix_arrays, prefix_arrays_torch
 
 
 def case(points, extra, rows=3, seed=1, device="cpu"):

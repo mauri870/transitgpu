@@ -22,7 +22,7 @@ import time
 
 import numpy as np
 import torch
-import torch.nn.functional as functional
+from torch.nn import functional
 from transitleastsquares.backends import SearchBackend, SearchResult
 from transitleastsquares.grid import T14
 

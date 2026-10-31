@@ -9,7 +9,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitgpu import core, hip  # noqa: E402
+from transitgpu import core, hip
 
 on_rocm = bool(torch.version.hip) and torch.cuda.is_available()
 needs_rocm = pytest.mark.skipif(not on_rocm, reason="the HIP kernel runs on ROCm only")

@@ -9,9 +9,8 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
-
 import analyse
+import numpy as np
 
 PARTS = ("main-white", "main-red", "main-variable")
 SEARCHES = ("exact", "binned", "box", "hybrid5")

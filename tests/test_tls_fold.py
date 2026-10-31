@@ -4,8 +4,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitgpu.tls.fold import phase_order  # noqa: E402
-from transitgpu.tls.fold import phases as fold_phases  # noqa: E402
+from transitgpu.tls.fold import phase_order
+from transitgpu.tls.fold import phases as fold_phases
 
 
 def phases(times, periods):

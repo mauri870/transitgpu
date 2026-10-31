@@ -6,9 +6,7 @@
 - the spectra that divide by the spread of chi square (power, power_raw, SR) an absolute 1e-5 on top of the relative 1e-6, because the division amplifies the rounding of chi square by about 1e4 (TLS's own golden test allows 1e-8 for the same reason at 1e-9).
 
 Function tests: the references are TLS's results, run here."""
-import os
 import sys
-import warnings
 from pathlib import Path
 
 import numpy as np
@@ -16,9 +14,9 @@ import pytest
 
 torch = pytest.importorskip("torch")
 sys.path.insert(0, str(Path(__file__).parent / "golden_upstream"))
-import golden_cases  # noqa: E402
+import golden_cases
 
-import transitgpu.tls  # noqa: E402,F401  (registers the backends "gpu" and "gpu-binned")
+import transitgpu.tls  # noqa: F401  (registers the backends "gpu" and "gpu-binned")
 
 pytestmark = pytest.mark.gpu
 SPECTRA = ("power", "power_raw", "SR")

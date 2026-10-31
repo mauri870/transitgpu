@@ -9,12 +9,12 @@ import pytest
 
 torch = pytest.importorskip("torch")
 sys.path.insert(0, str(Path(__file__).parent / "golden_upstream"))
-import golden_cases  # noqa: E402
-from test_tls_binned import exact_arguments, light_curve, problem_of  # noqa: E402
+import golden_cases
+from test_tls_binned import exact_arguments, light_curve, problem_of
 
-import transitgpu.tls  # noqa: E402,F401  (registers the backends)
-from transitgpu.tls.pl import pl_power  # noqa: E402
-from transitgpu.tls.window import window_power  # noqa: E402
+import transitgpu.tls  # noqa: F401  (registers the backends)
+from transitgpu.tls.pl import pl_power
+from transitgpu.tls.window import window_power
 
 pytestmark = pytest.mark.gpu
 UNEQUAL_ERRORS = ("syn_earth_dy", "narrow_stellar")

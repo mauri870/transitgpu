@@ -5,8 +5,8 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-import transitgpu  # noqa: E402
-from transitgpu.hybrid import Peak, top_peaks  # noqa: E402
+import transitgpu
+from transitgpu.hybrid import Peak, top_peaks
 
 
 def light_curve(period=3.18, t0=1.2, duration_hr=2.5, depth_ppm=3000, noise_ppm=1000, days=27.0, seed=3, cadence_min=30.0):

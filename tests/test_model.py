@@ -6,10 +6,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from test_transitgpu import light_curve  # noqa: E402
+from test_transitgpu import light_curve
 
-import transitgpu  # noqa: E402
-from transitgpu import core  # noqa: E402
+import transitgpu
+from transitgpu import core
 
 pytestmark = pytest.mark.gpu
 

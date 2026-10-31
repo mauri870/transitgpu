@@ -4,12 +4,11 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitleastsquares import transitleastsquares  # noqa: E402
-from transitleastsquares.backends import get_backend  # noqa: E402
-from transitleastsquares.validate import validate_args  # noqa: E402
+from transitleastsquares import transitleastsquares
+from transitleastsquares.validate import validate_args
 
-from transitgpu.tls import binned as tls_binned  # noqa: E402
-from transitgpu.tls.window import window_power  # noqa: E402
+from transitgpu.tls import binned as tls_binned
+from transitgpu.tls.window import window_power
 
 
 def light_curve(points=6000, seed=1, period=3.0, depth=0.004, duration=0.12, span=60.0):
@@ -138,7 +137,7 @@ def _power_of(time, flux, exact):
 def test_the_binned_backend_says_exact_so_that_tls_does_not_bin_the_light_curve_a_second_time():
     """With exact = False, TLS 2.0.1 (main.py, _search_plan) also bins the light curve in time where the shortest trial
     duration allows it: at a cadence of 20 s that changes the periodogram, at 2 minutes it does not."""
-    transitleastsquares = pytest.importorskip("transitleastsquares")  # noqa: F841
+    transitleastsquares = pytest.importorskip("transitleastsquares")
     if not torch.cuda.is_available():
         pytest.skip("no device: the binned backend searches on a GPU only and raises without one")
     time, flux = _dense_light_curve(120, 30)

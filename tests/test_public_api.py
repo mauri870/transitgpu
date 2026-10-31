@@ -4,10 +4,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from test_transitgpu import light_curve  # noqa: E402
+from test_transitgpu import light_curve
 
-import transitgpu  # noqa: E402
-from transitgpu import core  # noqa: E402
+import transitgpu
+from transitgpu import core
 
 RESULT_FIELDS = ("depth_mean_ppm", "depth_ppm", "duration_corrected_hr", "duration_hr", "fill_factor", "period_days", "period_max_searched_days", "period_min_searched_days", "period_uncertainty_days", "periods", "power",
                  "sde", "snr", "t0_days", "transit_count")

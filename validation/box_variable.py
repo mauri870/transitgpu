@@ -14,10 +14,9 @@ import time as clock
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-import numpy as np
-
 import analyse
 import generator
+import numpy as np
 import run
 
 HERE = Path(__file__).resolve().parent
@@ -75,8 +74,9 @@ def astropy_box(time, flux, errors, periods):
 def statistics(time, flux, errors, period_min, period_max, device=None):
     """The three searches on one light curve: {"box", "box_detrended", "astropy"}, each with the period and transit time of its best peak, its SDE and its seconds. `device` is for a CPU run in the tests; the box
     search runs on the GPU by default. The detrended spectrum's peak is its own argmax, with the centre of the best box of that period."""
-    import transitgpu
     from transitleastsquares.stats import sde_trend
+
+    import transitgpu
 
     started = clock.perf_counter()
     search = transitgpu.box_search(time, flux, errors)

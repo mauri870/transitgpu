@@ -78,7 +78,7 @@ if triton is not None:
         first = tl.load(starts + row * bins + mine, mask=inside, other=0)
         size = tl.load(counts + row * bins + mine, mask=inside, other=0)
         rank = tl.zeros([block], dtype=tl.int32)
-        for step in range(0, tl.minimum(tl.max(size, axis=0), limit)):
+        for step in range(tl.minimum(tl.max(size, axis=0), limit)):
             alive = inside & (step < size)
             other = tl.load(grouped + row * row_points + first + step, mask=alive, other=0)
             other_key = tl.load(phase + row * row_points + other, mask=alive, other=0.0)

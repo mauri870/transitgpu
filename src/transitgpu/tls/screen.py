@@ -28,7 +28,11 @@ try:
     import triton.language as tl
 except ImportError:  # the bounds run as torch operations instead
     triton = None
-from transitleastsquares.core_fused import flatten_templates, screen_round_budget, screen_templates
+from transitleastsquares.core_fused import (
+    flatten_templates,
+    screen_round_budget,
+    screen_templates,
+)
 
 SIGNAL_DEPTH = 0.5  # transitleastsquares.tls_constants.SIGNAL_DEPTH: the depth of the cached templates
 # Knot tolerance of the cheap proxy, relative to the largest sample of the template (TLS's own proxy uses 0.1 below

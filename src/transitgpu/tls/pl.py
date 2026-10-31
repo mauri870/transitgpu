@@ -11,9 +11,9 @@ import time
 
 import numpy as np
 import torch
+from transitleastsquares.core_fused import flatten_templates, pl_templates
 
 from transitgpu.core import on_device
-from transitleastsquares.core_fused import flatten_templates, pl_templates
 
 from .fold import counting_order
 from .prefix import prefix_arrays

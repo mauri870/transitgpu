@@ -11,10 +11,9 @@ the windows have a fixed width in phase, which differs from TLS's statistic wher
 unevenly. TLS's own backends ("fused", "fused-pl", ...) remain available by name.
 """
 try:
-    from transitleastsquares import (  # noqa: F401  TLS's interface, re-exported
+    from transitleastsquares import (
         FAP,
         SearchBackend,
-        __version__ as tls_version,
         available_backends,
         catalog_info,
         cleaned_array,
@@ -28,6 +27,9 @@ try:
         transit_mask,
         warmup,
     )
+    from transitleastsquares import (
+        __version__ as tls_version,
+    )
     from transitleastsquares import transitleastsquares as _tls
 except ModuleNotFoundError as error:
     if error.name != "transitleastsquares":
@@ -38,8 +40,25 @@ from transitgpu import __version__
 
 TLS_VERSION = "2.0.1"
 __all__ = [
-    "FAP", "SearchBackend", "TLS_VERSION", "__version__", "available_backends", "catalog_info", "check_version", "cleaned_array", "duration_grid", "fold", "get_backend", "period_grid", "register_backend", "resample",
-    "shutdown_workers", "tls_version", "transit_mask", "transitleastsquares", "warmup",
+    "FAP",
+    "TLS_VERSION",
+    "SearchBackend",
+    "__version__",
+    "available_backends",
+    "catalog_info",
+    "check_version",
+    "cleaned_array",
+    "duration_grid",
+    "fold",
+    "get_backend",
+    "period_grid",
+    "register_backend",
+    "resample",
+    "shutdown_workers",
+    "tls_version",
+    "transit_mask",
+    "transitleastsquares",
+    "warmup",
 ]
 
 

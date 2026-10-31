@@ -318,8 +318,8 @@ def test_the_readme_of_the_benchmarks_describes_the_gtls_input_and_its_commands(
 
 def test_the_versions_include_triton_batman_and_wotan_from_the_installed_distributions_and_leave_out_what_is_not_installed(bench, monkeypatch):
     """batman's module says 2.5.1 where its distribution batman-package is 2.5.3, so the distribution is read; triton's module version is its distribution's (triton-rocm on ROCm, triton on CUDA). A package that is not installed is absent, whatever the environment (the cpu build of torch brings no triton)."""
-    import importlib.metadata as metadata
     import sys
+    from importlib import metadata
 
     def installed(*names):
         for name in names:

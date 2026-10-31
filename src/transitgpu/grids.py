@@ -52,8 +52,7 @@ def T14(R_s, M_s, P, upper_limit=FRACTIONAL_TRANSIT_DURATION_MAX, small=False):
         T14max = (R_s + 2 * R_jup) * ((4 * P) / (pi * G * M_s)) ** (1 / 3)
 
     result = T14max / P
-    if result > upper_limit:
-        result = upper_limit
+    result = min(result, upper_limit)
     return result
 
 
@@ -164,8 +163,7 @@ def period_grid(
         return periods[selected_index]
 
     if number_of_periods < MINIMUM_PERIOD_GRID_SIZE:
-        if time_span < 5 * SECONDS_PER_DAY:
-            time_span = 5 * SECONDS_PER_DAY
+        time_span = max(time_span, 5 * SECONDS_PER_DAY)
         warnings.warn("period_grid defaults to R_star=1 and M_star=1 as given density yielded grid with too few values")
         return period_grid(
             R_star=1,

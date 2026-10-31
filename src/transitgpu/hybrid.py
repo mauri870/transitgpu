@@ -11,7 +11,7 @@ results and records the reason. The refinement needs the extra `tls` (`uv pip in
 GPU the call raises.
 """
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -29,8 +29,8 @@ class Peak:
     rank: int
     box_period: float
     box_sde: float
-    tls: Optional[Any] = None
-    reason: Optional[str] = None
+    tls: Any | None = None
+    reason: str | None = None
 
 
 @dataclass

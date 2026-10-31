@@ -6,11 +6,11 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitleastsquares import transitleastsquares  # noqa: E402
-from transitleastsquares.backends import get_backend  # noqa: E402
-from transitleastsquares.validate import validate_args  # noqa: E402
+from transitleastsquares import transitleastsquares
+from transitleastsquares.backends import get_backend
+from transitleastsquares.validate import validate_args
 
-from transitgpu.tls.window import WindowBackend, window_power  # noqa: E402
+from transitgpu.tls.window import WindowBackend, window_power
 
 
 def light_curve(points=3000, seed=1, period=3.0, depth=0.004, duration=0.12, span=27.0, error=None):
@@ -411,7 +411,7 @@ def test_a_start_better_than_the_incumbent_by_a_small_fraction_is_kept_after_a_f
     screen, width, overshoot, depth_min, patched, cumulative, squares, double, incumbent, better, first, second = near_edge_case(1e4, relative)
     assert better > incumbent, "the second start is better than the incumbent by construction"
     size = patched.shape[1]
-    keep = torch.zeros((1, len(range(0, size - width + 1))), dtype=torch.int8)
+    keep = torch.zeros((1, len(range(size - width + 1))), dtype=torch.int8)
     screen.starts_kept(width, 1, size, overshoot, depth_min, cumulative, squares, double, torch.tensor([incumbent], dtype=torch.float64), torch.ones(1, dtype=torch.bool), keep)
     assert keep[0, second] == 1, f"the better start {second} (gain {better!r}, incumbent {incumbent!r}, relative {relative}) was pruned"
 
@@ -424,7 +424,7 @@ def test_no_start_that_beats_the_incumbent_by_a_relative_1e_10_or_more_is_pruned
     for relative in (1e-6, 1e-8, 1e-10, 1e-12, 1e-14, -1e-6, -1e-8, -1e-10, -1e-12, -1e-14):
         screen, width, overshoot, depth_min, patched, cumulative, squares, double, incumbent, better, first, second = near_edge_case(outlier, relative)
         size = patched.shape[1]
-        keep = torch.zeros((1, len(range(0, size - width + 1))), dtype=torch.int8)
+        keep = torch.zeros((1, len(range(size - width + 1))), dtype=torch.int8)
         screen.starts_kept(width, 1, size, overshoot, depth_min, cumulative, squares, double, torch.tensor([incumbent], dtype=torch.float64), torch.ones(1, dtype=torch.bool), keep)
         if better > incumbent * (1 + 1e-10) and keep[0, second] == 0:
             missed.append((outlier, relative, better, incumbent))
@@ -440,7 +440,7 @@ def test_on_the_device_the_screening_kernel_keeps_a_start_better_than_the_incumb
     screen, width, overshoot, depth_min, patched, cumulative, squares, double, incumbent, better, first, second = near_edge_case(1e4, relative)
     assert better > incumbent
     size = patched.shape[1]
-    count = len(range(0, size - width + 1))
+    count = len(range(size - width + 1))
     keep = torch.zeros((1, count), dtype=torch.int8, device="cuda")
     screen.starts_kept_all([width], {width: 1}, {width: overshoot}, size, depth_min, cumulative.cuda(), squares.cuda(), double.cuda(), torch.tensor([incumbent], dtype=torch.float64, device="cuda"),
                            torch.ones((1, 1), dtype=torch.bool, device="cuda"), keep, np.array([0, count]))

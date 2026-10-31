@@ -10,7 +10,7 @@ tls_grid = pytest.importorskip("transitleastsquares.grid")
 tls_stats = pytest.importorskip("transitleastsquares.stats")
 tls_constants = pytest.importorskip("transitleastsquares.tls_constants")
 
-from transitgpu import grids  # noqa: E402
+from transitgpu import grids
 
 CONSTANTS = ("G", "R_sun", "R_jup", "M_sun", "SECONDS_PER_DAY", "R_STAR", "M_STAR", "OVERSAMPLING_FACTOR", "N_TRANSITS_MIN", "M_STAR_MIN", "M_STAR_MAX", "R_STAR_MIN", "R_STAR_MAX", "DURATION_GRID_STEP",
              "FRACTIONAL_TRANSIT_DURATION_MAX", "MINIMUM_PERIOD_GRID_SIZE")

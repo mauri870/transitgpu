@@ -2,8 +2,6 @@
 
 import time as clock
 
-import numpy as np
-
 import transitgpu
 from transitgpu.tls import transitleastsquares
 

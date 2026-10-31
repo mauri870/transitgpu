@@ -3,10 +3,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitleastsquares import tls_constants  # noqa: E402
-from transitleastsquares.grid import period_grid  # noqa: E402
+from transitleastsquares import tls_constants
+from transitleastsquares.grid import period_grid
 
-from transitgpu import core as gpu  # noqa: E402
+from transitgpu import core as gpu
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 

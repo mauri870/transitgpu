@@ -9,9 +9,8 @@ import time as clock
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-import numpy as np
-
 import generator
+import numpy as np
 from generator import NOISE_CLASSES
 
 HERE = Path(__file__).parent

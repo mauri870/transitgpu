@@ -11,8 +11,6 @@ import time as clock
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
-import numpy as np
-
 import generator
 import run
 
@@ -26,6 +24,7 @@ def settings():
 
 def binned(time, flux, errors, backend, kwargs):
     from methods import PERIOD_MAX, PERIOD_MIN
+
     from transitgpu.tls import transitleastsquares
 
     started = clock.perf_counter()

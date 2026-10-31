@@ -13,7 +13,6 @@ import warnings
 
 import numpy
 import pytest
-
 import transitleastsquares.tls_constants as C
 from transitleastsquares import duration_grid, period_grid
 from transitleastsquares.core import search_period

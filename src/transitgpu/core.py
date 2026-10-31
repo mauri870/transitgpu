@@ -28,6 +28,7 @@ that choose the device themselves import from `transitgpu.engine`, whose names a
 import warnings
 
 import numpy as np
+
 from transitgpu import grids
 from transitgpu.grids import T14, duration_limit_masses, period_grid, period_uncertainty
 
@@ -71,7 +72,7 @@ RECOMPILE_LIMIT = 64
 
 def raise_recompile_limit():
     """Raise torch's limit of compiled variants per function to RECOMPILE_LIMIT; a higher limit that the caller set stays. Older torch names it `cache_size_limit`."""
-    import torch._dynamo.config as config
+    from torch._dynamo import config
 
     name = "recompile_limit" if hasattr(config, "recompile_limit") else "cache_size_limit"
     if getattr(config, name) < RECOMPILE_LIMIT:
@@ -169,7 +170,7 @@ def _accumulate_many_kernel():
                 x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
                 phase = x - tl.floor(x)
                 bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
-                for f in range(0, fluxes):
+                for f in range(fluxes):
                     target = ((f * rows + row).to(tl.int64) * bins) + bin_of
                     tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
                     tl.atomic_add(counts_ptr + target, tl.load(w_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
@@ -203,7 +204,7 @@ def _accumulate_once_kernel():
                 x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
                 phase = x - tl.floor(x)
                 bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
-                for f in range(0, fluxes):
+                for f in range(fluxes):
                     target = ((f * rows + row).to(tl.int64) * bins) + bin_of
                     tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
                     if f == 0:

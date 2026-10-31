@@ -8,10 +8,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from test_transitgpu import light_curve  # noqa: E402
+from test_transitgpu import light_curve
 
-import transitgpu  # noqa: E402
-from transitgpu import core, engine  # noqa: E402
+import transitgpu
+from transitgpu import core, engine
 
 NAMES = ["DURATION_STEP", "MAXIMUM_BINS", "MAXIMUM_WEIGHT", "MINIMUM_BINS", "MINIMUM_BINS_PER_PERIOD", "MINIMUM_POINTS", "PRECISION", "WEIGHT_UNIT", "WindowBackend", "device_name", "duration_fractions",
          "fold_index", "grid_of", "refine_peak", "refine_peaks", "search", "search_many", "tls_hybrid", "top_peaks"]

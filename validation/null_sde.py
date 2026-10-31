@@ -7,9 +7,8 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
-
 import analyse
+import numpy as np
 import roc
 
 SEARCHES = roc.SEARCHES

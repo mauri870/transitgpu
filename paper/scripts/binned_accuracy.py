@@ -16,9 +16,9 @@ import numpy as np
 HERE = Path(__file__).resolve().parent
 PACKAGE = HERE.parent.parent
 sys.path.insert(0, str(PACKAGE / "tests" / "golden_upstream"))
-import golden_cases  # noqa: E402
+import golden_cases
 
-import transitgpu.tls  # noqa: E402,F401  (registers the backends)
+import transitgpu.tls  # noqa: F401  (registers the backends)
 
 
 def search(name, backend):

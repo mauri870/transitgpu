@@ -5,7 +5,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitgpu.tls.fold import counting_order, phases  # noqa: E402
+from transitgpu.tls.fold import counting_order, phases
 
 pytestmark = pytest.mark.gpu
 
@@ -59,7 +59,7 @@ def test_phases_that_differ_below_float32_resolution_are_ordered_by_the_float64_
 
 
 def test_a_row_with_a_bin_over_the_limit_is_sorted_by_torch_and_the_order_is_the_same(monkeypatch):
-    import transitgpu.tls.fold as fold
+    from transitgpu.tls import fold
 
     monkeypatch.setattr(fold, "RANK_LIMIT", 8)  # the regular cadence below puts 100 points in each of 50 bins; the random periods keep bins of a few points
     cadence = 2.0 / 1440.0

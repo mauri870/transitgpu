@@ -7,9 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-import numpy as np
-
 import analyse
+import numpy as np
 import rerun_binned
 
 NEW = "binned_bands"

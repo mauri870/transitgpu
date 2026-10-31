@@ -4,9 +4,9 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from test_transitgpu import light_curve  # noqa: E402
+from test_transitgpu import light_curve
 
-from transitgpu import core, engine  # noqa: E402
+from transitgpu import core, engine
 
 
 def four_fluxes():

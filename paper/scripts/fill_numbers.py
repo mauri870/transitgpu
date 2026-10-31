@@ -10,13 +10,13 @@ of the file).
 
 import argparse
 import json
-import sys
 import math
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))  # completeness.py, for the Wilson interval and the merge of the real stars
-from completeness import merge_real  # noqa: E402
+from completeness import merge_real
 
 PACKAGE = HERE.parent.parent
 BLOCKS = (None, "tls", "tls_earlier_session")  # None: the sizes at the top of the file
@@ -156,7 +156,7 @@ def one_decimal(value):
     from decimal import ROUND_HALF_UP, Decimal
 
     text = str(Decimal(f"{value:.6f}").quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
-    return text[:-2] if text.endswith(".0") else text
+    return text.removesuffix(".0")
 
 
 def recovery_macros(results, rate="0.05"):

@@ -1,7 +1,6 @@
 """How far the approximate searches are from the exact backend of TLS on its 14 characterization cases (golden_upstream/golden_cases.py): the best period, the SDE and, for the binned search, the cases it refuses.
 
 The binned search of transitgpu.tls ("gpu-binned") folds each period into phase bins narrower than the shortest transit duration and needs equal errors; TLS's approximate backend "fused-pl" fits a piecewise-linear template to the folded points. Function tests: the references are TLS's results, run here."""
-import os
 import sys
 from pathlib import Path
 
@@ -10,9 +9,9 @@ import pytest
 
 torch = pytest.importorskip("torch")
 sys.path.insert(0, str(Path(__file__).parent / "golden_upstream"))
-import golden_cases  # noqa: E402
+import golden_cases
 
-import transitgpu.tls  # noqa: E402,F401  (registers the backends "gpu" and "gpu-binned")
+import transitgpu.tls  # noqa: F401  (registers the backends "gpu" and "gpu-binned")
 
 pytestmark = pytest.mark.gpu
 

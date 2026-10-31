@@ -8,13 +8,13 @@ PAPER = Path(__file__).resolve().parent.parent / "paper"
 if not (PAPER / "main.tex").exists():
     pytest.skip("the paper is not in the source distribution", allow_module_level=True)
 
-UNRELEASED = re.compile(r"in preparation|submitted|unpublished", re.I)
+UNRELEASED = re.compile(r"in preparation|submitted|unpublished", re.IGNORECASE)
 
 
 def entries():
     """{key: text of the entry} of refs.bib."""
     text = (PAPER / "refs.bib").read_text()
-    starts = [(match.group(1), match.start()) for match in re.finditer(r"^@[A-Za-z]+\{([^,\s]+),", text, re.M)]
+    starts = [(match.group(1), match.start()) for match in re.finditer(r"^@[A-Za-z]+\{([^,\s]+),", text, re.MULTILINE)]
     ends = [position for _, position in starts[1:]] + [len(text)]
     return {key: text[start:end] for (key, start), end in zip(starts, ends)}
 

@@ -6,10 +6,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from transitgpu import core as gpu  # noqa: E402
-from transitgpu.core import search_many  # noqa: E402
+from test_transitgpu import light_curve
 
-from test_transitgpu import light_curve  # noqa: E402
+from transitgpu import core as gpu
+from transitgpu.core import search_many
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 

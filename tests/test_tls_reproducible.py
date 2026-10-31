@@ -5,9 +5,9 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from test_tls_binned import exact_arguments, light_curve, problem_of  # noqa: E402
+from test_tls_binned import exact_arguments, light_curve, problem_of
 
-from transitgpu.tls.window import window_power  # noqa: E402
+from transitgpu.tls.window import window_power
 
 pytestmark = pytest.mark.gpu
 

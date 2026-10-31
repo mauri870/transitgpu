@@ -9,7 +9,11 @@ screening kernel), correlations (the dot products of the survivors), and the res
 once, from the device events and not the torch operators that launched it. Device time is not wall time: the host
 launches while the device works, and the profiler slows the run.
 """
-import argparse, importlib.util, json, time, warnings
+import argparse
+import importlib.util
+import json
+import time
+import warnings
 from pathlib import Path
 
 import torch
@@ -19,7 +23,7 @@ warnings.filterwarnings("ignore")
 _spec = importlib.util.spec_from_file_location("transitgpu_bench", Path(__file__).resolve().parents[2] / "benchmarks" / "bench.py")
 bench = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bench)
-from transitgpu.tls import transitleastsquares  # noqa: E402
+from transitgpu.tls import transitleastsquares
 
 STAGES = (
     ("fold", ("_phase_kernel", "_bin_kernel", "_rank_kernel", "sort", "rocprim", "radix", "scatter", "index_", "argsort", "bucketize")),

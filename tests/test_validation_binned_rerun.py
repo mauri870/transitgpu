@@ -2,7 +2,6 @@
 thresholds and the paired interval of analyse.py. Function tests on fabricated records: the device is not needed."""
 
 import importlib.util
-import json
 import sys
 from pathlib import Path
 

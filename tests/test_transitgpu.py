@@ -3,10 +3,10 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from astropy.timeseries import BoxLeastSquares  # noqa: E402
+from astropy.timeseries import BoxLeastSquares
 
-from transitgpu import core  # noqa: E402
-from transitgpu.core import search  # noqa: E402
+from transitgpu import core
+from transitgpu.core import search
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 

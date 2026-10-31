@@ -12,7 +12,7 @@ import pytest
 torch = pytest.importorskip("torch")
 pytest.importorskip("transitleastsquares")
 
-import transitgpu.tls  # noqa: E402,F401  (registers the backends "gpu" and "gpu-binned")
+import transitgpu.tls  # noqa: F401  (registers the backends "gpu" and "gpu-binned")
 
 pytestmark = pytest.mark.gpu
 SPECTRA = ("power", "power_raw", "SR")
