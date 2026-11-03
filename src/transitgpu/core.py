@@ -46,10 +46,10 @@ MINIMUM_POINTS = 3
 BATCH_ELEMENTS = 60_000_000
 ONE_PASS_BATCH = 512
 # (periods x points) visited by one launch of the one-pass accumulation: a launch visits every point once for every
-# period of its batch, about 45 ps a visit on a RX 7900 XTX, so this is about 11.5 ms and keeps the launches of a long
-# stack near the 10 ms that a GPU which also drives a display tolerates (docs/launch-size.md). A stack of up to
-# 500,000 points keeps ONE_PASS_BATCH periods a launch.
-ONE_PASS_ELEMENTS = 256_000_000
+# period of its batch, so its duration grows with this product. 160 million keeps the largest launch of a stack of
+# 1 to 2.5 million points under 9 ms on a RX 7900 XTX (the mean is about 4 ms), near the 10 ms that a GPU which also
+# drives a display tolerates (docs/launch-size.md). A stack of up to 312,500 points keeps ONE_PASS_BATCH periods a launch.
+ONE_PASS_ELEMENTS = 160_000_000
 # The flux is summed as integers of QUANTUM (1e-9 of the level). Floating-point atomic additions on a GPU depend on
 # their order and integer additions do not, so a search gives the same numbers every time. A CPU and a GPU still
 # differ in the last digits of the float arithmetic that follows.

@@ -5,12 +5,12 @@ import pytest
 from transitgpu import core
 
 
-@pytest.mark.parametrize("points", [1_000, 20_000, 105_000, 380_000, 500_000])
-def test_a_stack_of_up_to_500_thousand_points_takes_512_periods_a_launch_as_before(points):
+@pytest.mark.parametrize("points", [1_000, 20_000, 105_000, 250_000, 312_500])
+def test_a_stack_of_up_to_312_thousand_points_takes_512_periods_a_launch_as_before(points):
     assert core.one_pass_batch(points) == core.ONE_PASS_BATCH == 512
 
 
-@pytest.mark.parametrize("points,rows", [(500_001, 511), (1_000_000, 256), (2_000_000, 128), (2_525_000, 101), (100_000_000, 2), (256_000_000, 1), (10**10, 1)])
+@pytest.mark.parametrize("points,rows", [(312_501, 511), (350_000, 457), (450_000, 355), (500_000, 320), (1_000_000, 160), (1_300_000, 123), (2_000_000, 80), (2_525_000, 63), (100_000_000, 1), (160_000_000, 1), (10**10, 1)])
 def test_a_longer_stack_takes_the_periods_that_keep_a_launch_under_the_element_budget(points, rows):
     assert core.one_pass_batch(points) == rows
     assert rows * points <= core.ONE_PASS_ELEMENTS or rows == 1
@@ -38,7 +38,7 @@ def test_the_search_of_a_stack_with_a_small_budget_equals_the_search_with_the_de
 
 
 def test_no_kernel_of_a_search_launches_longer_at_2_5_million_points_than_at_the_largest_stack_that_keeps_the_old_batch():
-    """The bound is for every kernel of a call and not for the accumulation alone: the largest launch of any kernel at 2,525,000 points is at most 1.5 times the largest at 500,000 points, where 512 periods are taken as before (device; the absolute figure, about 10 ms on the card of docs/launch-size.md, is printed by benchmarks/launch_size.py)."""
+    """The bound is for every kernel of a call and not for the accumulation alone: the largest launch of any kernel at 2,525,000 points is at most 1.5 times the largest at 312,500 points, where 512 periods are taken as before (device; the absolute figure, about 10 ms on the card of docs/launch-size.md, is printed by benchmarks/launch_size.py)."""
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("the launches are of a GPU")
@@ -49,7 +49,7 @@ def test_no_kernel_of_a_search_launches_longer_at_2_5_million_points_than_at_the
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     largest = {}
-    for points in (500_000, 2_525_000):
+    for points in (312_500, 2_525_000):
         kernels, _ = module.launches(points)
         largest[points] = max(max(times) for times in kernels.values())
-    assert largest[2_525_000] <= 1.5 * largest[500_000], f"{largest}"
+    assert largest[2_525_000] <= 1.5 * largest[312_500], f"{largest}"
