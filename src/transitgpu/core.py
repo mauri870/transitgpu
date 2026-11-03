@@ -45,6 +45,11 @@ MINIMUM_POINTS = 3
 # and 512. The one-pass accumulation stores no fold table and takes ONE_PASS_BATCH periods at a time.
 BATCH_ELEMENTS = 60_000_000
 ONE_PASS_BATCH = 512
+# (periods x points) visited by one launch of the one-pass accumulation: a launch visits every point once for every
+# period of its batch, about 45 ps a visit on a RX 7900 XTX, so this is about 11.5 ms and keeps the launches of a long
+# stack near the 10 ms that a GPU which also drives a display tolerates (docs/launch-size.md). A stack of up to
+# 500,000 points keeps ONE_PASS_BATCH periods a launch.
+ONE_PASS_ELEMENTS = 256_000_000
 # The flux is summed as integers of QUANTUM (1e-9 of the level). Floating-point atomic additions on a GPU depend on
 # their order and integer additions do not, so a search gives the same numbers every time. A CPU and a GPU still
 # differ in the last digits of the float arithmetic that follows.
@@ -104,6 +109,14 @@ def on_device(device):
 
     device = torch.device(device)
     return torch.cuda.device(device) if device.type == "cuda" else contextlib.nullcontext()
+
+
+def one_pass_batch(points):
+    """Return the trial periods of one launch of the one-pass accumulation for a stack of `points` points: ONE_PASS_BATCH, or fewer when that many would visit more than ONE_PASS_ELEMENTS (period, point) pairs; at least 1.
+
+    The sums are integers added atomically and the periods are independent, so the result does not depend on how the periods are divided into launches.
+    """
+    return int(max(1, min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // max(int(points), 1))))
 
 
 def fold_index(t, p, bins, shifts=None):
@@ -474,7 +487,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
       period_min, period_max: the range of the period grid, in days.
       spectrum: add `periods` and `power` to each result.
       device: a torch device; by default the first GPU, else the CPU.
-      batch: periods searched together (by default ONE_PASS_BATCH with the one-pass accumulation, else from
+      batch: periods searched together (by default one_pass_batch(points) with the one-pass accumulation, else from
         BATCH_ELEMENTS); it changes the time and not the result.
       minimum_bins: bins across the shortest duration of a period (MINIMUM_BINS).
       duration_step: ratio of consecutive durations (DURATION_STEP).
@@ -555,7 +568,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     # table and scatter_add_ give the same integers.
     together = template is None and device.type == "cuda" and float(time_axis.min()) >= 0.0 and bool(_accumulate_many_kernel())
     if not batch:  # a template adds a table of shifts as large as the fold table
-        batch = ONE_PASS_BATCH if together else int(np.clip(BATCH_ELEMENTS // (time_axis.size * (1 if template is None else 2)), 8, 512))
+        batch = one_pass_batch(time_axis.size) if together else int(np.clip(BATCH_ELEMENTS // (time_axis.size * (1 if template is None else 2)), 8, 512))
     rows_of = []
     if weights is not None:
         weights = np.asarray(weights, dtype=float)
