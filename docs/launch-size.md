@@ -2,17 +2,24 @@
 
 The one-pass accumulation (`accumulate_many`, a Triton or HIP kernel) folds every point of a stack into the phase bins of a batch of trial periods with integer atomic additions. One launch visits every point once for every period of the batch, so its duration is the number of periods times the number of points times the cost of one visit.
 
-`search_many` takes `ONE_PASS_BATCH = 512` periods at a time whatever the number of points. The duration of a launch therefore grows in proportion to the points: the largest launch of the main kernel on a RX 7900 XTX was 1.16 ms at 50,000 points, 5.24 ms at 250,000 and 23.07 ms at 1,000,000 (`benchmarks/launch_size.py`), about 45 ps per visit, and a stack of 2.5 million points (two years at 25 s) would make launches of about 58 ms. A GPU that also drives a display wants launches of about 10 ms; a launch that runs much longer starves the display and, past the driver's timeout, resets the device.
+With 512 periods a launch whatever the number of points, the duration of a launch grows in proportion to the points. On a RX 7900 XTX the largest launch was 5.25 ms at 312,500 points, 8.46 ms at 450,000 and 19.81 ms at 1,000,000 (`benchmarks/launch_compare.py`), and a stack of 2.5 million points (two years at 25 s) would make launches of about 40 ms by the same proportion. A GPU that also drives a display wants launches of about 10 ms; a launch that runs much longer starves the display and, past the driver's timeout, resets the device.
 
 ## Change
 
-The periods per launch become `min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // points)`, at least 1, with `ONE_PASS_ELEMENTS = 256_000_000` (periods x points per launch, about 11.5 ms at the rate above). A stack of up to 500,000 points keeps 512 periods a launch, as today; larger stacks take fewer periods a launch, so that no launch visits more than 256 million (period, point) pairs. `batch=` given by the caller still overrides.
+The periods per launch are `core.one_pass_batch(points) = max(1, min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // points))`, with `ONE_PASS_BATCH = 512` and `ONE_PASS_ELEMENTS = 160_000_000` (period and point pairs a launch, 4.2 ms for the accumulation kernel on that card, 4.3 ms at 312,500 points and 4.2 ms at 2,525,000). A stack of up to 312,500 points keeps 512 periods a launch; a larger one takes fewer. `batch=` given by the caller still overrides.
 
-Why not a slice of the points as well. The sums are integers added atomically, so the order of the additions does not change the result, and a period is independent of the others: the periods of a launch can be any subset of the batch and the result is bitwise the same. A single period of 2.5 million points is one launch of about 0.11 ms, so slicing the points would only matter above about 90 million points (a launch of one period over 10 ms), which no stack of this kind has. Points are not sliced; the limit is documented, and the test that a one-period launch is short is the benchmark above.
+The sums are integers added atomically, so the order of the additions does not change the result, and a period is independent of the others: the periods of a launch can be any subset of the batch and the result is bitwise the same. One period costs about 0.07 ms at 2.5 million points, so a single period would pass 10 ms only above about 380 million points. Points are not sliced.
+
+## Measured
+
+The table of the README gives the periods a launch, the largest launch of any kernel and the search time at 312,500 to 2,525,000 points. The largest launch is 6.5 ms at 1,000,000 points against 19.8 ms with 512 periods, and 9.1 ms at 2,525,000 points. The search takes 1.3 to 5.5 % longer with the bound at 350,000 to 1,000,000 points, where the launches are more numerous and each launch has a fixed cost.
 
 ## Tests
 
-1. `launch_rows` (the rule) at the boundaries: 512 up to 500,000 points, the quotient above, 1 at the largest sizes, and `batch=` overriding.
-2. The search of a small stack with the budget made so small that the batch is 3 periods, against the default batch of 512: the same result, bit for bit (device test).
-3. Stacks of the size of a TESS stack (up to 500,000 points) take 512 periods a launch: the same value as before the change.
-4. `benchmarks/launch_size.py`: the largest launch of the main kernel at 50,000, 250,000, 1,000,000, 2,000,000 and 2,525,000 points, each size only after the smaller ones, each under a time limit; the kernel journal is read before and after by the person who runs it.
+`tests/test_launch_rows.py`:
+
+1. The rule at its boundaries: 512 up to 312,500 points, the quotient above, 1 at the largest sizes, and `batch=` overriding.
+2. A search with a batch of 3 periods gives the same result as with 512, bit for bit (device).
+3. The mean launch of the longest kernel at 2,525,000 points is at most 1.5 times its mean at 312,500 points, and no launch at 2,525,000 points exceeds 10 ms (device). The largest launch is not compared between sizes: it is the maximum of 18 launches at one size and of about 1,000 at the other.
+
+`benchmarks/launch_size.py` prints the launches of every kernel at each size, and `benchmarks/launch_compare.py` the table. Read the kernel log (`journalctl -k`) before and after.
