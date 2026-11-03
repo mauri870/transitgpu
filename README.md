@@ -191,6 +191,24 @@ uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-w
 
 `tests/test_bench.py` checks that this table equals the output of `bench.weights_table` on `benchmarks/results-weights.json`.
 
+The fifth table times the search of stacks of 312,500 to 2,525,000 points (25 s cadence, white noise of 1,000 ppm, periods from 0.5 to 14 d). The search takes at most 512 periods a launch and fewer when 512 would visit more than `transitgpu.core.ONE_PASS_ELEMENTS` (160 million) period and point pairs, so that no launch of a long stack runs much past 10 ms, which a GPU that also drives a display tolerates. The result of a search does not depend on the number of periods a launch. "512 always" is the search with the budget removed, run up to 1,000,000 points. The sizes of the other tables, up to 200,000 points, take 512 periods a launch in both columns. The rows are from one session of 2026-11-03 on the machine of the third table, the GPU to itself, with ROCm 7.2.53211, torch 2.12.0+rocm7.2 and triton 3.7.0. Each search time is the median of seven runs and `benchmarks/results-launches.json` has every run.
+
+| points | periods a launch, 512 always | periods a launch, bounded | largest launch, 512 always (ms) | largest launch, bounded (ms) | search, 512 always (s) | search, bounded (s) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 312,500 | 512 | 512 | 5.3 | 5.3 | 0.0889 | 0.0884 |
+| 350,000 | 512 | 457 | 6.6 | 5.6 | 0.111 | 0.113 |
+| 450,000 | 512 | 355 | 8.5 | 5.9 | 0.174 | 0.180 |
+| 1,000,000 | 512 | 160 | 19.8 | 6.5 | 0.777 | 0.819 |
+| 1,300,000 | - | 123 | - | 7.5 | - | 1.36 |
+| 2,000,000 | - | 80 | - | 9.2 | - | 3.17 |
+| 2,525,000 | - | 63 | - | 9.0 | - | 5.04 |
+
+```
+uv run --group rocm python benchmarks/launch_compare.py --sizes 312500 350000 450000 1000000 1300000 2000000 2525000 --repeats 7 --json results-launches.json
+```
+
+`tests/test_bench.py` checks that this table equals the output of `launch_compare.launches_table` on `benchmarks/results-launches.json`.
+
 ## Tests
 
 From a clone, run `uv run --group rocm pytest`, or use `--group cu128` or `--group cpu` for other torch builds. Without a group, uv installs PyPI's default torch, which is the NVIDIA build. CI runs the suite on the CPU; `tests/test_tls_golden.py` checks `transitgpu.tls` against TLS's exact backend on TLS's 14 test cases, field by field.

@@ -156,6 +156,23 @@ def test_the_weights_table_of_the_readme_is_the_table_built_from_its_own_results
     assert results["command"] in "\n".join(readme).replace("uv run --group rocm python", "uv run python"), "the README gives the command that made the file"
 
 
+def test_the_launch_table_of_the_readme_is_the_table_built_from_its_own_results_file_of_one_session():
+    """The fifth table of the README's Performance section is built from benchmarks/results-launches.json, a file of its own, of one session; a row without the search before the budget has a dash in its old cells."""
+    root = BENCH.parents[1]
+    spec = importlib.util.spec_from_file_location("launch_compare", root / "benchmarks" / "launch_compare.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    results = json.loads((root / "benchmarks" / "results-launches.json").read_text())
+    assert all(len(row["new"]["seconds"]) == 7 for row in results["sizes"]), "seven runs in every row"
+    assert any(row["old"] is None for row in results["sizes"]) and any(row["old"] for row in results["sizes"]), "sizes with and without the search of 512 periods a launch"
+    readme = (root / "README.md").read_text().splitlines()
+    start = next(i for i, line in enumerate(readme) if line.startswith("| points | periods a launch"))
+    end = next(i for i in range(start, len(readme)) if not readme[i].startswith("|"))
+    assert "\n".join(readme[start:end]) == module.launches_table(results)
+    assert str(results["elements"]) == "160000000" and "160 million" in "\n".join(readme), "the README states the budget of the results"
+    assert results["command"] in "\n".join(readme).replace("uv run --group rocm python", "uv run python"), "the README gives the command that made the file"
+
+
 def test_the_figures_of_the_table_have_three_significant_figures_and_the_same_form_in_every_cell(bench):
     """Edge cases of the format: a round number keeps its zeros (15.0, not 15), a number over 100 has no decimals, and one under 1 has three figures."""
     assert [bench.three_figures(value) for value in (15.0, 93.96, 291.78, 0.27711, 2.15, 5.74, 1234.0)] == ["15.0", "94.0", "292", "0.277", "2.15", "5.74", "1230"]
