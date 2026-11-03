@@ -14,8 +14,8 @@ from pathlib import Path
 
 sys.path[:0] = [str(Path(__file__).resolve().parent.parent / "src"), str(Path(__file__).resolve().parent)]
 
-from bench import command_line, hardware, three_figures, versions  # noqa: E402
-from launch_size import stack  # noqa: E402
+from bench import command_line, hardware, three_figures, versions
+from launch_size import stack
 
 OLD = 10**15
 
