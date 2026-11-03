@@ -37,8 +37,8 @@ def test_the_search_of_a_stack_with_a_small_budget_equals_the_search_with_the_de
     assert repr(default) == repr(small), "a batch of 3 periods changed the result"
 
 
-def test_no_kernel_of_a_search_launches_longer_at_2_5_million_points_than_at_the_largest_stack_that_keeps_the_old_batch():
-    """The bound is for every kernel of a call and not for the accumulation alone: the largest launch of any kernel at 2,525,000 points is at most 1.5 times the largest at 312,500 points, where 512 periods are taken as before (device; the absolute figure, about 10 ms on the card of docs/launch-size.md, is printed by benchmarks/launch_size.py)."""
+def test_the_launches_of_a_search_at_2_5_million_points_are_as_long_as_at_the_largest_stack_that_keeps_the_old_batch():
+    """The mean launch of the longest kernel at 2,525,000 points is at most 1.5 times its mean at 312,500 points, where 512 periods are taken as before, and no launch of any kernel at 2,525,000 points exceeds 10 ms (device). The largest launch is not compared between sizes: it is the maximum of 18 launches at one size and of about 1,000 at the other, and rises with the count (8.6 ms and 5.3 to 7.4 ms with equal means of 4.2 and 4.3 ms)."""
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("the launches are of a GPU")
@@ -48,8 +48,11 @@ def test_no_kernel_of_a_search_launches_longer_at_2_5_million_points_than_at_the
     spec = importlib.util.spec_from_file_location("launch_size", Path(__file__).resolve().parent.parent / "benchmarks" / "launch_size.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    largest = {}
-    for points in (312_500, 2_525_000):
-        kernels, _ = module.launches(points)
-        largest[points] = max(max(times) for times in kernels.values())
-    assert largest[2_525_000] <= 1.5 * largest[312_500], f"{largest}"
+    old, _ = module.launches(312_500)
+    new, _ = module.launches(2_525_000)
+    name = max(old, key=lambda kernel: sum(old[kernel]) / len(old[kernel]))
+    mean_old = sum(old[name]) / len(old[name])
+    mean_new = sum(new[name]) / len(new[name])
+    assert mean_new <= 1.5 * mean_old, f"{name}: mean {mean_new:.3f} ms against {mean_old:.3f} ms"
+    largest = max(max(times) for times in new.values())
+    assert largest <= 10.0, f"largest launch {largest:.2f} ms"
