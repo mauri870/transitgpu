@@ -125,6 +125,7 @@ def test_off_rocm_the_kernel_is_not_asked(monkeypatch):
 def fresh(monkeypatch, tmp_path):
     monkeypatch.setattr(hip, "_module", None)
     monkeypatch.setattr(hip, "_failed", False)
+    monkeypatch.setattr(hip, "_built_for", hip._built_for)  # a build in tmp_path sets it, and a later test would see the architectures of that build
     monkeypatch.setattr(hip, "_build_directory", lambda: tmp_path)
     return tmp_path
 
