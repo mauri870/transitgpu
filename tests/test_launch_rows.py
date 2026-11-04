@@ -53,6 +53,10 @@ def test_the_launches_of_a_search_at_2_5_million_points_are_as_long_as_at_the_la
     name = max(old, key=lambda kernel: sum(old[kernel]) / len(old[kernel]))
     mean_old = sum(old[name]) / len(old[name])
     mean_new = sum(new[name]) / len(new[name])
-    assert mean_new <= 1.5 * mean_old, f"{name}: mean {mean_new:.3f} ms against {mean_old:.3f} ms"
+    def describe(times):
+        ordered = sorted(times)
+        return f"{len(ordered)} launches, median {ordered[len(ordered) // 2]:.3f} ms, largest {ordered[-1]:.3f} ms"
+
+    assert mean_new <= 1.5 * mean_old, f"{name}: mean {mean_new:.3f} ms against {mean_old:.3f} ms; at 2,525,000 points {describe(new[name])}; at 312,500 points {describe(old[name])}"
     largest = max(max(times) for times in new.values())
     assert largest <= 10.0, f"largest launch {largest:.2f} ms"
