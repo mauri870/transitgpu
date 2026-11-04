@@ -13,8 +13,9 @@ the factor (1 - n / N). Nothing is sorted and no template is slid over the point
 pass over the points plus a few hundred bins.
 
 The trial periods are TLS's grid (transitgpu.grids.period_grid with its default star). The durations of a period run
-from the shortest that TLS allows (T14 with its default stellar limits) in steps of DURATION_STEP up to the first
-step that reaches the longest, so the longest box can be one step (10%) wider than TLS's longest duration.
+from the shortest that TLS allows (T14 with its default stellar limits, or those of radius_limits and mass_limits) in
+steps of DURATION_STEP up to the first step that reaches the longest, so the longest box can be one step (10%) wider
+than TLS's longest duration.
 
 The SDE is the z-score of the best statistic of each period over all periods, (max - mean) / std. It is not TLS's
 SDE (TLS detrends its spectrum) and has no threshold of its own; one can be estimated from the SDEs of block
@@ -39,6 +40,8 @@ MAXIMUM_BINS = 4096
 MINIMUM_BINS_PER_PERIOD = 128
 # Ratio of consecutive durations, as in TLS's grid (grids.DURATION_GRID_STEP).
 DURATION_STEP = 1.1
+# Tolerance, in steps, for a floor that lands on a point of the lattice of durations.
+LATTICE_TOLERANCE = 1e-9
 # Fewest points inside a box, and outside it, for the box to be scored.
 MINIMUM_POINTS = 3
 # Periods per batch: as many as keep the (periods x points) fold table under this many elements (480 MB), between 8
@@ -411,15 +414,48 @@ def advance(winner, start, width_of, number_in, sum_in, value_of_step, where_of_
     return advance_winner(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed)
 
 
-def duration_fractions(periods):
-    """Return the shortest and the longest transit duration TLS allows at each period, as fractions of the period.
+def check_limits(name, limits):
+    """Return `limits` as a pair (minimum, maximum) of floats, or raise ValueError when it is not an increasing pair of positive numbers."""
+    try:
+        low, high = (float(value) for value in limits)
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a pair (minimum, maximum), got {limits!r}") from None
+    if not 0 < low <= high:
+        raise ValueError(f"{name} must be positive and increasing, got {limits!r}")
+    return low, high
 
-    The limits are those of TLS's default stellar radius and mass range.
+
+def duration_fractions(periods, radius_limits=None, mass_limits=None):
+    """Return the shortest and the longest transit duration allowed at each period, as fractions of the period.
+
+    The limits are those of TLS's default stellar radius and mass range (grids.R_STAR_MIN and R_STAR_MAX, grids.M_STAR_MIN and M_STAR_MAX) unless `radius_limits` or `mass_limits`, pairs (minimum, maximum) in solar units,
+    replace them. The shortest duration is that of a central transit of a small planet at the radius and mass of the densest star of the limits, and it falls in proportion to the minimum radius.
     """
-    m_short, m_long = duration_limit_masses(grids.R_STAR_MIN, grids.R_STAR_MAX, grids.M_STAR_MIN, grids.M_STAR_MAX)
-    shortest = np.array([T14(R_s=grids.R_STAR_MIN, M_s=m_short, P=p, small=True) for p in periods])
-    longest = np.array([T14(R_s=grids.R_STAR_MAX, M_s=m_long, P=p, small=False) for p in periods])
+    radius_min, radius_max = check_limits("radius_limits", (grids.R_STAR_MIN, grids.R_STAR_MAX) if radius_limits is None else radius_limits)
+    mass_min, mass_max = check_limits("mass_limits", (grids.M_STAR_MIN, grids.M_STAR_MAX) if mass_limits is None else mass_limits)
+    m_short, m_long = duration_limit_masses(radius_min, radius_max, mass_min, mass_max)
+    shortest = np.array([T14(R_s=radius_min, M_s=m_short, P=p, small=True) for p in periods])
+    longest = np.array([T14(R_s=radius_max, M_s=m_long, P=p, small=False) for p in periods])
     return shortest, longest
+
+
+def duration_exponents(periods, duration_step, radius_limits=None, mass_limits=None):
+    """Return (shortest, anchor, first, steps) of the duration grid of each period, with `shortest` the floor of the limits as a fraction of the period: the durations are `anchor * duration_step ** (first + k)` for k below `steps`, as fractions of the period.
+
+    The anchor is the shortest duration of the default stellar limits, so that a lowered floor keeps every default duration (the same numbers) and adds the steps below it. The first duration is the shortest on that lattice that is not under the floor of the limits.
+    """
+    shortest, longest = duration_fractions(periods, radius_limits, mass_limits)
+    anchor = shortest if radius_limits is None and mass_limits is None else duration_fractions(periods)[0]
+    first = np.ceil(np.log(shortest / anchor) / np.log(duration_step) - LATTICE_TOLERANCE).astype(int)  # a floor that lands on a lattice point must not move one step up by rounding
+    start = anchor * duration_step ** first
+    steps = np.maximum(1, np.ceil(np.log(longest / start) / np.log(duration_step)).astype(int) + 1)
+    return shortest, anchor, first, steps
+
+
+def duration_lattice(periods, duration_step, radius_limits=None, mass_limits=None):
+    """Return, for each period, the array of its trial durations as fractions of the period (the durations that `search_many` scores before it rounds them to bins)."""
+    _, anchor, first, steps = duration_exponents(periods, duration_step, radius_limits, mass_limits)
+    return [anchor[index] * duration_step ** (first[index] + np.arange(steps[index])) for index in range(len(anchor))]
 
 
 def grid_of(time, flux, period_min, period_max, oversampling_factor=None, n_transits_min=None):
@@ -476,7 +512,7 @@ def _check(time, flux):
     check_integer_range(np.abs(flux - flux.mean()).max(), time.size)
 
 
-def search_many(time, fluxes, period_min, period_max, spectrum=False, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, duration_hours=None, labeled=True, boxes=False, cuts=None, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False):
+def search_many(time, fluxes, period_min, period_max, spectrum=False, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, duration_hours=None, labeled=True, boxes=False, cuts=None, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False, radius_limits=None, mass_limits=None):
     """Search each flux of `fluxes`, all on the time axis `time`, and return a list with one result dict per flux.
 
     The fluxes share one grid of trial periods (`periods`, else TLS's grid for the first flux), so their SDEs are
@@ -493,6 +529,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
       duration_step: ratio of consecutive durations (DURATION_STEP).
       periods: the trial periods, in place of TLS's grid.
       duration_hours: a pair (low, high); only the duration steps longer than low and up to high hours are scored.
+      radius_limits, mass_limits: pairs (minimum, maximum) in solar units that replace TLS's stellar limits for the durations of the grid (see duration_fractions); a smaller minimum radius adds shorter
+        durations and more phase bins at every period, and keeps every default duration.
       labeled: put the index of the flux in the message of a ValueError about it.
       boxes: add `centers` and `widths_days`, the best box of every trial period.
       cuts: a list of periods; the result of each flux is then a list with one result per cut, over the periods of
@@ -561,7 +599,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         raise ValueError(f"a cut of {min(cuts)} d leaves fewer than two periods of the grid, which starts at {periods.min()} d")
     on_axis = np.isfinite(time)  # a point without a time is dropped; a point with a time and no flux has zero weight
     time_axis = time[on_axis]
-    shortest, longest = duration_fractions(periods)
+    shortest, anchor, offset, steps_of = duration_exponents(periods, duration_step, radius_limits, mass_limits)
     device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     t = torch.as_tensor(time_axis, dtype=torch.float64, device=device)
     # The one-pass accumulation needs a CUDA device, no template, non-negative times and Triton; otherwise the fold
@@ -621,8 +659,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             index = members[first:first + batch]
             rows = index.size
             p = torch.as_tensor(periods[index], dtype=torch.float64, device=device)
-            steps = np.maximum(1, np.ceil(np.log(longest[index] / shortest[index]) / np.log(duration_step)).astype(int) + 1)
-            fractions = shortest[index, None] * duration_step ** np.arange(steps.max())[None, :]
+            steps = steps_of[index]
+            fractions = anchor[index, None] * duration_step ** (offset[index, None] + np.arange(steps.max())[None, :])
             valid_step = np.arange(steps.max())[None, :] < steps[:, None]
             if duration_hours is not None:
                 hours = fractions * periods[index, None] * 24
@@ -746,9 +784,9 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     return [[result(k, row, end) for end in ends] for k, row in enumerate(rows_of)]
 
 
-def search(time, flux, period_min, period_max, spectrum=False, threads=1, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, boxes=False, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False):
+def search(time, flux, period_min, period_max, spectrum=False, threads=1, device=None, batch=None, minimum_bins=MINIMUM_BINS, duration_step=DURATION_STEP, periods=None, boxes=False, template=None, precision=None, weights=None, oversampling_factor=None, n_transits_min=None, bumps=False, radius_limits=None, mass_limits=None):
     """Search one flux and return its result dict: `search_many(time, [flux], ...)[0]` with unlabeled errors.
 
     See `search_many` for the arguments and the fields of the result. `threads` is accepted and ignored.
     """
-    return search_many(time, [flux], period_min, period_max, spectrum=spectrum, device=device, batch=batch, minimum_bins=minimum_bins, duration_step=duration_step, periods=periods, labeled=False, boxes=boxes, template=template, precision=precision, weights=weights, oversampling_factor=oversampling_factor, n_transits_min=n_transits_min, bumps=bumps)[0]
+    return search_many(time, [flux], period_min, period_max, spectrum=spectrum, device=device, batch=batch, minimum_bins=minimum_bins, duration_step=duration_step, periods=periods, labeled=False, boxes=boxes, template=template, precision=precision, weights=weights, oversampling_factor=oversampling_factor, n_transits_min=n_transits_min, bumps=bumps, radius_limits=radius_limits, mass_limits=mass_limits)[0]

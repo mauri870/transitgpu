@@ -4,6 +4,7 @@
 
 ### Added
 
+- `radius_limits` and `mass_limits`, pairs (minimum, maximum) in solar units, on `duration_fractions`, `search` and `search_many` replace TLS's stellar limits for the durations of the grid. A smaller minimum radius lowers the shortest duration in proportion and adds shorter durations and more phase bins at every period; every duration of the default grid stays in the lowered one, and a search without the arguments is bit for bit the search as it was.
 - `bumps=True` on `box_search(...).power`, `search` and `search_many` scores the windows whose mean is above the whole's from the same fold, sums and grid as the dips. Each result then has a `bump` entry with the fields of a result, equal to the result of a search of the negated flux, and the results of `power` a `bump` attribute; the other fields are those of a search without `bumps`.
 
 ### Changed
