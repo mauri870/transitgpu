@@ -79,7 +79,9 @@ faulthandler_timeout = 300  # a test that runs longer prints the stack of every 
 markers = [
     "gpu: may search on the device (the tests also run on a CPU, slowly)",
     "timing: times the device",
+    "slow: runs for minutes, mostly on the CPU; `pytest -m slow` runs these tests and the default run leaves them out",
 ]
+addopts = "-m 'not slow'"
 
 [tool.uv]
 conflicts = [[{ group = "cpu" }, { group = "cu128" }, { group = "rocm" }]]
