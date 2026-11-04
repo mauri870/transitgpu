@@ -285,3 +285,37 @@ def test_on_torch_without_a_device_the_architecture_is_none_and_not_an_error(mon
     monkeypatch.setattr(torch.cuda, "current_device", cpu_torch)
     assert hip._architecture() is None
     assert hip._device_architecture(torch.device("cpu")) is None
+
+
+@needs_rocm
+@pytest.mark.parametrize("bins", [128, 512, 1024, 2048, 4096])
+def test_a_single_flux_runs_on_the_hip_kernel_and_gives_the_integers_of_the_triton_kernel(bins, monkeypatch):
+    t, quantized, weight = inputs(fluxes=1, seed=11)
+    p = torch.as_tensor(np.linspace(3.0, 90.0, 40), dtype=torch.float64, device="cuda")
+    asked = []
+    original = hip.accumulate_many
+    monkeypatch.setattr(hip, "accumulate_many", lambda *a, **k: asked.append(original(*a, **k)) or asked[-1])
+    sums, counts = core.accumulate_many(t, p, bins, quantized, weight, shared_weight=True)
+    assert asked and asked[0] is not None, "the HIP kernel did not take a single flux"
+    reference_sums, reference_counts = triton_result(monkeypatch, t, p, bins, quantized, weight, shared_weight=True)
+    assert sums.shape == (1, 40, bins) and torch.equal(sums, reference_sums), f"{bins} bins: the sums differ in {int((sums != reference_sums).sum())} bins"
+    assert torch.equal(counts, reference_counts), f"{bins} bins: the counts differ"
+
+
+@needs_rocm
+@pytest.mark.parametrize("points, rows", [(1, 1), (2, 3), (4097, 2), (153_046, 512)])
+def test_a_single_flux_of_one_point_the_largest_bin_count_and_a_full_batch_gives_the_integers_of_the_triton_kernel(points, rows, monkeypatch):
+    t, quantized, weight = inputs(points=points, fluxes=1, seed=13)
+    p = torch.as_tensor(np.linspace(200.0, 399.0, rows), dtype=torch.float64, device="cuda")
+    for bins in (4096, 512):  # the bin count changes between two calls on the same arrays
+        sums, counts = core.accumulate_many(t, p, bins, quantized, weight, shared_weight=True)
+        reference_sums, reference_counts = triton_result(monkeypatch, t, p, bins, quantized, weight, shared_weight=True)
+        assert torch.equal(sums, reference_sums) and torch.equal(counts, reference_counts), f"{bins} bins"
+
+
+@needs_rocm
+def test_a_single_flux_whose_weights_are_too_large_for_the_counts_of_a_block_still_goes_to_the_triton_kernel():
+    t, quantized, _ = inputs(points=2000, fluxes=1, seed=5)
+    p = torch.as_tensor(np.linspace(5.0, 60.0, 9), dtype=torch.float64, device="cuda")
+    weight = torch.full_like(quantized, 2**20)
+    assert hip.accumulate_many(t, p, 512, quantized, weight, shared_weight=True) is None
