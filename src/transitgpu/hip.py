@@ -113,7 +113,7 @@ def _load():
 
 
 def accumulate_many(t, p, bins, quantized, weight, shared_weight=False):
-    if not (shared_weight and quantized.shape[0] > 1 and bins <= MAXIMUM_BINS and available()):
+    if not (shared_weight and bins <= MAXIMUM_BINS and available()):
         return None
     points_per_block = 8192 if bins == MAXIMUM_BINS else 4096
     if int(weight.min()) < 0 or int(weight.max()) * points_per_block >= 2**31:
