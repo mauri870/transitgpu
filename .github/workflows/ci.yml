@@ -36,6 +36,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.2"
+          python-version: "3.13"  # the runner's own Python moved to 3.14, for which batman-package has no wheel
           enable-cache: true
       - name: Ruff
         run: uv run --only-dev ruff check
