@@ -444,11 +444,16 @@ def _warn_durations_under_half_a_bin(periods, bins_of, anchor, offset, steps_of,
     asked for is not honoured there. The default limits give no such duration at any period up to 1,000 days.
     """
     if duration_hours is None:  # the durations grow with the step, so the short ones are the first few steps of each period: counted without a table of periods by steps (a search of 20,000 points takes 0.2 s, and the table took 18 ms)
-        smallest = anchor * duration_step ** offset * bins_of  # the shortest duration of each period, in bins
-        count = np.where(smallest < 0.5, np.minimum(steps_of, np.floor(np.log(0.5 / smallest) / np.log(duration_step)) + 1), 0).astype(np.int64)
+        def in_bins(step):  # the expression of the table below, so that the two paths compare the same floats with the same strict limit
+            return anchor * duration_step ** (offset + step) * bins_of
+
+        count = np.where(in_bins(0) < 0.5, np.ceil(np.log(0.5 / in_bins(0)) / np.log(duration_step)), 0).astype(np.int64)
+        count = np.minimum(count, steps_of)
+        count -= (count > 0) & (in_bins(np.maximum(count - 1, 0)) >= 0.5)  # a count one too high where 0.5 / smallest is a power of the step
+        count += (count < steps_of) & (in_bins(count) < 0.5)  # or one too low by rounding of the logarithm
         if count.any():
             rows = np.flatnonzero(count)
-            _warn_short(periods, bins_of, rows, int(count.sum()), float((smallest * periods * 24 / bins_of)[rows].min()))
+            _warn_short(periods, bins_of, rows, int(count.sum()), float((anchor * duration_step ** offset * periods * 24)[rows].min()))
         return
     width = np.arange(int(steps_of.max()))[None, :]
     fractions = anchor[:, None] * duration_step ** (offset[:, None] + width)
