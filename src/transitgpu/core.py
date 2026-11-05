@@ -621,8 +621,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     periods = np.sort(np.asarray(periods, dtype=float))
     if periods.size and not (np.isfinite(periods).all() and periods[0] > 0.0):
         raise ValueError(f"periods must be finite and above 0 days, not {periods[~(np.isfinite(periods) & (periods > 0.0))][:3].tolist()}")
-    if np.unique(periods).size < 2:
-        raise ValueError(f"the SDE is a z-score over the periods: the search needs at least two distinct periods, not {np.unique(periods).size}")
+    if periods.size < 2 or periods[0] == periods[-1]:  # sorted: all equal when the ends are
+        raise ValueError(f"the SDE is a z-score over the periods: the search needs at least two distinct periods, not {min(periods.size, 1)}")
     ends = None if cuts is None else [int(np.searchsorted(periods, cut, side="right")) for cut in cuts]
     if ends is not None and min(ends) < 2:
         raise ValueError(f"a cut of {min(cuts)} d leaves fewer than two periods of the grid, which starts at {periods.min()} d")
