@@ -339,3 +339,52 @@ def test_the_hip_accumulation_is_called_inside_the_device_context_of_the_time_ax
     t = torch.zeros(4, dtype=torch.float64)
     found = core.accumulate_many(t, torch.ones(2, dtype=torch.float64), 8, torch.zeros((1, 4), dtype=torch.int64), torch.ones((1, 4), dtype=torch.int64), shared_weight=True)
     assert found == ("sums", "counts") and seen == [True], "the HIP kernel must launch with the device of t as the current device"
+
+
+def entry_arguments(points=512, rows=3, fluxes=2, bins=64):
+    """The tensors of a valid call of the C++ entry point (module.accumulate)."""
+    t, quantized, weight = inputs(points=points, fluxes=fluxes)
+    inverse = torch.full((rows,), 1.0 / 7.0, dtype=torch.float64, device="cuda")
+    sums = torch.zeros(fluxes, rows, bins, dtype=torch.int64, device="cuda")
+    counts = torch.zeros(rows, bins, dtype=torch.int64, device="cuda")
+    return [t, inverse, quantized, weight[0].contiguous(), sums, counts, bins, 4096]
+
+
+@needs_rocm
+def test_the_entry_point_refuses_a_bin_count_outside_one_to_the_maximum_and_a_launch_that_cannot_run():
+    """The entry point checked nothing: bins above MAXIMUM_BINS asked for more local memory than a block has, the launch failed, and the sums stayed zero with no error."""
+    module = hip._load()
+    assert module is not None
+    module.accumulate(*entry_arguments())  # a valid call
+    for bins in (0, -1, hip.MAXIMUM_BINS + 1, 100_000):
+        arguments = entry_arguments(bins=max(bins, 1))
+        arguments[6] = bins
+        with pytest.raises(RuntimeError, match="bins"):
+            module.accumulate(*arguments)
+
+
+@needs_rocm
+def test_the_entry_point_refuses_tensors_that_do_not_fit_the_points_and_a_time_axis_that_is_not_contiguous():
+    module = hip._load()
+    arguments = entry_arguments()
+    with pytest.raises(RuntimeError, match="quantized"):
+        module.accumulate(arguments[0], arguments[1], arguments[2][:, :-1].contiguous(), *arguments[3:])  # one point short: the kernel would read past it
+    with pytest.raises(RuntimeError, match="weight"):
+        module.accumulate(arguments[0], arguments[1], arguments[2], arguments[3][:-1].contiguous(), *arguments[4:])
+    strided = torch.zeros(1024, dtype=torch.float64, device="cuda")[::2]
+    with pytest.raises(RuntimeError, match="contiguous"):
+        module.accumulate(strided, *arguments[1:])
+    with pytest.raises(RuntimeError, match="device"):
+        module.accumulate(arguments[0].cpu(), *arguments[1:])
+
+
+@needs_rocm
+def test_the_python_wrapper_makes_a_strided_time_axis_contiguous_and_the_bin_limit_is_the_one_of_the_source():
+    t, quantized, weight = inputs(points=2000, fluxes=3)
+    p = torch.as_tensor(np.linspace(3.0, 90.0, 12), dtype=torch.float64, device="cuda")
+    wide = torch.zeros(4000, dtype=torch.float64, device="cuda")
+    wide[::2] = t
+    sums, counts = hip.accumulate_many(wide[::2], p, 256, quantized, weight, shared_weight=True)
+    reference_sums, reference_counts = hip.accumulate_many(t, p, 256, quantized, weight, shared_weight=True)
+    assert torch.equal(sums, reference_sums) and torch.equal(counts, reference_counts)
+    assert f"#define MAXIMUM_BINS {hip.MAXIMUM_BINS}\n" in hip.SOURCE.read_text(), "the limit of the C++ entry point is the one of hip.py"

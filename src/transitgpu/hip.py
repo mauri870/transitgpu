@@ -130,5 +130,5 @@ def accumulate_many(t, p, bins, quantized, weight, shared_weight=False):
     fluxes, rows = quantized.shape[0], p.numel()
     sums = torch.zeros(fluxes, rows, bins, dtype=torch.int64, device=t.device)
     counts = torch.zeros(rows, bins, dtype=torch.int64, device=t.device)
-    module.accumulate(t, (1.0 / p).contiguous(), quantized.contiguous(), weight[0].contiguous(), sums, counts, bins, points_per_block)
+    module.accumulate(t.contiguous(), (1.0 / p).contiguous(), quantized.contiguous(), weight[0].contiguous(), sums, counts, bins, points_per_block)
     return sums, counts.unsqueeze(0).expand(fluxes, -1, -1)
