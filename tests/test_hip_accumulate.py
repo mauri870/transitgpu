@@ -3,6 +3,7 @@
 Function tests: the property is that two paths give equal integers on random inputs, and the fallback is a code path with no data.
 """
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -388,3 +389,21 @@ def test_the_python_wrapper_makes_a_strided_time_axis_contiguous_and_the_bin_lim
     reference_sums, reference_counts = hip.accumulate_many(t, p, 256, quantized, weight, shared_weight=True)
     assert torch.equal(sums, reference_sums) and torch.equal(counts, reference_counts)
     assert f"#define MAXIMUM_BINS {hip.MAXIMUM_BINS}\n" in hip.SOURCE.read_text(), "the limit of the C++ entry point is the one of hip.py"
+
+
+def test_the_extension_is_built_from_the_hashed_copy_of_the_source_text_and_not_from_the_path_of_the_file(monkeypatch, tmp_path):
+    """The test of hip._source_path alone would stay green if _load went back to `sources=[str(SOURCE)]`: it checks the file that _load hands to torch's build."""
+    from torch.utils import cpp_extension
+
+    calls = []
+    monkeypatch.setattr(hip, "_module", None)
+    monkeypatch.setattr(hip, "_failed", False)
+    monkeypatch.setattr(hip, "_built_for", None)
+    monkeypatch.setattr(hip, "available", lambda: True)
+    monkeypatch.setattr(hip, "_build_directory", lambda: tmp_path)
+    monkeypatch.setenv("PYTORCH_ROCM_ARCH", "gfx1100")
+    monkeypatch.setattr(cpp_extension, "load", lambda **arguments: calls.append(arguments) or object())
+    assert hip._load() is not None and len(calls) == 1
+    (source,) = calls[0]["sources"]
+    assert Path(source).parent == tmp_path and Path(source).name.startswith("accumulate-") and Path(source).read_text() == hip.SOURCE_TEXT, source
+    assert Path(source) != hip.SOURCE
