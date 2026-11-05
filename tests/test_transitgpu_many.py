@@ -48,7 +48,8 @@ def test_a_search_limited_to_a_band_of_durations_places_every_best_box_inside_th
     assert (wide["widths_days"] * 24).min() < 3.0, "the unlimited search scores shorter durations, which the band leaves out"
 
 
-def test_a_band_of_durations_that_no_period_reaches_is_searched_without_an_error_and_finds_nothing():
+def test_a_band_of_durations_that_no_period_reaches_is_refused_with_a_value_error():
+    """Until 0.2.0 such a band was searched and found nothing (an SDE of 0). A search that scores no duration has no result, so since 0.2.0 it raises, as the other arguments with no result do (tests/test_input_checks.py)."""
     time, flux = light_curve(seed=3, cadence_min=30.0)
-    found = search_many(time, [flux], 3.0, 5.0, spectrum=True, duration_hours=(1000.0, 2000.0))[0]
-    assert found["sde"] == 0.0 and not found["power"].any() and found["depth_ppm"] == 0.0
+    with pytest.raises(ValueError, match="duration_hours"):
+        search_many(time, [flux], 3.0, 5.0, spectrum=True, duration_hours=(1000.0, 2000.0))

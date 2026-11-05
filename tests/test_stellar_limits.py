@@ -87,7 +87,7 @@ def test_a_floor_set_exactly_on_a_lattice_point_starts_the_grid_at_that_point(st
 def one_period_search(period, **limits):
     time = np.linspace(0.0, 4.0 * period, 3000)
     flux = 1.0 + np.random.default_rng(3).normal(0.0, 1e-3, time.size)
-    return core.search_many(time, [flux], period * 0.99, period * 1.01, periods=np.array([period]), device="cpu", **limits)
+    return core.search_many(time, [flux], period * 0.99, period * 1.01, periods=np.array([period, period * 1.01]), device="cpu", **limits)
 
 
 def test_a_lowered_floor_under_half_a_bin_at_a_long_period_warns_once_that_the_durations_collapse_onto_one_bin():

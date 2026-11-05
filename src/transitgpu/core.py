@@ -585,6 +585,12 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         if value not in PRECISION_CHOICES[name]:
             raise ValueError(f"precision {name}={value!r} is not one of {PRECISION_CHOICES[name]}")
     single = choice["statistic"] == "float32"
+    if not (np.isfinite(duration_step) and duration_step > 1.0):
+        raise ValueError(f"duration_step must be finite and above 1 (the ratio of consecutive durations), not {duration_step!r}")
+    if not (np.isfinite(minimum_bins) and minimum_bins >= 1):
+        raise ValueError(f"minimum_bins must be at least 1 (the bins across the shortest duration), not {minimum_bins!r}")
+    if batch is not None and not batch >= 1:
+        raise ValueError(f"batch must be at least 1 period, or None for the default, not {batch!r}")
     time = np.asarray(time, dtype=float)
     fluxes = [np.asarray(flux, dtype=float) for flux in fluxes]
     if not fluxes:
@@ -603,12 +609,21 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     if periods is None:
         periods = grid_of(time, fluxes[0], period_min, period_max, oversampling_factor, n_transits_min)
     periods = np.sort(np.asarray(periods, dtype=float))
+    if periods.size and not (np.isfinite(periods).all() and periods[0] > 0.0):
+        raise ValueError(f"periods must be finite and above 0 days, not {periods[~(np.isfinite(periods) & (periods > 0.0))][:3].tolist()}")
+    if np.unique(periods).size < 2:
+        raise ValueError(f"the SDE is a z-score over the periods: the search needs at least two distinct periods, not {np.unique(periods).size}")
     ends = None if cuts is None else [int(np.searchsorted(periods, cut, side="right")) for cut in cuts]
     if ends is not None and min(ends) < 2:
         raise ValueError(f"a cut of {min(cuts)} d leaves fewer than two periods of the grid, which starts at {periods.min()} d")
     on_axis = np.isfinite(time)  # a point without a time is dropped; a point with a time and no flux has zero weight
     time_axis = time[on_axis]
     shortest, anchor, offset, steps_of = duration_exponents(periods, duration_step, radius_limits, mass_limits)
+    if duration_hours is not None:
+        steps = np.arange(int(steps_of.max()))[None, :]
+        hours = anchor[:, None] * duration_step ** (offset[:, None] + steps) * periods[:, None] * 24
+        if not ((steps < steps_of[:, None]) & (hours > duration_hours[0]) & (hours <= duration_hours[1])).any():
+            raise ValueError(f"duration_hours {tuple(duration_hours)} leaves no duration to score at any of the {periods.size} periods")
     device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
     t = torch.as_tensor(time_axis, dtype=torch.float64, device=device)
     # The one-pass accumulation needs a CUDA device, no template, non-negative times and Triton; otherwise the fold
