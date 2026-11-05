@@ -133,14 +133,14 @@ The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of 
 
 | search | device | 20,000 points | 100,000 points | 200,000 points |
 | --- | --- | --- | --- | --- |
-| transitgpu box search | GPU | 0.267 (0.266–0.267) | 0.505 (0.504–0.506) | 0.579 (0.578–0.580) |
-| transitgpu.bls_tls_hybrid, 5 peaks, window 1%, exact | GPU | 0.443 (0.441–0.443) | 0.874 (0.855–0.879) | 1.24 (1.20–1.26) |
-| transitgpu.tls exact | GPU | 2.48 (2.48–2.48) | 5.55 (5.55–5.55) | 10.8 (10.8–10.8) |
-| transitgpu.tls binned | GPU | 1.08 (1.08–1.08) | 1.32 (1.32–1.32) | 1.42 (1.42–1.42) |
-| transitgpu.tls piecewise-linear | GPU | 1.17 (1.17–1.17) | 3.84 (3.84–3.84) | 6.45 (6.45–6.45) |
+| transitgpu box search | GPU | 0.223 (0.223–0.224) | 0.333 (0.333–0.336) | 0.477 (0.476–0.479) |
+| transitgpu.bls_tls_hybrid, 5 peaks, window 1%, exact | GPU | 0.407 (0.406–0.409) | 0.697 (0.673–0.708) | 1.06 (1.06–1.13) |
+| transitgpu.tls exact | GPU | 2.57 (2.57–2.58) | 5.33 (5.32–5.34) | 9.91 (9.90–9.94) |
+| transitgpu.tls binned | GPU | 1.11 (1.11–1.12) | 1.37 (1.37–1.37) | 1.48 (1.47–1.48) |
+| transitgpu.tls piecewise-linear | GPU | 1.24 (1.24–1.24) | 4.08 (4.08–4.09) | 6.77 (6.76–6.78) |
 | astropy BoxLeastSquares | CPU, 1 thread | 37.2 (37.2–37.2) | 51.3 (51.3–51.4) | 69.1 (69.1–69.2) |
-| transitleastsquares 2.0.1 exact (fused) | CPU, 16 threads | 6.43 (6.43–6.43) | 12.4 (12.4–12.4) | 26.6 (26.6–26.7) |
-| transitleastsquares 2.0.1 default (fused-pl) | CPU, 16 threads | 1.45 (1.45–1.46) | 4.06 (4.06–4.06) | 10.8 (10.7–10.9) |
+| transitleastsquares 2.0.1 exact (fused) | CPU, 16 threads | 6.54 (6.54–6.57) | 12.5 (12.4–12.5) | 27.7 (27.5–27.7) |
+| transitleastsquares 2.0.1 default (fused-pl) | CPU, 16 threads | 1.47 (1.47–1.47) | 4.09 (4.08–4.10) | 10.8 (10.7–10.9) |
 | transitleastsquares 2.0.1 exact (fused) | CPU, 1 thread | 91.0 (90.9–91.2) | 166 (166–166) | 277 (276–278) |
 | transitleastsquares 2.0.1 default (fused-pl) | CPU, 1 thread | 20.2 (20.1–20.2) | 49.1 (49.0–49.2) | 85.6 (84.2–85.9) |
 
@@ -150,10 +150,10 @@ The second table shows a batch of 64 light curves of 20,000 points, each with it
 
 | search | device | seconds for the set | light curves per second |
 | --- | --- | --- | --- |
-| transitgpu.search_many | GPU | 6.90 (6.90–6.90) | 9.28 |
+| transitgpu.search_many | GPU | 5.24 (5.23–5.24) | 12.2 |
 | transitleastsquares 2.0.1 default (fused-pl), one after another | CPU, 16 threads | 92.4 (92.3–92.4) | 0.693 |
 
-Machine: AMD Ryzen 9 9950X3D and AMD Radeon RX 7900 XTX, ROCm 7.2.53211, Python 3.12.13, numpy 2.5.4, torch 2.12.0+rocm7.2, astropy 8.0.1, transitleastsquares 2.0.1 and numba 0.68.0. All the rows come from one session of 2026-10-26, each process pinned to cores 0–15 of the otherwise idle machine. `benchmarks/results.json` has every run and the log of the session. To reproduce:
+Machine: AMD Ryzen 9 9950X3D and AMD Radeon RX 7900 XTX, ROCm 7.2.53211, Python 3.12.13, numpy 2.5.4, torch 2.12.0+rocm7.2, astropy 8.0.2, transitleastsquares 2.0.1 and numba 0.68.0. The GPU rows and the 16-thread TLS rows of the first table and the GPU row of the second come from one session of 2026-11-05, each process pinned to cores 0–15 of the otherwise idle machine. The astropy rows, the one-thread TLS rows and the 16-thread TLS row of the second table come from the session of 2026-10-26 (astropy 8.0.1), and each of those rows carries the session it was measured in. `benchmarks/results.json` has every run and the log of the session. To reproduce:
 
 ```
 bash benchmarks/session.sh DIRECTORY
