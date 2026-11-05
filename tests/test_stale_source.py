@@ -62,7 +62,7 @@ SOURCES = """
 
 
 def test_the_source_of_the_kernels_of_core_is_the_same_after_its_file_is_replaced(tmp_path):
-    plain = run(tmp_path / "plain", "import transitgpu\nfrom transitgpu import core\n" + SOURCES)
+    plain = run(tmp_path / "plain", "\n    import transitgpu\n    from transitgpu import core\n" + SOURCES)
     replaced = run(tmp_path / "replaced", REPLACE + SOURCES)
     assert plain.returncode == 0, plain.stderr[-2000:]
     assert replaced.returncode == 0, replaced.stderr[-2000:]
