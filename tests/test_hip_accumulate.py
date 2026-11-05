@@ -388,7 +388,6 @@ def test_the_python_wrapper_makes_a_strided_time_axis_contiguous_and_the_bin_lim
     sums, counts = hip.accumulate_many(wide[::2], p, 256, quantized, weight, shared_weight=True)
     reference_sums, reference_counts = hip.accumulate_many(t, p, 256, quantized, weight, shared_weight=True)
     assert torch.equal(sums, reference_sums) and torch.equal(counts, reference_counts)
-    assert f"#define MAXIMUM_BINS {hip.MAXIMUM_BINS}\n" in hip.SOURCE.read_text(), "the limit of the C++ entry point is the one of hip.py"
 
 
 def test_the_extension_is_built_from_the_hashed_copy_of_the_source_text_and_not_from_the_path_of_the_file(monkeypatch, tmp_path):
@@ -407,3 +406,8 @@ def test_the_extension_is_built_from_the_hashed_copy_of_the_source_text_and_not_
     (source,) = calls[0]["sources"]
     assert Path(source).parent == tmp_path and Path(source).name.startswith("accumulate-") and Path(source).read_text() == hip.SOURCE_TEXT, source
     assert Path(source) != hip.SOURCE
+
+
+def test_the_bin_limit_of_the_source_is_the_one_of_hip_py():
+    """Not marked for ROCm: the CPU run checks that the C++ entry point and hip.accumulate_many refuse the same number of bins."""
+    assert f"#define MAXIMUM_BINS {hip.MAXIMUM_BINS}\n" in hip.SOURCE.read_text(), "the limit of the C++ entry point is the one of hip.py"
