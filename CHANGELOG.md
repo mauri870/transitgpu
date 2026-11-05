@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 (2026-11-05)
+
 ### Added
 
 - `radius_limits` and `mass_limits`, pairs (minimum, maximum) in solar units, on `duration_fractions`, `search` and `search_many` replace TLS's stellar limits for the durations of the grid. A smaller minimum radius lowers the shortest duration in proportion and adds shorter durations and more phase bins at every period; every duration of the default grid stays in the lowered one, and a search without the arguments is bit for bit the search as it was.
