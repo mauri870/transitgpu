@@ -84,6 +84,7 @@ void accumulate(torch::Tensor t, torch::Tensor inverse, torch::Tensor quantized,
     const size_t shared = (size_t)bins * (sizeof(int64_t) + sizeof(int32_t));
     const dim3 block(THREADS), grid((n + points_per_block - 1) / points_per_block, rows);
     hipStream_t stream = at::hip::getCurrentHIPStreamMasqueradingAsCUDA();
+    (void)hipGetLastError();  // clears an error left by earlier work, so that the check after the launch reports this kernel's own failure and not a sticky one from before
 #define LAUNCH(P) hipLaunchKernelGGL(accumulate_kernel<P>, grid, block, shared, stream, t.data_ptr<double>(), inverse.data_ptr<double>(), \
     quantized.data_ptr<int64_t>(), weight.data_ptr<int64_t>(), sums.data_ptr<int64_t>(), counts.data_ptr<int64_t>(), n, (int)bins, rows, fluxes)
     if (points_per_block == 4096) LAUNCH(4096);
