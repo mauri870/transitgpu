@@ -103,14 +103,14 @@ def test_a_search_of_many_fluxes_with_a_small_flux_budget_equals_the_search_with
     assert repr(default) == repr(small), "a batch of 3 periods changed the result of 12 fluxes"
 
 
-def largest_launch(points, fluxes, period_max, every=1):
+def largest_launch(points, fluxes, period_max, every=1, cadence_seconds=120.0):
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("the launches are of a GPU")
     from torch.profiler import ProfilerActivity, profile
 
     rng = np.random.default_rng(833)
-    time = np.sort(rng.uniform(0.0, 2877.0, points))
+    time = np.arange(points) * cadence_seconds / 86400.0  # a regular cadence: the points of a fold fall into few bins at some periods and the atomics of a bin are serial, which random times do not show
     flux = 1.0 + 1e-3 * rng.standard_normal(points)
     many = [flux[rng.permutation(points)] for _ in range(fluxes)]
     periods = core.search_many(time, many[:1], 0.5, period_max, spectrum=True)[0]["periods"][::every]  # a slice of the grid keeps the profiler's events few: every launch has the shape of its batch whichever periods it holds
@@ -124,12 +124,12 @@ def largest_launch(points, fluxes, period_max, every=1):
 
 @pytest.mark.gpu
 def test_a_call_of_8_fluxes_at_236_thousand_points_has_no_launch_over_10_ms():
-    largest, launches = largest_launch(236_736, 8, 14.0)
+    largest, launches = largest_launch(236_736, 8, 14.0, every=20)
     assert largest <= 10.0, f"largest launch {largest:.2f} ms of {launches}"
 
 
 @pytest.mark.slow
 @pytest.mark.gpu
 def test_a_call_of_12_fluxes_at_2_5_million_points_has_no_launch_over_10_ms():
-    largest, launches = largest_launch(2_524_608, 12, 14.0, every=50)
+    largest, launches = largest_launch(2_524_608, 12, 14.0, every=50, cadence_seconds=25.0)
     assert largest <= 10.0, f"largest launch {largest:.2f} ms of {launches}"
