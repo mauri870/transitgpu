@@ -17,6 +17,7 @@ import torch
 
 MAXIMUM_BINS = 4096  # the table of a block (8 bytes of sum and 4 of count a bin) must fit the 64 KiB of local memory
 SOURCE = Path(__file__).with_name("accumulate.hip")
+SOURCE_TEXT = SOURCE.read_text()  # read at import: the build may come long after, and a sync of the environment may have replaced the file by then
 LOCK_WAIT_SECONDS = 120.0  # a build takes 20 to 32 s (measured, one or two architectures); a lock older than four builds is not a build that is running
 _module = None
 _failed = False
@@ -81,6 +82,22 @@ def _default_lock():
     return Path(root) / "lock"
 
 
+def _source_path(directory):
+    """The file that is built: the text of the source as it was when the module was imported, in `directory` (torch's own build directory for None) under a name of its hash, so that a build and a change of the text never share a file."""
+    import hashlib
+
+    if directory is None:
+        from torch.utils import cpp_extension
+
+        directory = Path(cpp_extension._get_build_directory("transitgpu_accumulate", verbose=False))
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"accumulate-{hashlib.sha256(SOURCE_TEXT.encode()).hexdigest()[:12]}.hip"
+    if not path.exists() or path.read_text() != SOURCE_TEXT:
+        path.write_text(SOURCE_TEXT)
+    return path
+
+
 def _load():
     global _module, _failed, _built_for
     if _module is None and not _failed:
@@ -101,7 +118,7 @@ def _load():
             if chosen:
                 os.environ["PYTORCH_ROCM_ARCH"] = chosen
             try:
-                _module = cpp_extension.load(name="transitgpu_accumulate", sources=[str(SOURCE)], build_directory=None if directory is None else str(directory))
+                _module = cpp_extension.load(name="transitgpu_accumulate", sources=[str(_source_path(directory))], build_directory=None if directory is None else str(directory))
                 _built_for = _architectures(chosen, user)
             finally:
                 if chosen:

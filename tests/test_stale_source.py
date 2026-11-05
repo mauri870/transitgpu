@@ -83,3 +83,19 @@ def test_a_search_after_the_file_was_replaced_still_works(tmp_path):
     print("searched")
     """)
     assert result.returncode == 0 and "searched" in result.stdout, result.stderr[-2000:]
+
+
+def test_the_hip_source_that_is_built_is_the_text_read_when_the_module_was_imported(tmp_path):
+    """accumulate.hip was read from its path at the first build, which may come long after the import: a process that survives the replacement of the package's files (a sync of the environment) built the new file with the Python of the old. The text is read at import and the build is made from a file written from it."""
+    program = """
+    import hashlib, pathlib, tempfile
+    import transitgpu
+    from transitgpu import hip
+    original = hashlib.sha256(hip.SOURCE.read_bytes()).hexdigest()
+    hip.SOURCE.write_text("// replaced after the import\\n")
+    built = hip._source_path(pathlib.Path(tempfile.mkdtemp()))
+    print("same", hashlib.sha256(built.read_bytes()).hexdigest() == original, built.name.startswith("accumulate-") and built.suffix == ".hip")
+    """
+    result = run(tmp_path, program)
+    assert result.returncode == 0, result.stderr[-2000:]
+    assert result.stdout.strip().splitlines()[-1] == "same True True", result.stdout

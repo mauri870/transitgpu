@@ -20,6 +20,7 @@
 
 ### Fixed
 
+- The HIP accumulation is built from the text of `accumulate.hip` as it was when `transitgpu.hip` was imported, written to a file named by its hash in the build directory. The file was read from its path at the first build, which a process that survives a sync of the environment reaches after the package's files were replaced, as the Triton kernels were fixed to read their source at import.
 - The C++ entry point of the HIP accumulation checks its arguments: every tensor on one device and contiguous, the dtypes, 1 to 4,096 bins, as many points in `quantized` and `weight` as in `t`, and the sizes of the sums and counts. It makes the device of `t` current for the launch, and it raises when the launch does not run (a launch over the limits of the device left the sums at zero and returned a wrong spectrum with no error). `hip.accumulate_many` makes the time axis contiguous.
 - On ROCm, the HIP accumulation of `search_many` is launched with the device of the time axis as the current device, as the Triton kernel already was. With `device='cuda:1'` on a host of two GPUs it launched on the stream of device 0 over the pointers of device 1. Tested by the structure of the call, since one GPU was available: two devices were not tested.
 - The exact search (`transitgpu.tls`, backend `gpu`) of a single trial period raised `ValueError: At least one stride in the given numpy array is negative`: the periods were sorted into descending order through a reversed view, and `np.ascontiguousarray` returns a view of one element unchanged. The periods are copied.
