@@ -437,6 +437,29 @@ def duration_exponents(periods, duration_step, radius_limits=None, mass_limits=N
     return shortest, anchor, first, steps
 
 
+def _warn_durations_under_half_a_bin(periods, bins_of, anchor, offset, steps_of, duration_step, duration_hours):
+    """Warn once for a call when some of the durations that it scores are shorter than half a phase bin of their period.
+
+    The bins of a period stop at MAXIMUM_BINS, so at long periods a bin is a fixed fraction of the period (35 minutes at 100 days) and a duration under half of it is scored as one bin: the floor that `radius_limits` or `mass_limits`
+    asked for is not honoured there. The default limits give no such duration at any period up to 1,000 days.
+    """
+    import warnings
+
+    width = np.arange(int(steps_of.max()))[None, :]
+    fractions = anchor[:, None] * duration_step ** (offset[:, None] + width)
+    scored = width < steps_of[:, None]
+    if duration_hours is not None:
+        hours = fractions * periods[:, None] * 24
+        scored = scored & (hours > duration_hours[0]) & (hours <= duration_hours[1])
+    short = scored & (fractions * bins_of[:, None] < 0.5)
+    if short.any():
+        rows = np.flatnonzero(short.any(axis=1))
+        shortest_hours = float((fractions * periods[:, None] * 24)[short].min())
+        bin_hours = float((periods[rows] * 24 / bins_of[rows]).max())
+        warnings.warn(f"{int(short.sum())} of the durations scored at {rows.size} periods (up to {float(periods[rows].max()):.4g} d) are shorter than half a phase bin and are scored as one bin of up to {bin_hours:.2f} h: "
+                      f"the shortest, {shortest_hours:.2f} h, is not honoured because the bins of a period stop at {MAXIMUM_BINS}", stacklevel=3)
+
+
 def duration_lattice(periods, duration_step, radius_limits=None, mass_limits=None):
     """Return, for each period, the array of its trial durations as fractions of the period (the durations that `search_many` scores before it rounds them to bins)."""
     _, anchor, first, steps = duration_exponents(periods, duration_step, radius_limits, mass_limits)
@@ -515,7 +538,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
       periods: the trial periods, in place of TLS's grid.
       duration_hours: a pair (low, high); only the duration steps longer than low and up to high hours are scored.
       radius_limits, mass_limits: pairs (minimum, maximum) in solar units that replace TLS's stellar limits for the durations of the grid (see duration_fractions); a smaller minimum radius adds shorter
-        durations and more phase bins at every period, and keeps every default duration.
+        durations and more phase bins at every period, and keeps every default duration. The bins of a period stop at MAXIMUM_BINS (4,096), so at long periods a bin is a fixed fraction of the period (35 minutes at
+        100 days): a duration shorter than half a bin is scored as one bin, and the call warns once when it scores any. A lowered floor is honoured only down to half a bin.
       labeled: put the index of the flux in the message of a ValueError about it.
       boxes: add `centers` and `widths_days`, the best box of every trial period.
       cuts: a list of periods; the result of each flux is then a list with one result per cut, over the periods of
@@ -637,6 +661,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     # with the same number of bins are searched together, `batch` at a time.
     bins_of = np.clip(2 ** np.ceil(np.log2(minimum_bins / shortest)), MINIMUM_BINS_PER_PERIOD, MAXIMUM_BINS).astype(np.int64)
     groups = [(int(bins), np.flatnonzero(bins_of == bins)) for bins in np.unique(bins_of)]
+    _warn_durations_under_half_a_bin(periods, bins_of, anchor, offset, steps_of, duration_step, duration_hours)
     quantized_all = weight_all = None  # every flux, stacked for accumulate_many
     shared_weight = all(torch.equal(row["weight"], rows_of[0]["weight"]) for row in rows_of[1:])  # block shuffles of a star share its weights
     for bins, members in groups:

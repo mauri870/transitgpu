@@ -82,3 +82,23 @@ def test_a_floor_set_exactly_on_a_lattice_point_starts_the_grid_at_that_point(st
         expected_first = default[index][0] * step**steps_below
         assert lattice[index][0] == pytest.approx(expected_first, rel=1e-9), f"period {PERIODS[index]}: the grid starts at {lattice[index][0]}, not at the lattice point {expected_first}"
         assert len(lattice[index]) == len(default[index]) - steps_below, f"period {PERIODS[index]}: {len(lattice[index])} steps against {len(default[index]) - steps_below}"
+
+
+def one_period_search(period, **limits):
+    time = np.linspace(0.0, 4.0 * period, 3000)
+    flux = 1.0 + np.random.default_rng(3).normal(0.0, 1e-3, time.size)
+    return core.search_many(time, [flux], period * 0.99, period * 1.01, periods=np.array([period]), device="cpu", **limits)
+
+
+def test_a_lowered_floor_under_half_a_bin_at_a_long_period_warns_once_that_the_durations_collapse_onto_one_bin():
+    """Review of 0.2.0 (F2): the phase bins of a period stop at MAXIMUM_BINS, so at 100 d a bin is 35 minutes, and the shortest durations of a lowered floor all round to one bin: the floor is not honoured and nothing said so. A requested duration under half a bin is scored as one bin, more than twice what was asked."""
+    import warnings
+
+    with pytest.warns(UserWarning, match="shorter than half a phase bin") as caught:
+        one_period_search(100.0, radius_limits=(0.005, grids.R_STAR_MAX))
+    assert len([w for w in caught if "shorter than half a phase bin" in str(w.message)]) == 1, "one warning for the call, not one for each batch"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        for period in (1.0, 14.0, 100.0, 1000.0):
+            one_period_search(period)  # the default limits give no duration under half a bin at any period of the search
+        one_period_search(14.0, radius_limits=(grids.R_STAR_MIN / 2, grids.R_STAR_MAX))
