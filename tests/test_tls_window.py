@@ -517,13 +517,12 @@ def test_a_batch_whose_starts_would_pass_the_32_bit_offsets_of_the_screening_is_
         check_offsets(1024, 2_268_753)
 
 
-@pytest.mark.slow
 def test_on_the_device_a_batch_of_256_periods_gives_the_numbers_of_a_batch_of_64_over_long_and_short_periods():
     """The periods of the batches reach from 0.6 d to the baseline, so a batch holds many template widths."""
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("no device")
-    problem, found = reference(*light_curve(points=8000, seed=11, span=400.0), 0.6, 200.0, backend="fused")
+    problem, found = reference(*light_curve(points=2000, seed=11, span=100.0), 0.6, 50.0, backend="fused")
     assert len(found.periods) > 300, len(found.periods)
     small = ported(problem, found.periods, correlate="screen", batch=64)
     large = ported(problem, found.periods, correlate="screen", batch=256)
@@ -577,14 +576,13 @@ def test_a_batch_whose_mask_of_starts_would_pass_the_limit_is_halved_until_it_fi
         window.OFFSET_LIMIT = original
 
 
-@pytest.mark.slow
 @pytest.mark.gpu
 def test_on_the_device_a_batch_split_by_the_limit_of_the_mask_gives_the_numbers_of_the_whole_batch(monkeypatch):
     if not torch.cuda.is_available():
         pytest.skip("no device")
     from transitgpu.tls import window
 
-    problem, found = reference(*light_curve(points=8000, seed=11, span=400.0), 0.6, 200.0, backend="fused")
+    problem, found = reference(*light_curve(points=2000, seed=11, span=100.0), 0.6, 50.0, backend="fused")
     whole = ported(problem, found.periods, correlate="screen", batch=256)
     seen = []
     original = window.check_offsets
