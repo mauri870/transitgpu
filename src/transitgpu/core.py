@@ -443,21 +443,30 @@ def _warn_durations_under_half_a_bin(periods, bins_of, anchor, offset, steps_of,
     The bins of a period stop at MAXIMUM_BINS, so at long periods a bin is a fixed fraction of the period (35 minutes at 100 days) and a duration under half of it is scored as one bin: the floor that `radius_limits` or `mass_limits`
     asked for is not honoured there. The default limits give no such duration at any period up to 1,000 days.
     """
-    import warnings
-
+    if duration_hours is None:  # the durations grow with the step, so the short ones are the first few steps of each period: counted without a table of periods by steps (a search of 20,000 points takes 0.2 s, and the table took 18 ms)
+        smallest = anchor * duration_step ** offset * bins_of  # the shortest duration of each period, in bins
+        count = np.where(smallest < 0.5, np.minimum(steps_of, np.floor(np.log(0.5 / smallest) / np.log(duration_step)) + 1), 0).astype(np.int64)
+        if count.any():
+            rows = np.flatnonzero(count)
+            _warn_short(periods, bins_of, rows, int(count.sum()), float((smallest * periods * 24 / bins_of)[rows].min()))
+        return
     width = np.arange(int(steps_of.max()))[None, :]
     fractions = anchor[:, None] * duration_step ** (offset[:, None] + width)
-    scored = width < steps_of[:, None]
-    if duration_hours is not None:
-        hours = fractions * periods[:, None] * 24
-        scored = scored & (hours > duration_hours[0]) & (hours <= duration_hours[1])
+    hours = fractions * periods[:, None] * 24
+    scored = (width < steps_of[:, None]) & (hours > duration_hours[0]) & (hours <= duration_hours[1])
     short = scored & (fractions * bins_of[:, None] < 0.5)
     if short.any():
         rows = np.flatnonzero(short.any(axis=1))
-        shortest_hours = float((fractions * periods[:, None] * 24)[short].min())
-        bin_hours = float((periods[rows] * 24 / bins_of[rows]).max())
-        warnings.warn(f"{int(short.sum())} of the durations scored at {rows.size} periods (up to {float(periods[rows].max()):.4g} d) are shorter than half a phase bin and are scored as one bin of up to {bin_hours:.2f} h: "
-                      f"the shortest, {shortest_hours:.2f} h, is not honoured because the bins of a period stop at {MAXIMUM_BINS}", stacklevel=3)
+        _warn_short(periods, bins_of, rows, int(short.sum()), float(hours[short].min()))
+
+
+def _warn_short(periods, bins_of, rows, count, shortest_hours):
+    """The warning of _warn_durations_under_half_a_bin: `count` durations at the periods `rows`, the shortest of them `shortest_hours` long."""
+    import warnings
+
+    bin_hours = float((periods[rows] * 24 / bins_of[rows]).max())
+    warnings.warn(f"{count} of the durations scored at {rows.size} periods (up to {float(periods[rows].max()):.4g} d) are shorter than half a phase bin and are scored as one bin of up to {bin_hours:.2f} h: "
+                  f"the shortest, {shortest_hours:.2f} h, is not honoured because the bins of a period stop at {MAXIMUM_BINS}", stacklevel=4)
 
 
 def duration_lattice(periods, duration_step, radius_limits=None, mass_limits=None):

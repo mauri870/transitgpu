@@ -102,3 +102,20 @@ def test_a_lowered_floor_under_half_a_bin_at_a_long_period_warns_once_that_the_d
         for period in (1.0, 14.0, 100.0, 1000.0):
             one_period_search(period)  # the default limits give no duration under half a bin at any period of the search
         one_period_search(14.0, radius_limits=(grids.R_STAR_MIN / 2, grids.R_STAR_MAX))
+
+
+def test_the_count_of_durations_under_half_a_bin_is_the_same_without_and_with_a_duration_window():
+    """The warning counts the short durations from the first steps of each period when there is no window (a table of periods by steps took 18 ms of a search of 0.2 s) and from the table with one. A window that keeps every duration must give the same count."""
+    import warnings
+
+    periods = np.array([50.0, 100.0, 300.0, 1000.0])
+    exponents = core.duration_exponents(periods, core.DURATION_STEP, radius_limits=(0.005, grids.R_STAR_MAX))
+    _, anchor, offset, steps_of = exponents
+    bins_of = np.full(periods.size, core.MAXIMUM_BINS)
+    messages = []
+    for window in (None, (0.0, 1e9)):
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            core._warn_durations_under_half_a_bin(periods, bins_of, anchor, offset, steps_of, core.DURATION_STEP, window)
+        messages.append(str(caught[0].message))
+    assert messages[0] == messages[1], messages
