@@ -564,7 +564,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     Each result holds plain floats (periods in days, durations in hours, depths in ppm):
       period_days, t0_days: the best period and the center of one transit of its best box.
       duration_hr: the width of the best box; duration_corrected_hr equals it and fill_factor is 1.
-      depth_ppm, depth_mean_ppm: the mean depth of the box against the flux outside it.
+      depth_ppm, depth_mean_ppm: the mean depth of the box against the flux outside it, relative to the mean level of the flux (a flux flattened and normalized to 1, as the search expects). NaN when the absolute level is
+        under the standard deviation of the flux, for example a flux with its mean subtracted: there is no relative depth then, and the period, the SDE and the snr do not depend on the level.
       snr: the depth over its white-noise error, sigma / sqrt(n (1 - n / N)) for n of the N points in the box.
       sde, transit_count, period_uncertainty_days (TLS's half width at half maximum of the highest peak),
       period_min_searched_days, period_max_searched_days.
@@ -778,7 +779,8 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
         # best_sum is the flux in the box minus the mean of all the points, the box included; the mean in the box minus
         # the mean outside it is best_sum / (n (1 - n / N)).
         share = 1 - box_number / (row["n"] if row["packed_total"] is None else row["packed_total"])
-        depth = float(-box_sum / box_number / share / level * 1e6)
+        relative = row["level"] != 0.0 and abs(row["level"]) >= np.sqrt(row["sigma2"])  # a level under the scatter (a flux with its mean subtracted) gives no relative depth; the negated flux of a bump search has the negative level and keeps its depth
+        depth = float(-box_sum / box_number / share / level * 1e6) if relative else float("nan")
         found = {
             "period_min_searched_days": float(grid.min()),
             "period_max_searched_days": float(grid.max()),
@@ -791,7 +793,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
             "depth_ppm": depth,
             "depth_mean_ppm": depth,
             "sde": float(power[top]),
-            "snr": float(depth * 1e-6 * level / (np.sqrt(row["sigma2"]) / np.sqrt(box_number * share))),  # its square is the statistic searched
+            "snr": float((depth * 1e-6 * level if relative else -box_sum / box_number / share) / (np.sqrt(row["sigma2"]) / np.sqrt(box_number * share))),  # its square is the statistic searched
             "transit_count": int(np.floor((kept.max() - first) / period)) + 1,
         }
         if spectrum:
