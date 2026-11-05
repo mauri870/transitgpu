@@ -637,3 +637,12 @@ def test_the_correlations_of_a_weighted_residual_on_a_cpu_are_those_of_the_flux_
     plain = screen.correlations(patched, rows, starts, index)
     residual = screen.correlations(screen.weight * (1.0 - patched), rows, starts, index, residual=True)
     assert torch.allclose(plain, residual, rtol=1e-12, atol=0.0)
+
+
+def test_the_backend_searches_one_period_without_taking_a_reversed_view_of_it():
+    """A search of one period raised 'At least one stride in the given numpy array is negative': the backend sorts the periods into descending order with a reversed view and np.ascontiguousarray returns a view of one element as it is, since one element is contiguous in either direction, so torch got a negative stride."""
+    problem, found = reference(*light_curve(points=2500, seed=4), 2.98, 3.02)
+    one = found.periods[:1]
+    searched = WindowBackend(device="cpu", correlate="direct").search(problem, one)
+    expected = ported(problem, one, correlate="direct")
+    assert searched.chi2[0] == expected[0][0] and searched.rows[0] == expected[1][0] and searched.depths[0] == expected[2][0]

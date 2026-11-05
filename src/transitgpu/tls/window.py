@@ -299,7 +299,7 @@ class WindowBackend(SearchBackend):
         started = time.perf_counter()
         if self.correlate == "auto" and torch.device(self.device).type == "cpu":
             raise RuntimeError(NO_TLS_DEVICE)
-        periods = np.ascontiguousarray(np.sort(np.asarray(periods))[::-1])  # a batch holds the periods next to each other: TLS hands them over in a random order by default, a batch then needs the template widths of the whole range
+        periods = np.sort(np.asarray(periods))[::-1].copy()  # a batch holds the periods next to each other: TLS hands them over in a random order by default, a batch then needs the template widths of the whole range
         correlate, batch = self.correlate, self.batch or exact_batch(len(problem.t), torch.cuda.mem_get_info(self.device)[0] if torch.device(self.device).type == "cuda" else 0)
         if correlate == "auto":  # the screened search needs equal errors; otherwise the direct correlation in float64
             equal = bool(np.ptp(problem.dy) == 0.0)
