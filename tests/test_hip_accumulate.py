@@ -320,3 +320,22 @@ def test_a_single_flux_whose_weights_are_too_large_for_the_counts_of_a_block_sti
     p = torch.as_tensor(np.linspace(5.0, 60.0, 9), dtype=torch.float64, device="cuda")
     weight = torch.full_like(quantized, 2**20)
     assert hip.accumulate_many(t, p, 512, quantized, weight, shared_weight=True) is None
+
+
+def test_the_hip_accumulation_is_called_inside_the_device_context_of_the_time_axis(monkeypatch):
+    """core.accumulate_many called the HIP kernel outside `on_device(t.device)`, and the kernel launches on the stream of the current device while its tensors are on t.device: with device='cuda:1' on a host of two GPUs it would run on device 0 over the pointers of device 1. The Triton kernel of the same function was already inside the context. Structural test, as one GPU is all that was available: the call is made while the context that `on_device` returned is open. Two devices were not tested."""
+    inside = []
+
+    class Context:
+        def __enter__(self):
+            inside.append(True)
+
+        def __exit__(self, *exc):
+            inside.pop()
+
+    seen = []
+    monkeypatch.setattr(core, "on_device", lambda device: Context())
+    monkeypatch.setattr(hip, "accumulate_many", lambda *a, **k: seen.append(bool(inside)) or ("sums", "counts"))
+    t = torch.zeros(4, dtype=torch.float64)
+    found = core.accumulate_many(t, torch.ones(2, dtype=torch.float64), 8, torch.zeros((1, 4), dtype=torch.int64), torch.ones((1, 4), dtype=torch.int64), shared_weight=True)
+    assert found == ("sums", "counts") and seen == [True], "the HIP kernel must launch with the device of t as the current device"

@@ -229,7 +229,8 @@ def accumulate_many(t, p, bins, quantized, weight, shared_weight=False):
 
     from transitgpu import hip
 
-    found_hip = hip.accumulate_many(t, p, bins, quantized, weight, shared_weight)
+    with on_device(t.device):  # the HIP kernel launches on the stream of the current device, which is not the device of the tensors until it is made so
+        found_hip = hip.accumulate_many(t, p, bins, quantized, weight, shared_weight)
     if found_hip is not None:
         return found_hip
     once = _accumulate_once_kernel() if shared_weight and quantized.shape[0] > 1 else False
