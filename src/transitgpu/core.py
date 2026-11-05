@@ -53,6 +53,9 @@ ONE_PASS_BATCH = 512
 # 1 to 2.5 million points under 9 ms on a RX 7900 XTX (the mean is about 4 ms), near the 10 ms that a GPU which also
 # drives a display tolerates (docs/launch-size.md). A stack of up to 312,500 points keeps ONE_PASS_BATCH periods a launch.
 ONE_PASS_ELEMENTS = 160_000_000
+# A launch of a call of several fluxes visits its points once for each flux. A flux after the first adds this share of the work of the first, and the work of a launch is kept under this many (period, point) pairs counted so (measured: the launch of 8 fluxes took 4.4 times that of one flux at 2.5 million points; the largest launch stays under 8 ms on the grid of the benchmarks).
+ONE_PASS_FLUX_WEIGHT = 0.4
+ONE_PASS_FLUX_ELEMENTS = 200_000_000
 # The flux is summed as integers of QUANTUM (1e-9 of the level). Floating-point atomic additions on a GPU depend on
 # their order and integer additions do not, so a search gives the same numbers every time. A CPU and a GPU still
 # differ in the last digits of the float arithmetic that follows.
@@ -114,12 +117,14 @@ def on_device(device):
     return torch.cuda.device(device) if device.type == "cuda" else contextlib.nullcontext()
 
 
-def one_pass_batch(points):
-    """Return the trial periods of one launch of the one-pass accumulation for a stack of `points` points: ONE_PASS_BATCH, or fewer when that many would visit more than ONE_PASS_ELEMENTS (period, point) pairs; at least 1.
+def one_pass_batch(points, fluxes=1):
+    """Return the trial periods of one launch of the one-pass accumulation for a stack of `points` points and a call of `fluxes` fluxes (at most FLUX_CHUNK count): ONE_PASS_BATCH, or fewer when that many would visit more than ONE_PASS_ELEMENTS (period, point) pairs, or when the work of the launch would exceed ONE_PASS_FLUX_ELEMENTS; at least 1.
 
-    The sums are integers added atomically and the periods are independent, so the result does not depend on how the periods are divided into launches.
+    The kernel visits every point of its block once for every flux of the call, so the work of a launch grows with the fluxes: the first flux counts 1 and each further flux counts ONE_PASS_FLUX_WEIGHT. The sums are integers added atomically and the periods are independent, so the result does not depend on how the periods are divided into launches.
     """
-    return int(max(1, min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // max(int(points), 1))))
+    points = max(int(points), 1)
+    weight = 1.0 + ONE_PASS_FLUX_WEIGHT * (min(max(int(fluxes), 1), FLUX_CHUNK) - 1)
+    return int(max(1, min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // points, int(ONE_PASS_FLUX_ELEMENTS // (points * weight)))))
 
 
 def fold_index(t, p, bins, shifts=None):
@@ -606,7 +611,7 @@ def search_many(time, fluxes, period_min, period_max, spectrum=False, device=Non
     # table and scatter_add_ give the same integers.
     together = template is None and device.type == "cuda" and float(time_axis.min()) >= 0.0 and bool(_accumulate_many_kernel())
     if not batch:  # a template adds a table of shifts as large as the fold table
-        batch = one_pass_batch(time_axis.size) if together else int(np.clip(BATCH_ELEMENTS // (time_axis.size * (1 if template is None else 2)), 8, 512))
+        batch = one_pass_batch(time_axis.size, len(fluxes)) if together else int(np.clip(BATCH_ELEMENTS // (time_axis.size * (1 if template is None else 2)), 8, 512))
     rows_of = []
     if weights is not None:
         weights = np.asarray(weights, dtype=float)
