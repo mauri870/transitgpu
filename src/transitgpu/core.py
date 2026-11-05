@@ -53,9 +53,9 @@ ONE_PASS_BATCH = 512
 # 1 to 2.5 million points under 9 ms on a RX 7900 XTX (the mean is about 4 ms), near the 10 ms that a GPU which also
 # drives a display tolerates (docs/launch-size.md). A stack of up to 312,500 points keeps ONE_PASS_BATCH periods a launch.
 ONE_PASS_ELEMENTS = 160_000_000
-# A launch of a call of several fluxes visits its points once for each flux. A flux after the first adds this share of the work of the first, and the work of a launch is kept under this many (period, point) pairs counted so (measured: the launch of 8 fluxes took 4.4 times that of one flux at 2.5 million points; the largest launch stays under 8 ms on the grid of the benchmarks).
+# A launch of a call of several fluxes visits its points once for each flux. A flux after the first adds this share of the work of the first, and the work of a launch is kept under this many (period, point) pairs counted so (measured: the launch of 8 fluxes took 4.4 times that of one flux at 2.5 million points; the largest launch of 12 fluxes is 5 ms at 2.5 million points).
 ONE_PASS_FLUX_WEIGHT = 0.4
-ONE_PASS_FLUX_ELEMENTS = 200_000_000
+ONE_PASS_FLUX_ELEMENTS = 140_000_000
 # The flux is summed as integers of QUANTUM (1e-9 of the level). Floating-point atomic additions on a GPU depend on
 # their order and integer additions do not, so a search gives the same numbers every time. A CPU and a GPU still
 # differ in the last digits of the float arithmetic that follows.
@@ -123,8 +123,11 @@ def one_pass_batch(points, fluxes=1):
     The kernel visits every point of its block once for every flux of the call, so the work of a launch grows with the fluxes: the first flux counts 1 and each further flux counts ONE_PASS_FLUX_WEIGHT. The sums are integers added atomically and the periods are independent, so the result does not depend on how the periods are divided into launches.
     """
     points = max(int(points), 1)
-    weight = 1.0 + ONE_PASS_FLUX_WEIGHT * (min(max(int(fluxes), 1), FLUX_CHUNK) - 1)
-    return int(max(1, min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // points, int(ONE_PASS_FLUX_ELEMENTS // (points * weight)))))
+    rows = min(ONE_PASS_BATCH, ONE_PASS_ELEMENTS // points)
+    fluxes = min(int(fluxes), FLUX_CHUNK)
+    if fluxes > 1:
+        rows = min(rows, int(ONE_PASS_FLUX_ELEMENTS // (points * (1.0 + ONE_PASS_FLUX_WEIGHT * (fluxes - 1)))))
+    return int(max(1, rows))
 
 
 def fold_index(t, p, bins, shifts=None):

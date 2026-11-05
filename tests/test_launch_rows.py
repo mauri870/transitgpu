@@ -67,7 +67,7 @@ def test_a_call_of_one_flux_takes_the_periods_that_it_took_before_the_fluxes_wer
     assert core.one_pass_batch(points, 1) == core.one_pass_batch(points)
 
 
-@pytest.mark.parametrize("points,fluxes,rows", [(153_046, 8, 343), (236_736, 8, 222), (236_736, 4, 384), (600_000, 8, 87), (2_524_608, 8, 20), (2_524_608, 12, 20), (2_524_608, 1, 63), (20_000, 8, 512), (50_000_000, 8, 1)])
+@pytest.mark.parametrize("points,fluxes,rows", [(153_046, 8, 240), (236_736, 8, 155), (236_736, 4, 268), (600_000, 8, 61), (2_524_608, 8, 14), (2_524_608, 12, 14), (2_524_608, 1, 63), (20_000, 8, 512), (50_000_000, 8, 1)])
 def test_the_periods_of_a_launch_fall_with_the_fluxes_of_its_call(points, fluxes, rows):
     """The accumulation kernel visits every point of its block for every flux of the call, so the work of a launch grows with the fluxes; a flux counts for 0.4 of the first flux in the work of a launch."""
     assert core.one_pass_batch(points, fluxes) == rows
@@ -103,7 +103,7 @@ def test_a_search_of_many_fluxes_with_a_small_flux_budget_equals_the_search_with
     assert repr(default) == repr(small), "a batch of 3 periods changed the result of 12 fluxes"
 
 
-def largest_launch(points, fluxes, period_max):
+def largest_launch(points, fluxes, period_max, every=1):
     torch = pytest.importorskip("torch")
     if not torch.cuda.is_available():
         pytest.skip("the launches are of a GPU")
@@ -113,10 +113,10 @@ def largest_launch(points, fluxes, period_max):
     time = np.sort(rng.uniform(0.0, 2877.0, points))
     flux = 1.0 + 1e-3 * rng.standard_normal(points)
     many = [flux[rng.permutation(points)] for _ in range(fluxes)]
-    core.search_many(time, many[:2], 0.5, period_max)
+    periods = core.search_many(time, many[:1], 0.5, period_max, spectrum=True)[0]["periods"][::every]  # a slice of the grid keeps the profiler's events few: every launch has the shape of its batch whichever periods it holds
     torch.cuda.synchronize()
     with profile(activities=[ProfilerActivity.CUDA]) as recording:
-        core.search_many(time, many, 0.5, period_max)
+        core.search_many(time, many, 0.5, period_max, periods=periods)
         torch.cuda.synchronize()
     times = [event.device_time / 1000.0 for event in recording.events() if event.device_type == torch.autograd.DeviceType.CUDA and event.device_time > 0]
     return max(times), len(times)
@@ -131,5 +131,5 @@ def test_a_call_of_8_fluxes_at_236_thousand_points_has_no_launch_over_10_ms():
 @pytest.mark.slow
 @pytest.mark.gpu
 def test_a_call_of_12_fluxes_at_2_5_million_points_has_no_launch_over_10_ms():
-    largest, launches = largest_launch(2_524_608, 12, 14.0)
+    largest, launches = largest_launch(2_524_608, 12, 14.0, every=50)
     assert largest <= 10.0, f"largest launch {largest:.2f} ms of {launches}"
