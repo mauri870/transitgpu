@@ -144,69 +144,69 @@ def fold_index(t, p, bins, shifts=None):
     return (torch.remainder(moved * (1.0 / p).unsqueeze(1), 1.0) * bins).long().clamp_(0, bins - 1)
 
 
-_ACCUMULATE = None
-_ACCUMULATE_MANY = None
 # Fluxes added by one launch of accumulate_many. Its sums are (fluxes x periods x bins) int64 and stop fitting in the
 # caches beyond a few fluxes.
 FLUX_CHUNK = 8
 
+try:
+    import triton
+    import triton.language as tl
+except ImportError:  # the fold table and the scatters are used instead
+    triton = None
 
-def _accumulate_kernel():
-    """Return (kernel, triton) for `accumulate`, built on first use, or False when Triton is not available."""
-    global _ACCUMULATE
-    if _ACCUMULATE is None:
-        try:
-            import triton
-            import triton.language as tl
+if triton is not None:
+    # The kernels are defined when this module is imported. Triton reads the source of a kernel with inspect.getsource
+    # when it is defined, from the file as it is then, with the line numbers of the code that was imported; a kernel
+    # defined on the first search would read a file that a sync of the environment has replaced since the import.
 
-            @triton.jit
-            def kernel(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, BLOCK: tl.constexpr):
-                row = tl.program_id(1)
-                offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-                inside = offsets < n
-                x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
-                phase = x - tl.floor(x)
-                bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
-                target = row * bins + bin_of
-                tl.atomic_add(sums_ptr + target, tl.load(q_ptr + offsets, mask=inside, other=0), mask=inside)
+    @triton.jit
+    def _accumulate_kernel_source(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, BLOCK: tl.constexpr):
+        row = tl.program_id(1)
+        offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+        inside = offsets < n
+        x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
+        phase = x - tl.floor(x)
+        bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
+        target = row * bins + bin_of
+        tl.atomic_add(sums_ptr + target, tl.load(q_ptr + offsets, mask=inside, other=0), mask=inside)
+        tl.atomic_add(counts_ptr + target, tl.load(w_ptr + offsets, mask=inside, other=0), mask=inside)
+
+    @triton.jit
+    def _accumulate_many_kernel_source(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, rows, fluxes, BLOCK: tl.constexpr):
+        row = tl.program_id(1)
+        offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+        inside = offsets < n
+        x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
+        phase = x - tl.floor(x)
+        bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
+        for f in range(fluxes):
+            target = ((f * rows + row).to(tl.int64) * bins) + bin_of
+            tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
+            tl.atomic_add(counts_ptr + target, tl.load(w_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
+
+    @triton.jit
+    def _accumulate_once_kernel_source(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, rows, fluxes, BLOCK: tl.constexpr):
+        row = tl.program_id(1)
+        offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
+        inside = offsets < n
+        x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
+        phase = x - tl.floor(x)
+        bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
+        for f in range(fluxes):
+            target = ((f * rows + row).to(tl.int64) * bins) + bin_of
+            tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
+            if f == 0:
                 tl.atomic_add(counts_ptr + target, tl.load(w_ptr + offsets, mask=inside, other=0), mask=inside)
 
-            _ACCUMULATE = (kernel, triton)
-        except Exception as error:
-            warnings.warn(f"the fused fold and accumulation is not available ({type(error).__name__}: {error}); the fold table and the scatters are used", stacklevel=2)
-            _ACCUMULATE = False
-    return _ACCUMULATE
+
+def _accumulate_kernel():
+    """Return (kernel, triton) for `accumulate`, or False when Triton is not available."""
+    return (_accumulate_kernel_source, triton) if triton is not None else False
 
 
 def _accumulate_many_kernel():
-    """Return (kernel, triton) for `accumulate_many`, built on first use, or False when Triton is not available."""
-    global _ACCUMULATE_MANY
-    if _ACCUMULATE_MANY is None:
-        try:
-            import triton
-            import triton.language as tl
-
-            @triton.jit
-            def kernel(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, rows, fluxes, BLOCK: tl.constexpr):
-                row = tl.program_id(1)
-                offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-                inside = offsets < n
-                x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
-                phase = x - tl.floor(x)
-                bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
-                for f in range(fluxes):
-                    target = ((f * rows + row).to(tl.int64) * bins) + bin_of
-                    tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
-                    tl.atomic_add(counts_ptr + target, tl.load(w_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
-
-            _ACCUMULATE_MANY = (kernel, triton)
-        except Exception as error:
-            warnings.warn(f"the one-pass accumulation is not available ({type(error).__name__}: {error}); the fold table and the scatters are used", stacklevel=2)
-            _ACCUMULATE_MANY = False
-    return _ACCUMULATE_MANY
-
-
-_ACCUMULATE_ONCE = None
+    """Return (kernel, triton) for `accumulate_many`, or False when Triton is not available."""
+    return (_accumulate_many_kernel_source, triton) if triton is not None else False
 
 
 def _accumulate_once_kernel():
@@ -214,31 +214,7 @@ def _accumulate_once_kernel():
 
     It is the kernel of _accumulate_many_kernel with the counts added for the first flux only.
     """
-    global _ACCUMULATE_ONCE
-    if _ACCUMULATE_ONCE is None:
-        try:
-            import triton
-            import triton.language as tl
-
-            @triton.jit
-            def kernel(t_ptr, f_ptr, q_ptr, w_ptr, sums_ptr, counts_ptr, n, bins, rows, fluxes, BLOCK: tl.constexpr):
-                row = tl.program_id(1)
-                offsets = tl.program_id(0) * BLOCK + tl.arange(0, BLOCK)
-                inside = offsets < n
-                x = tl.load(t_ptr + offsets, mask=inside, other=0.0) * tl.load(f_ptr + row)
-                phase = x - tl.floor(x)
-                bin_of = tl.minimum(tl.maximum((phase * bins).to(tl.int32), 0), bins - 1)
-                for f in range(fluxes):
-                    target = ((f * rows + row).to(tl.int64) * bins) + bin_of
-                    tl.atomic_add(sums_ptr + target, tl.load(q_ptr + f * n + offsets, mask=inside, other=0), mask=inside)
-                    if f == 0:
-                        tl.atomic_add(counts_ptr + target, tl.load(w_ptr + offsets, mask=inside, other=0), mask=inside)
-
-            _ACCUMULATE_ONCE = (kernel, triton)
-        except Exception as error:
-            warnings.warn(f"the accumulation with the counts added once is not available ({type(error).__name__}: {error}); the one-pass accumulation is used", stacklevel=2)
-            _ACCUMULATE_ONCE = False
-    return _ACCUMULATE_ONCE
+    return (_accumulate_once_kernel_source, triton) if triton is not None else False
 
 
 def accumulate_many(t, p, bins, quantized, weight, shared_weight=False):
