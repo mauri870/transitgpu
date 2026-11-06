@@ -36,6 +36,14 @@ def summary(periods_reference, reference, other, periods_other):
     return {"periods": int(found.size), "periods_equal": True, "maximum_relative_difference": float(np.max(np.abs(kept))) if kept.size else None, "compared": int(kept.size)}
 
 
+def dump(cases, figure):
+    """The text of the file: the cases one to a group of lines and the series of the figure on one line each, so that the file is read in a diff."""
+    head = '{\n "cases": ' + json.dumps(cases, indent=1).replace("\n", "\n ") + ",\n \"figure\": "
+    if figure is None:
+        return head + "null\n}\n"
+    return head + "{\n" + ",\n".join(f"  {json.dumps(key)}: {json.dumps(value)}" for key, value in figure.items()) + "\n }\n}\n"
+
+
 def run(name, backend):
     import golden_cases
 
@@ -71,7 +79,7 @@ def main():
         print(name, cases[name], flush=True)
         if name == arguments.figure_case and cases[name]["periods_equal"]:
             figure = {"case": name, "periods_days": [float(p) for p in reference["periods"]], "relative_difference": [None if not np.isfinite(v) else float(v) for v in relative_difference(reference["chi2"], mine["chi2"])]}
-    arguments.out.write_text(json.dumps({"cases": cases, "figure": figure}, indent=1) + "\n")
+    arguments.out.write_text(dump(cases, figure))
 
 
 if __name__ == "__main__":

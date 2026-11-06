@@ -41,3 +41,14 @@ def test_a_case_whose_period_grids_differ_is_flagged_and_not_compared():
 def test_a_period_with_no_finite_reference_is_not_counted_as_compared():
     summary = chi2.summary(np.array([0.5, 0.6, 0.7]), np.array([1.0, np.nan, 3.0]), np.array([1.0, 2.0, 3.0]), np.array([0.5, 0.6, 0.7]))
     assert summary["compared"] == 2 and summary["periods"] == 3 and summary["maximum_relative_difference"] == 0.0, summary
+
+
+def test_the_file_has_the_cases_one_to_a_line_group_and_the_series_on_one_line_and_reads_back_equal():
+    """A series of thousands of periods one value to a line is a diff nobody reads: the series is one line, and the file is the same data."""
+    import json
+
+    cases = {"a": {"periods": 3, "periods_equal": True, "maximum_relative_difference": 1e-12, "compared": 3}}
+    figure = {"case": "a", "periods_days": [0.5 + 0.001 * k for k in range(5000)], "relative_difference": [1e-13 * (k % 7) for k in range(5000)]}
+    text = chi2.dump(cases, figure)
+    assert json.loads(text) == {"cases": cases, "figure": figure} and text.count("\n") < 40 and text.endswith("\n"), text.count("\n")
+    assert json.loads(chi2.dump(cases, None)) == {"cases": cases, "figure": None}, "a case whose grids differ has no figure data"
