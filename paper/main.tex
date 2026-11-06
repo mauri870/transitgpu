@@ -196,7 +196,7 @@ All runs used an \Hw{cpu} with \Hw{logical_cpus} logical processors and an \Hw{g
 \section{Results}\label{sec:results}
 
 \subsection{Agreement of exact mode with TLS}\label{sec:correctness}
-On each of the 14 characterization cases, exact mode agrees with TLS fused to within float64 rounding. The period grid, the duration grid, the number of transits and every integer field are identical, and the best period is the same grid point. Of the 41 result fields, 28 are identical in all cases; the other 13 differ in the last digits. Table~\ref{tab:validation} (Appendix~\ref{sec:appendix}) lists the 10 fields with the largest differences. The $\chi^2$ of every period differs by at most $1.8\times10^{-11}$ relative and the SDE by less than $10^{-11}$ (Table~\ref{tab:validation}; a rerun moves the last digit of these differences). The largest relative difference, $10^{-7}$ in the raw power, arises because the power divides by the spread of $\chi^2$, which amplifies its rounding by about $10^4$. In the tests, each component is checked against a reference implementation, and the screened search is checked against a brute-force search over all trial epochs.
+On each of the 14 characterization cases, exact mode agrees with TLS fused to within float64 rounding. The period grid, the duration grid, the number of transits and every integer field are identical, and the best period is the same grid point. Of the 41 result fields, 28 are identical in all cases; the other 13 differ in the last digits. Table~\ref{tab:validation} (Appendix~\ref{sec:appendix}) lists the 10 fields with the largest differences. The $\chi^2$ of every period differs by at most $1.8\times10^{-11}$ relative and the SDE by less than $10^{-11}$ (Table~\ref{tab:validation}; a rerun moves the last digit of these differences). Figure~\ref{fig:chi2} draws the relative difference of the $\chi^2$ at every trial period of one case, and Table~\ref{tab:chi2} gives its largest value for each case. The largest relative difference, $10^{-7}$ in the raw power, arises because the power divides by the spread of $\chi^2$, which amplifies its rounding by about $10^4$. In the tests, each component is checked against a reference implementation, and the screened search is checked against a brute-force search over all trial epochs.
 
 
 \subsection{Adversarial cases}\label{sec:adversarial}
@@ -451,6 +451,19 @@ Table~\ref{tab:binned} gives the best period and SDE of binned mode and of TLS f
 \caption{Largest difference between exact mode on the GPU and TLS fused over the 14 characterization cases, for the 10 fields with the largest differences.}\label{tab:validation}
 \small
 \input{validation_table}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.8\textwidth]{chi2_difference.pdf}
+\caption{Relative difference of the $\chi^2$ of exact mode on the GPU and of TLS fused at each trial period of the characterization case \texttt{k2\_box}: the line is zero.}\label{fig:chi2}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Largest relative difference of the $\chi^2$ of exact mode on the GPU and of TLS fused over the trial periods of each of the 14 characterization cases.}\label{tab:chi2}
+\small
+\input{chi2_table}
 \end{table}
 
 \begin{table}[htbp]
