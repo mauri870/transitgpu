@@ -552,7 +552,12 @@ def performance_table(results):
     return "\n".join(lines)
 
 
-THROUGHPUT_ROWS = (("transitgpu.search_many", "GPU", "many"), ("transitleastsquares 2.0.1 default (fused-pl), one after another", "CPU, 16 threads", "tls16-many"))
+def time_ratios(results, new, old):
+    """The median time of the row `new` over the median time of the row `old`, at each size of the first table of results.json (the sizes of the README's first table)."""
+    return [sizes["rows"][new]["median"] / sizes["rows"][old]["median"] for sizes in results["sizes"].values()]
+
+
+THROUGHPUT_ROWS = (("transitgpu.search_many, box search (a different statistic from TLS's)", "GPU", "many"), ("transitleastsquares 2.0.1 default (fused-pl), one after another", "CPU, 16 threads", "tls16-many"))
 
 
 def throughput_table(results):

@@ -1,6 +1,6 @@
 # transitgpu
 
-transitgpu is a parallel search for alien worlds: Box Least Squares (BLS) and Transit Least Squares (TLS) for exoplanet transit detection, accelerated on the GPU with PyTorch for CUDA and ROCm.
+transitgpu searches light curves for transiting planets on the GPU, with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch on CUDA and ROCm.
 
 If you use transitgpu, please cite [Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection](paper/main.pdf).
 
@@ -35,7 +35,14 @@ On ROCm, `search_many` accumulates in a HIP kernel that is compiled with `hipcc`
 
 ## Getting started
 
-The examples below use the WASP-18 light curve in `examples/data/wasp18_s2.npz`, which is in the repository but not in the wheel. `uv run --group rocm python examples/wasp18_b.py` runs the first one.
+The examples below use the WASP-18 light curve in `examples/data/wasp18_s2.npz`, which is in the repository and not in the wheel, so clone the repository first:
+
+```text
+git clone https://github.com/mauri870/transitgpu
+cd transitgpu
+```
+
+`uv run --group rocm python examples/wasp18_b.py` runs all the examples below and prints their output.
 
 ```python
 import numpy as np
@@ -75,7 +82,7 @@ SDE       2.3
 
 With errors, each point is weighted by 1/dy², rounded to multiples of 1/64 of the median weight and clipped to between 1/64 and 64 times it.
 
-A weight of 0 masks its point. To search one light curve with several sets of weights, for example one mask for each of several events, give `transitgpu.search_many(t, [y], 0.5, 14.0, weights=weights)` a matrix with one row of weights for each result; each result is that of a search with that row, and a batch of five takes 0.7 to 0.8 of the time of five separate searches (the fourth table under Performance).
+A weight of 0 masks its point. To search one light curve with several sets of weights, for example one mask for each of several events, give `transitgpu.search_many(t, [y], 0.5, 14.0, weights=weights)` a matrix with one row of weights for each result; each result is that of a search with that row, and a batch of five takes 0.69 to 0.81 of the time of five separate searches (the fourth table under Performance).
 
 For TLS, change the import:
 
@@ -129,7 +136,7 @@ found = engine.search(t, y, 0.5, 14.0, device="cpu")
 
 ## Performance
 
-The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of white noise and one injected box (3.18 d, 3,000 ppm, 2.5 h). Every search covers TLS's 91,607 trial periods from 0.5 to 14 days, and every one finds the injected period. Each cell is the median of seven runs in seconds, with the first and third quartiles in brackets.
+The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of white noise and one injected box (3.18 d, 3,000 ppm, 2.5 h). Every search covers TLS's 91,607 trial periods from 0.5 to 14 days, and every one finds the injected period. A time is the median of seven runs in seconds; where a cell has brackets, they hold the first and third quartiles.
 
 | search | device | 20,000 points | 100,000 points | 200,000 points |
 | --- | --- | --- | --- | --- |
@@ -144,16 +151,23 @@ The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of 
 | transitleastsquares 2.0.1 exact (fused) | CPU, 1 thread | 91.0 (90.9–91.2) | 166 (166–166) | 277 (276–278) |
 | transitleastsquares 2.0.1 default (fused-pl) | CPU, 1 thread | 20.2 (20.1–20.2) | 49.1 (49.0–49.2) | 85.6 (84.2–85.9) |
 
-The like-for-like comparisons are `transitgpu.tls` exact against TLS `fused`, and `transitgpu.tls` binned against TLS `fused-pl`. The box search and the hybrid compute a different statistic from TLS, so their rows show what a box search costs next to a template search, not a speed-up of TLS. On average the box search scores 24 durations per period, astropy 37, and both TLS implementations 38 with the transit template. The box row does not include generating the period grid.
+Like for like, on 16 CPU threads, at 20,000, 100,000 and 200,000 points (the time of transitgpu over the time of TLS):
 
-The second table shows a batch of 64 light curves of 20,000 points, each with its own noise and the same injected box. transitgpu searches them in a single `search_many` call; TLS runs `power()` on one light curve after another. Times are in seconds for the whole batch. The search is the box search, and TLS computes a different statistic (see above).
+- `transitgpu.tls` exact against TLS's exact backend (`fused`), which gives the same χ²: 0.39, 0.43, 0.36.
+- `backend="gpu-pl"` against TLS's default backend (`fused-pl`), the same statistic: 0.84, 1.00, 0.63.
+- `transitgpu.tls` exact against TLS's default backend: 1.74, 1.30, 0.92. The exact device search is not faster than TLS's default backend on 16 threads below 200,000 points.
+- `transitgpu.tls` binned against `fused-pl` compares speed only, since the binned statistic is different.
+
+The box search and the hybrid compute a different statistic from TLS, so their rows show what a box search costs next to a template search, not a speed-up of TLS. On average the box search scores 24 durations per period, astropy 37, and both TLS implementations 38 with the transit template. The box row does not include generating the period grid.
+
+The second table shows a batch of 64 light curves of 20,000 points, each with its own noise and the same injected box. transitgpu searches them in a single `search_many` call; TLS runs `power()` on one light curve after another. Times are in seconds for the whole batch.
 
 | search | device | seconds for the set | light curves per second |
 | --- | --- | --- | --- |
-| transitgpu.search_many | GPU | 5.24 (5.23–5.24) | 12.2 |
+| transitgpu.search_many, box search (a different statistic from TLS's) | GPU | 5.24 (5.23–5.24) | 12.2 |
 | transitleastsquares 2.0.1 default (fused-pl), one after another | CPU, 16 threads | 92.4 (92.3–92.4) | 0.693 |
 
-Machine: AMD Ryzen 9 9950X3D and AMD Radeon RX 7900 XTX, ROCm 7.2.53211, Python 3.12.13, numpy 2.5.4, torch 2.12.0+rocm7.2, astropy 8.0.2, transitleastsquares 2.0.1 and numba 0.68.0. The GPU rows and the 16-thread TLS rows of the first table and the GPU row of the second come from one session of 2026-11-05, each process pinned to cores 0–15 of the otherwise idle machine. The astropy rows, the one-thread TLS rows and the 16-thread TLS row of the second table come from the session of 2026-10-26 (astropy 8.0.1), and each of those rows carries the session it was measured in. `benchmarks/results.json` has every run and the log of the session. To reproduce:
+Machine: AMD Ryzen 9 9950X3D and AMD Radeon RX 7900 XTX, ROCm 7.2.53211, Python 3.12.13, numpy 2.5.4, torch 2.12.0+rocm7.2, triton 3.7.0, astropy 8.0.2, transitleastsquares 2.0.1 and numba 0.68.0. The GPU rows and the 16-thread TLS rows of the first table and the GPU row of the second come from one session of 2026-11-05, each process pinned to cores 0–15 of the otherwise idle machine. The astropy rows, the one-thread TLS rows and the 16-thread TLS row of the second table come from the session of 2026-10-26 (astropy 8.0.1), and each of those rows carries the session it was measured in. `benchmarks/results.json` has every run and the log of the session. To reproduce:
 
 ```
 bash benchmarks/session.sh DIRECTORY
@@ -161,9 +175,7 @@ uv run --group rocm python benchmarks/assemble.py DIRECTORY --out benchmarks/res
 uv run --group rocm python -c "import json, sys; sys.path.insert(0, 'benchmarks'); import bench; r = json.load(open('benchmarks/results.json')); print(bench.performance_table(r)); print(bench.throughput_table(r))"
 ```
 
-`tests/test_bench.py` checks that the two tables above equal that output.
-
-The third table times the dips and the bumps of one light curve, on the input of the first table. Its three rows are from one session of 2026-10-27 on the same machine, with ROCm 7.2.53211, Python 3.13.12, numpy 2.5.4, torch 2.12.0+rocm7.2 and triton 3.7.0, the GPU to itself. Each cell is the median of seven runs in seconds, with the first and third quartiles in brackets. `benchmarks/results-bumps.json` has every run.
+The third table times the dips and the bumps of one light curve, on the input of the first table. Its rows are from one session of 2026-10-27 on the same machine, with ROCm 7.2.53211, Python 3.13.12, numpy 2.5.4, torch 2.12.0+rocm7.2 and triton 3.7.0, the GPU to itself. `benchmarks/results-bumps.json` has every run.
 
 | search of one light curve | 20,000 points | 100,000 points | 200,000 points |
 | --- | --- | --- | --- |
@@ -175,9 +187,7 @@ The third table times the dips and the bumps of one light curve, on the input of
 uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-bumps gpu-two --repeats 7 --json bench-bumps-final.json
 ```
 
-`tests/test_bench.py` checks that this table equals the output of `bench.bumps_table` on `benchmarks/results-bumps.json`.
-
-The fourth table times one light curve searched with five weight vectors, each with a weight of 0 at 60 points (a mask), on the input of the first table. `search_many` with one flux and a matrix of weights, one row for each result, folds the times once and gives for each row the result of the search with that row; a separate search folds them again. Its three rows are from one session of 2026-10-27 on the same machine, with ROCm 7.2.53211, Python 3.13.12, numpy 2.5.4, torch 2.12.0+rocm7.2 and triton 3.7.0, the GPU to itself. Each cell is the median of seven runs in seconds, with the first and third quartiles in brackets. `benchmarks/results-weights.json` has every run.
+The fourth table times one light curve searched with five weight vectors, each with a weight of 0 at 60 points (a mask), on the input of the first table. `search_many` with one flux and a matrix of weights, one row for each result, folds the times once and gives for each row the result of the search with that row; a separate search folds them again. The rows are from the same session and machine as the third table. `benchmarks/results-weights.json` has every run.
 
 | search of one light curve with weight vectors | 20,000 points | 100,000 points | 200,000 points |
 | --- | --- | --- | --- |
@@ -189,9 +199,7 @@ The fourth table times one light curve searched with five weight vectors, each w
 uv run --group rocm python benchmarks/bench.py --refuse-if-busy --rows gpu gpu-weights gpu-weights-separate --repeats 7 --json bench-weights.json
 ```
 
-`tests/test_bench.py` checks that this table equals the output of `bench.weights_table` on `benchmarks/results-weights.json`.
-
-The fifth table times the search of stacks of 312,500 to 2,525,000 points (25 s cadence, white noise of 1,000 ppm, periods from 0.5 to 14 d). The search takes at most 512 periods a launch and fewer when 512 would visit more than `transitgpu.core.ONE_PASS_ELEMENTS` (160 million) period and point pairs, so that no launch of a long stack runs much past 10 ms, which a GPU that also drives a display tolerates. The result of a search does not depend on the number of periods a launch. "512 always" is the search with the budget removed, run up to 1,000,000 points. The sizes of the other tables, up to 200,000 points, take 512 periods a launch in both columns. The rows are from one session of 2026-11-03 on the machine of the third table, the GPU to itself, with ROCm 7.2.53211, torch 2.12.0+rocm7.2 and triton 3.7.0. Each search time is the median of seven runs and `benchmarks/results-launches.json` has every run.
+The fifth table times the search of stacks of 312,500 to 2,525,000 points (25 s cadence, white noise of 1,000 ppm, periods from 0.5 to 14 d). The search takes at most 512 periods a launch and fewer when 512 would visit more than `transitgpu.core.ONE_PASS_ELEMENTS` (160 million) period and point pairs, so that no launch of a long stack runs much past 10 ms, which a GPU that also drives a display tolerates. The result of a search does not depend on the number of periods a launch. "512 always" is the search with the budget removed, run up to 1,000,000 points. The sizes of the other tables, up to 200,000 points, take 512 periods a launch in both columns. The rows are from one session of 2026-11-03 on the machine of the third table, the GPU to itself, with ROCm 7.2.53211, torch 2.12.0+rocm7.2 and triton 3.7.0. `benchmarks/results-launches.json` has every run.
 
 | points | periods a launch, 512 always | periods a launch, bounded | largest launch, 512 always (ms) | largest launch, bounded (ms) | search, 512 always (s) | search, bounded (s) |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -206,8 +214,6 @@ The fifth table times the search of stacks of 312,500 to 2,525,000 points (25 s 
 ```
 uv run --group rocm python benchmarks/launch_compare.py --sizes 312500 350000 450000 1000000 1300000 2000000 2525000 --repeats 7 --json results-launches.json
 ```
-
-`tests/test_bench.py` checks that this table equals the output of `launch_compare.launches_table` on `benchmarks/results-launches.json`.
 
 ## Tests
 

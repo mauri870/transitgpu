@@ -360,3 +360,13 @@ def test_the_versions_include_triton_batman_and_wotan_from_the_installed_distrib
     monkeypatch.setitem(sys.modules, "triton", None)
     absent = bench.versions()
     assert not {"triton", "batman", "wotan"} & set(absent), "absent when not installed, not None"
+
+
+def test_the_like_for_like_ratios_of_the_readme_are_those_of_the_results_file_to_two_decimals_of_the_time(bench):
+    """The README states the time of the exact device search over the time of TLS's exact backend, of gpu-pl over TLS's default backend and of the exact device search over TLS's default backend, on 16 threads, at the sizes of the first table, as fractions of the time rounded to two decimals as the changelog gives them."""
+    root = BENCH.parents[1]
+    results = json.loads((root / "benchmarks" / "results.json").read_text())
+    readme = (root / "README.md").read_text()
+    for new, old in (("tls-gpu", "tls16-exact"), ("tls-gpu-pl", "tls16"), ("tls-gpu", "tls16")):
+        ratios = bench.time_ratios(results, new, old)
+        assert len(ratios) == 3 and ", ".join(f"{ratio:.2f}" for ratio in ratios) in readme, (new, old, ratios)

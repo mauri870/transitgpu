@@ -118,7 +118,7 @@ def test_every_relative_image_and_link_of_the_readme_exists_in_the_tree():
 
 def test_the_third_line_of_the_readme_is_the_sentence_that_opens_its_description():
     lines = (ROOT / "README.md").read_text().splitlines()
-    assert lines[0] == "# transitgpu" and lines[2] == "transitgpu is a parallel search for alien worlds: Box Least Squares (BLS) and Transit Least Squares (TLS) for exoplanet transit detection, accelerated on the GPU with PyTorch for CUDA and ROCm."
+    assert lines[0] == "# transitgpu" and lines[2] == "transitgpu searches light curves for transiting planets on the GPU, with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch on CUDA and ROCm."
 
 
 def test_the_readme_says_what_gpu_pl_is_and_that_it_needs_equal_errors():
