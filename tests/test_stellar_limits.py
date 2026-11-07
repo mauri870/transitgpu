@@ -122,7 +122,7 @@ def test_the_count_of_durations_under_half_a_bin_is_the_same_without_and_with_a_
 
 
 def test_the_two_paths_of_the_count_agree_on_a_grid_to_long_periods_and_where_half_a_bin_is_an_exact_power_of_the_step():
-    """Rule 20: without a duration window the count comes from the first steps of each period, with one from the table of periods by steps (starlord-20's review of 2d2dd3e). Where 0.5 over the shortest duration in bins is an exact power of the step, a count by floor(log) + 1 takes one step that the strict `< 0.5` of the table does not."""
+    """Without a duration window the count comes from the first steps of each period, and with one from the table of periods by steps; the two paths must agree. Where 0.5 over the shortest duration in bins is an exact power of the step, a count by floor(log) + 1 takes one step that the strict `< 0.5` of the table does not."""
     import warnings
 
     def message(periods, bins_of, anchor, offset, steps_of, step, window):

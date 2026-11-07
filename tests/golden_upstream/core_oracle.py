@@ -142,7 +142,7 @@ def test_fused_kernel_matches_brute_force(seed, T0_fit_margin, with_dy, template
     ov, lc_arr = cache(t, y, template)
     lim = (C.R_STAR_MIN, C.R_STAR_MAX, C.M_STAR_MIN, C.M_STAR_MAX)
     fused = FusedProblem(SearchProblem(t, y, dy, lc_arr, ov, 1e-5, *lim, T0_fit_margin))
-    # piecewise-linear path (idea L3) with every sample a knot: exact algebra
+    # piecewise-linear path (`pl_templates` in `core_fused.py` of transitleastsquares 2.0.1) with every sample a knot: exact algebra
     fused_pl = FusedProblem(
         SearchProblem(t, y, dy, lc_arr, ov, 1e-5, *lim, T0_fit_margin)
     )

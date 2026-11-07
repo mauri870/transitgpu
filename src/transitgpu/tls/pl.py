@@ -5,7 +5,7 @@ template). fused-pl takes AR from a piecewise-linear fit of the template, about 
 product for shorter ones; the chi square of a period is the constant residual less the largest gain over the starts and widths, with no refinement of the winner, and its depth is the box mean of the winning start. This module does
 the same on the device with the templates, tolerance and minimum length of TLS's own `pl_templates`: the fold and the stable phase order (transitgpu.tls.fold), the prefix arrays (transitgpu.tls.prefix), one launch for the
 gains of every start of every width of a batch of periods, which keeps the best start of each block of starts, and a reduction to the winner of each period. It evaluates every start of every allowed width: TLS's coarser grid of
-start phases with local refinement and its scout durations (ideas L5 and L8 of its source) are approximations of the search and are not copied. Equal errors only.
+start phases with local refinement (`t0_coarsen` in `core_fused.py` of transitleastsquares 2.0.1) and its scout durations (`scout_every` there) are approximations of the search and are not copied. Equal errors only.
 """
 import time
 
