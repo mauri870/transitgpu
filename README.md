@@ -124,6 +124,8 @@ peak 2: box 2.82748 d (SDE 3.2), TLS 2.82748 d, 2.03 h
 
 Each peak's SDE comes from the box search. If TLS cannot refine a peak, the peak keeps its box values and `peak.reason` says why.
 
+To estimate whether a signal that transitgpu finds is a false positive (an eclipsing binary, a blend with a nearby star or a companion of the target), [velociraptor](https://github.com/mauri870/velociraptor) runs the likelihoods of [TRICERATOPS](https://github.com/stevengiacalone/triceratops) on a GPU.
+
 ### Choosing the device
 
 `transitgpu.search` and `transitgpu.search_many` refuse to run without a GPU. `transitgpu.engine` has the same searches without that check, so you can pick the device yourself or run on the CPU (slowly):
