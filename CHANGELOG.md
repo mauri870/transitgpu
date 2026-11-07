@@ -11,6 +11,7 @@
 
 ### Added
 
+- `transitgpu.detrend.biweight(time, flux, window, mask=None)` returns the trend of wotan's biweight filter, with wotan's windows, its mask and its stopping step. On a CUDA or ROCm device where Triton can be imported a kernel with one program for each point computes it, reading each window from the flux array; elsewhere torch operations on a matrix of windows do, on the CPU too. The tests compare both with wotan 1.10, and `benchmarks/bench_detrend.py` times them against it on light curves of 30 minutes to 20 seconds of cadence.
 - `radius_limits` and `mass_limits`, pairs (minimum, maximum) in solar units, on `duration_fractions`, `search` and `search_many` replace TLS's stellar limits for the durations of the grid. A smaller minimum radius lowers the shortest duration in proportion and adds shorter durations and more phase bins at every period; every duration of the default grid stays in the lowered one, and a search without the arguments is bit for bit the search as it was.
 - `bumps=True` on `box_search(...).power`, `search` and `search_many` scores the windows whose mean is above the whole's from the same fold, sums and grid as the dips. Each result then has a `bump` entry with the fields of a result, equal to the result of a search of the negated flux, and the results of `power` a `bump` attribute; the other fields are those of a search without `bumps`.
 
