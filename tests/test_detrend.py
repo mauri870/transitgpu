@@ -149,3 +149,45 @@ def test_the_kernel_handles_a_window_wider_than_a_thousand_points_and_a_slice_of
     tensors = [torch.as_tensor(array, device="cuda") for array in (values, start, end)]
     sliced = detrend.trend_kernel(*tensors, 4096, rows=1).cpu().numpy()
     np.testing.assert_allclose(sliced, detrend.trend_kernel(*tensors, 4096).cpu().numpy(), rtol=0, atol=0)
+
+
+def sectors_of_a_star():
+    """Three light curves of different lengths and gaps, one all NaN and one of a single point, with the transit mask of the first."""
+    first = curve(seed=3)
+    second = curve(points=1500, seed=4, gaps=((0.5, 0.6),), nans=3)
+    third = (np.array([0.0]), np.array([1.0]))
+    empty = (np.array([0.0, 0.01]), np.array([np.nan, np.nan]))
+    mask = (first[0] % 2.3 > 1.0) & (first[0] % 2.3 < 1.06)
+    return [first, second, third, empty], [mask, None, None, None]
+
+
+def test_the_trends_of_many_light_curves_in_one_call_are_those_of_each_alone_and_wotans():
+    sectors, masks = sectors_of_a_star()
+    together = detrend.biweight_many(sectors, WINDOW, masks=masks, device="cpu")
+    assert len(together) == len(sectors)
+    for (time, flux), mask, trend in zip(sectors, masks, together):
+        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"))
+        if len(time) > 2 and not np.isnan(flux).all():
+            assert_same(trend, reference(time, flux, mask))
+
+
+def test_many_light_curves_with_no_list_or_with_no_masks_and_a_mask_list_of_the_wrong_length():
+    assert detrend.biweight_many([], WINDOW, device="cpu") == []
+    time, flux = curve(points=300)
+    assert_same(detrend.biweight_many([(time, flux)], WINDOW, device="cpu")[0], reference(time, flux))
+    with pytest.raises(ValueError, match="one entry"):
+        detrend.biweight_many([(time, flux)], WINDOW, masks=[None, None], device="cpu")
+
+
+def test_a_batch_of_only_nan_light_curves_gives_nan_for_each():
+    nan = (np.array([0.0, 1.0]), np.array([np.nan, np.nan]))
+    out = detrend.biweight_many([nan, nan], WINDOW, device="cpu")
+    assert len(out) == 2 and all(np.isnan(trend).all() and len(trend) == 2 for trend in out)
+
+
+@needs_kernel
+def test_the_kernel_on_many_light_curves_in_one_call_equals_the_torch_version_on_each():
+    sectors, masks = sectors_of_a_star()
+    together = detrend.biweight_many(sectors, WINDOW, masks=masks, device="cuda")
+    for (time, flux), mask, trend in zip(sectors, masks, together):
+        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"))

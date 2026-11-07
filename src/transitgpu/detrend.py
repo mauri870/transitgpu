@@ -12,7 +12,7 @@
   - A trend that is exactly 0 is NaN.
   - A masked point, which wotan gives the sign of its flux changed and then drops with every point whose value is at or below -1e-12, keeps that rule here: a point with a flux of -1e-12 or less is in no window.
 
-`time` must be in increasing order. The torch version runs on any torch device, the CPU included, and is the reference of the Triton kernel. The kernel is used on a CUDA or ROCm device where Triton can be imported; it builds
+`biweight_many` does the same for a list of light curves in one sequence of launches. `time` must be in increasing order. The torch version runs on any torch device, the CPU included, and is the reference of the Triton kernel. The kernel is used on a CUDA or ROCm device where Triton can be imported; it builds
 no matrix of windows (each program reads its window from the flux array) and gives the same trend as the torch version up to rounding. Triton: https://triton-lang.org/main/python-api/triton.language.html
 """
 import numpy as np
@@ -131,32 +131,58 @@ def trend_kernel(values, start, end, width, tolerance=TOLERANCE, rows=None):
     return out
 
 
+def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE):
+    """Return the biweight trend of each light curve of `sectors`, a list of (time, flux) pairs, as a list of numpy arrays, with the windows of all of them in one sequence of launches.
+
+    `masks` is None or a list with a mask (True for the points left out of the windows) or None for each light curve. The result of each equals `biweight` of that light curve alone; the batch pays the transfer and the
+    launches once, which is what a pipeline that detrends many sectors of a star at a time needs. The arguments and the rules are those of `biweight`.
+    """
+    masks = [None] * len(sectors) if masks is None else list(masks)
+    if len(masks) != len(sectors):
+        raise ValueError("masks must have one entry for each light curve")
+    prepared, offset, parts = [], 0, ([], [], [])
+    for (time, flux), mask in zip(sectors, masks):
+        time = np.array(time, dtype=np.float64)
+        flux = np.array(flux, dtype=np.float64)
+        keep = np.ones(len(time), dtype=bool) if mask is None else ~np.asarray(mask, dtype=bool)
+        good = ~np.isnan(time * flux)
+        if good.any() and np.any(np.diff(time[good]) < 0):
+            raise ValueError("time must be in increasing order")
+        if good.any():
+            values, start, end = windows(time[good], flux[good], keep[good], window)
+            parts[0].append(values)
+            parts[1].append(start + offset)
+            parts[2].append(end + offset)
+            offset += len(values)
+        prepared.append((len(time), good))
+    if offset == 0:
+        return [np.full(size, np.nan) for size, _ in prepared]
+    values, start, end = (np.concatenate(part) for part in parts)
+    width = int((end - start).max())
+    result = np.full(len(start), np.nan)
+    if width > 0:
+        device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        values_d, start_d, end_d = (torch.as_tensor(array, device=device) for array in (values, start, end))
+        if device.type == "cuda" and triton is not None:
+            computed = trend_kernel(values_d, start_d, end_d, triton.next_power_of_2(width), tolerance)
+        else:
+            computed = trend_torch(values_d, start_d, end_d, width, tolerance)
+        result = computed.cpu().numpy()
+        result[result == 0] = np.nan
+    trends, at = [], 0
+    for size, good in prepared:
+        trend = np.full(size, np.nan)
+        count = int(good.sum())
+        trend[good] = result[at : at + count]
+        at += count
+        trends.append(trend)
+    return trends
+
+
 def biweight(time, flux, window, mask=None, device=None, tolerance=TOLERANCE):
     """Return the biweight trend of `flux` at `time` (days), a window of `window` days wide, as a numpy array of the length of `time`.
 
     `mask` is True for the points that the trend must leave out of its windows (the points of known transits), as wotan's `mask`. `device` is a torch device name: the default is "cuda" where torch finds a CUDA or ROCm
     device and "cpu" otherwise. On a CUDA or ROCm device the Triton kernel is used when Triton can be imported, else the torch version. `tolerance` is the stopping step of the iteration.
     """
-    time = np.array(time, dtype=np.float64)
-    flux = np.array(flux, dtype=np.float64)
-    keep = np.ones(len(time), dtype=bool) if mask is None else ~np.asarray(mask, dtype=bool)
-    good = ~np.isnan(time * flux)
-    trend = np.full(len(time), np.nan)
-    if not good.any():
-        return trend
-    if np.any(np.diff(time[good]) < 0):
-        raise ValueError("time must be in increasing order")
-    values, start, end = windows(time[good], flux[good], keep[good], window)
-    width = int((end - start).max())
-    if width == 0:
-        return trend
-    device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
-    values_d, start_d, end_d = (torch.as_tensor(array, device=device) for array in (values, start, end))
-    if device.type == "cuda" and triton is not None:
-        result = trend_kernel(values_d, start_d, end_d, triton.next_power_of_2(width), tolerance)
-    else:
-        result = trend_torch(values_d, start_d, end_d, width, tolerance)
-    result = result.cpu().numpy()
-    result[result == 0] = np.nan
-    trend[good] = result
-    return trend
+    return biweight_many([(time, flux)], window, masks=[mask], device=device, tolerance=tolerance)[0]
