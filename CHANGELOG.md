@@ -6,11 +6,16 @@
 
 - `transitgpu.detrend.biweight(time, flux, window, mask=None)` returns the trend of wotan's biweight filter, with wotan's windows, its mask and its stopping step. On a CUDA or ROCm device where Triton can be imported a kernel with one program for each point computes it, reading each window from the flux array; elsewhere torch operations on a matrix of windows do, on the CPU too. The tests compare both with wotan 1.10, and `benchmarks/bench_detrend.py` times them against it on light curves of 30 minutes to 20 seconds of cadence.
 - `transitgpu.detrend.biweight_many(sectors, window, masks=None)` returns the trends of a list of (time, flux) light curves from one sequence of launches; each equals the trend of `biweight` of that light curve alone.
+- The kernel computes the trend of windows padded to at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window runs the torch version on the same device. `method="kernel"` or `method="torch"` on `biweight` and `biweight_many` chooses the path.
 
 ### Changed
 
 - `search`, `search_many`, `box_search(...).power`, `bls_tls_hybrid` and the `gpu` and `gpu-binned` backends of `transitgpu.tls` run on the CPU when torch finds no GPU or when `device="cpu"` is given, and no longer raise a `RuntimeError`. The CPU is slower than a GPU: TLS's exact statistic of 3,000 points from 1 to 6 days takes 1.6 s with `gpu` on 16 threads against 0.16 s with TLS's `fused`, and `gpu-binned` takes 0.18 s. `gpu-pl` has only Triton kernels and raises on a CPU with a message that names `gpu` and `gpu-binned`. Asking for `device="cuda"` where torch finds no GPU still raises, with the link to the torch build for the driver.
 - The fold, the scoring and the update of the best boxes are compiled by torch.compile on the CPU as well as on a GPU. On a CPU, a second search of 4,000 points from 1 to 6 days takes 0.02 s and not 0.43 s, after a first call of about 10 s that compiles (about 2 s from torch's compile cache; AMD Ryzen 9 9950X3D, torch 2.14.1+cpu). Where torch cannot compile, for example without a C++ compiler, a warning is shown once and the eager passes are used, as on a GPU.
+
+### Known limits
+
+- The compile of the detrend kernel grows about four times for each doubling of the padded window, because the kernel sorts the whole window in registers; above `detrend.KERNEL_WIDTH_LIMIT` the torch version is used instead. A sort that does not unroll the window would let the kernel take wider windows.
 
 ## 0.2.0 (2026-11-05)
 

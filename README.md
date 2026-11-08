@@ -152,6 +152,8 @@ flattened = flux / trend
 trends = detrend.biweight_many([(time_1, flux_1), (time_2, flux_2)], 0.75)
 ```
 
+On a GPU a Triton kernel computes the trend when the widest window, rounded up to a power of two, holds at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window, such as 0.75 d at 20 s cadence, runs the torch version on the GPU. The first call of the kernel at a width compiles it, longer for wider windows (the detrend table under Performance), and Triton keeps the compiled kernel on disk for later processes. `method="kernel"` or `method="torch"` chooses the path.
+
 ## Performance
 
 The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of white noise and one injected box (3.18 d, 3,000 ppm, 2.5 h). Every search covers TLS's 91,607 trial periods from 0.5 to 14 days, and every one finds the injected period. A time is the median of seven runs in seconds; where a cell has brackets, they hold the first and third quartiles.
