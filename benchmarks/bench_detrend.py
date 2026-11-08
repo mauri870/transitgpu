@@ -7,7 +7,7 @@ day in the middle and 0.2 days on each side of it removed, and 1 point in 500 a 
 in points rounded up to a power of two. A row is timed after one first call as the median of --repeats calls, from the numpy arrays of the call to the numpy trend, so the device rows include building the windows, both transfers
 and the launches; the first call is given apart, since for the kernel it includes the compile when the Triton cache does not hold that width. Each row also gives its largest difference from wotan's trend, relative to the trend,
 and whether the NaN positions are equal. The kernel row is not run where the padded width is over --kernel-max-width, whose compile does not end in bounded time; a torch row on the CPU that would take over --max-seconds a call,
-scaled by the points from the configuration before it, is skipped. Every skip is said in the table.
+scaled by the points times the padded width from the configuration before it, is skipped. Every skip is said in the table.
 With --processes, that many processes each detrend the 2-minute light curve with the 0.75-day window on the device for --seconds after a common start, once for each count given. With --cold N, N processes start together with
 an empty Triton cache and detrend the 2-minute light curve with the 1.5-day window once, and the table gives the time of that first call, which includes the compile of each process.
 """
@@ -102,7 +102,7 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
         reference, first, seconds = timed(lambda: flatten(time_values, flux, method="biweight", window_length=window, return_trend=True, mask=mask)[1], repeats)
         entry["rows"]["wotan"] = {"first": first, "seconds": seconds, "median": statistics.median(seconds)}
         before = previous["rows"].get("torch-cpu") if previous else None
-        if before is not None and "median" in before and before["median"] * len(time_values) / previous["points"] * window / previous["window_days"] > max_seconds:
+        if before is not None and "median" in before and before["median"] * len(time_values) * width / (previous["points"] * previous["padded_width"]) > max_seconds:  # the work is the points times the window
             entry["rows"]["torch-cpu"] = {"skipped": f"over {max_seconds:g} s a call by scaling the configuration before it"}
         else:
             trend, first, seconds = timed(lambda: detrend.biweight(time_values, flux, window, mask=mask, device="cpu"), repeats if len(time_values) < 50000 else 3)
@@ -115,6 +115,7 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
                 trend, first, seconds = timed(lambda method=method: detrend.biweight(time_values, flux, window, mask=mask, device="cuda", method=method), repeats)
                 entry["rows"][key] = {"first": first, "seconds": seconds, "median": statistics.median(seconds), **agreement(trend, reference)}
         results["configurations"].append(entry)
+        print(f"{heading(entry)}: " + ", ".join(f"{key} {cell(row)}" for key, row in entry["rows"].items()), file=sys.stderr, flush=True)
         previous = entry
     return results
 
@@ -216,7 +217,10 @@ def main(arguments=None):
     results = run(repeats=options.repeats, max_seconds=options.max_seconds, kernel_max_width=options.kernel_max_width, device=options.device)
     device = "cpu" if options.device == "cpu" else "cuda"
     if options.processes:
-        results["shared"] = [shared(count, seconds=options.seconds, device=device) for count in options.processes]
+        results["shared"] = []
+        for count in options.processes:
+            results["shared"].append(shared(count, seconds=options.seconds, device=device))
+            print(f"{count} processes sharing the device: {results['shared'][-1]['per_second']:.0f} detrends a second", file=sys.stderr, flush=True)
     if options.cold:
         with tempfile.TemporaryDirectory() as empty:
             results["cold"] = shared(options.cold, step_seconds=COLD[0], window=COLD[1], seconds=0.0, device=device, cache_dir=empty)

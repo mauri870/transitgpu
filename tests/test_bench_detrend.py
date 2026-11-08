@@ -44,6 +44,17 @@ def test_a_row_that_would_take_too_long_is_skipped_and_said():
     assert "Skipped: over" in bench.table(results)
 
 
+def test_the_skip_of_a_slow_row_scales_by_the_points_times_the_padded_width(monkeypatch):
+    def one_second(function, repeats):
+        return function(), 1.0, [1.0] * repeats
+
+    monkeypatch.setattr(bench, "timed", one_second)
+    results = bench.run(configurations=(("30 min", 1800, 0.75), ("10 min", 600, 0.75)), repeats=1, max_seconds=4.0, device="cpu")
+    first, second = results["configurations"]
+    assert second["points"] / first["points"] > 2.9 and second["padded_width"] == 2 * first["padded_width"]
+    assert "skipped" in second["rows"]["torch-cpu"], "1 s times about 3 times the points and twice the width is 6 s, over the 4 s limit"
+
+
 def test_two_processes_sharing_a_device_both_detrend_and_their_rate_is_the_sum_of_theirs(monkeypatch):
     monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))  # the spawned processes import the worker by its module name
     import bench_detrend
