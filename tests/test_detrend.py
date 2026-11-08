@@ -11,7 +11,7 @@ import pytest
 torch = pytest.importorskip("torch")
 wotan = pytest.importorskip("wotan")
 
-from transitgpu import detrend  # noqa: E402
+from transitgpu import detrend
 
 WINDOW = 0.75
 RELATIVE = 1e-9  # the trend of each agrees with wotan's to rounding (1e-15 on these inputs); a step of the iteration at its stopping step of 1e-6 would show as 1e-6
