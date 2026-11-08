@@ -93,6 +93,37 @@ def gtls_macros(results):
     return "\n".join(lines) + "\n"
 
 
+def detrend_macros(results):
+    """The macros of benchmarks/results-detrend.json: \\Dt{ROW}{STEP} the median milliseconds of a detrend of the light curve of STEP seconds of cadence
+    (ROW wotan, torch-cpu or device; three significant figures), \\Dt{points}{STEP} its points, \\Dt{speedup}{STEP} wotan's median over the device's
+    (two significant figures), \\Dt{difference}{all} the largest relative difference from wotan's trend over every row, \\Dt{shared}{N} and
+    \\Dt{each}{N} the detrends a second of N processes sharing the device together and each, and \\Dt{NAME}{version} the versions."""
+    lines = ["\\providecommand{\\Dt}[2]{\\ifcsname dt@#1@#2\\endcsname\\csname dt@#1@#2\\endcsname\\else[\\texttt{#1,#2}]\\fi}"]
+
+    def define(name, key, text):
+        lines.append(f"\\expandafter\\def\\csname dt@{name}@{key}\\endcsname{{{text}}}")
+
+    worst = 0.0
+    for entry in results["cadences"]:
+        step, rows = entry["step_seconds"], entry["rows"]
+        define("points", step, f"{entry['points']:,}".replace(",", "\\,"))
+        for name, row in rows.items():
+            if "median" in row:
+                define(name, step, seconds(1000 * row["median"]))
+            worst = max(worst, row.get("largest_relative_difference", 0.0))
+        if "median" in rows.get("wotan", {}) and "median" in rows.get("device", {}):
+            define("speedup", step, ratio(rows["wotan"]["median"] / rows["device"]["median"]))
+    mantissa, exponent = f"{worst:.1e}".split("e")
+    define("difference", "all", f"${mantissa}\\times10^{{{int(exponent)}}}$")
+    for row in results.get("shared", []):
+        define("shared", row["processes"], f"{row['per_second']:.0f}")
+        define("each", row["processes"], f"{row['per_second'] / row['processes']:.0f}")
+    for name, value in results.get("versions", {}).items():
+        if value is not None:
+            define(name, "version", str(value).replace("_", "\\_"))
+    return "\n".join(lines) + "\n"
+
+
 def macros(results):
     lines = []
     for (row, points), (median, periods) in sorted(collect(results).items()):
@@ -347,7 +378,11 @@ def main():
     parser.add_argument("--roc-out", type=Path, default=HERE.parent / "roc_numbers.tex")
     parser.add_argument("--recovery-out", type=Path, default=HERE.parent / "recovery_numbers.tex")
     parser.add_argument("--threshold-out", type=Path, default=HERE.parent / "threshold_numbers.tex")
+    parser.add_argument("--detrend", type=Path, default=PACKAGE / "benchmarks" / "results-detrend.json", help="the results of benchmarks/bench_detrend.py, when the paper has them")
+    parser.add_argument("--detrend-out", type=Path, default=HERE.parent / "detrend_numbers.tex")
     arguments = parser.parse_args()
+    if arguments.detrend.exists():
+        arguments.detrend_out.write_text("% written by scripts/fill_numbers.py from benchmarks/results-detrend.json\n" + detrend_macros(json.loads(arguments.detrend.read_text())))
     arguments.out.write_text("% written by scripts/fill_numbers.py from benchmarks/results.json\n" + (lambda results: macros(results) + gtls_macros(results) + cold_macros(results))(json.loads(arguments.results.read_text())))
     if arguments.profile.exists():
         arguments.profile_out.write_text("% written by scripts/fill_numbers.py from profile_split.json\n" + split_macros(json.loads(arguments.profile.read_text())))
