@@ -33,16 +33,18 @@ Issues = "https://github.com/mauri870/transitgpu/issues"
 # transitgpu.tls and bls_tls_hybrid
 tls = ["transitleastsquares==2.0.1"]
 # examples/
-examples = ["matplotlib", "wotan", "astropy"]
+examples = ["matplotlib>=3.7.3", "wotan>=1.10", "astropy>=6.0"]
 # benchmarks/bench.py
-bench = ["astropy", "transitleastsquares==2.0.1"]
+bench = ["astropy>=6.0", "transitleastsquares==2.0.1"]
 
 [dependency-groups]
 # the tests; what `uv run pytest` and `uv sync` install in a clone of the repository (dev)
 # batman-package: paper/scripts/injection.py, which tests/test_paper_injection.py runs
-test = ["pytest", "scipy", "astropy", "pyyaml", "batman-package", "wotan==1.10", "transitleastsquares==2.0.1"]
+# pytest, astropy, scipy, pyyaml and batman-package had no floor, so `uv sync --resolution lowest-direct` tried each package's oldest PyPI release; several use a pre-wheel setup.py that downloads an old setuptools over plain HTTP and 403s today.
+# Each floor below is the lowest release that installs from a wheel on Python 3.12 and, synced together, lets tests -q pass (checked 2026-11-08); none is a SPEC 0 window, unlike numpy and numba above (W319).
+test = ["pytest>=7.0", "scipy>=1.11.2", "astropy>=6.0", "pyyaml>=6.0.1", "batman-package>=2.5.3", "wotan==1.10", "transitleastsquares==2.0.1"]
 # validation/: the injection-recovery evaluation (wotan flattens the red, variable and real light curves with a biweight filter of 3 days)
-validation = ["batman-package==2.5.3", "wotan==1.10", "astropy", "transitleastsquares==2.0.1", "scipy"]
+validation = ["batman-package==2.5.3", "wotan==1.10", "astropy>=6.0", "transitleastsquares==2.0.1", "scipy>=1.11.2"]
 dev = [
     { include-group = "test" },
     "ruff>=0.17.3",
@@ -85,6 +87,7 @@ addopts = "-m 'not slow'"
 
 [tool.uv]
 conflicts = [[{ group = "cpu" }, { group = "cu128" }, { group = "rocm" }]]
+required-environments = ["sys_platform == 'linux' and platform_machine == 'x86_64'"]
 
 [tool.uv.sources]
 torch = [
