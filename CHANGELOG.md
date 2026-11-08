@@ -6,7 +6,7 @@
 
 - `transitgpu.detrend.biweight(time, flux, window, mask=None)` returns the trend of wotan's biweight filter, with wotan's windows, its mask and its stopping step. On a CUDA or ROCm device where Triton can be imported a kernel with one program for each point computes it, reading each window from the flux array; elsewhere torch operations on a matrix of windows do, on the CPU too. The tests compare both with wotan 1.10, and `benchmarks/bench_detrend.py` times them against it on light curves of 30 minutes to 20 seconds of cadence.
 - `transitgpu.detrend.biweight_many(sectors, window, masks=None)` returns the trends of a list of (time, flux) light curves from one sequence of launches; each equals the trend of `biweight` of that light curve alone.
-- The kernel computes the trend of windows padded to at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window runs the torch version on the same device. On the CPU the trend is wotan's own when wotan can be imported, which is faster there than the torch version at 2-minute cadence (`benchmarks/bench_detrend.py`). `method="kernel"`, `"torch"` or `"wotan"` on `biweight` and `biweight_many` chooses the path.
+- The kernel computes the trend of windows padded to at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window runs the torch version on the same device. On the CPU the trend is wotan's own when wotan can be imported, which is faster there than the torch version at 2-minute cadence (`benchmarks/bench_detrend.py`). Without wotan the same call gives the torch version's trend, which differs from wotan's by at most 2.2e-16 relative on the benchmark's light curves of 30 min to 2 min cadence, with the NaN at the same positions (`benchmarks/results-detrend.json`). `method="kernel"`, `"torch"` or `"wotan"` on `biweight` and `biweight_many` chooses the path.
 
 ### Changed
 
@@ -17,6 +17,7 @@
 
 - The compile of the detrend kernel grows about four times for each doubling of the padded window, because the kernel sorts the whole window in registers; above `detrend.KERNEL_WIDTH_LIMIT` the torch version is used instead. A sort that does not unroll the window would let the kernel take wider windows.
 - On a Radeon RX 7900 XTX that also drives the display, 8 processes launching the detrend kernel at once timed out the graphics ring twice within 10 s, and the driver reset it; one process did not. Bounding the work of each launch, as the box search does, is not built and not measured.
+- The torch version of the detrend on a GPU makes 220 kernel launches a call at a width of 64 points and 178 at 128 (torch.profiler), so at the narrowest windows it straddles wotan on the CPU: for a 30-minute sector with a 0.75-day window its median is 2.36 ms, with calls from 1.57 to 2.51 ms, against wotan's 1.97 ms (`benchmarks/results-detrend.json`). Below `detrend.KERNEL_WIDTH_LIMIT` a call on the GPU takes the kernel (0.249 ms there); the torch version runs on a GPU for wider windows and when `method="torch"` asks for it.
 
 ## 0.2.0 (2026-11-05)
 
