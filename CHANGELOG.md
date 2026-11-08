@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.0 (2026-11-08)
+
 ### Added
 
 - `transitgpu.detrend.biweight(time, flux, window, mask=None)` returns the trend of wotan's biweight filter, with wotan's windows, its mask and its stopping step. On a CUDA or ROCm device where Triton can be imported a kernel with one program for each point computes it, reading each window from the flux array; elsewhere torch operations on a matrix of windows do, on the CPU too. The tests compare both with wotan 1.10, and `benchmarks/bench_detrend.py` times them against it on light curves of 30 minutes to 20 seconds of cadence.
