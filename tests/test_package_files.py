@@ -118,9 +118,17 @@ def test_every_relative_image_and_link_of_the_readme_exists_in_the_tree():
 
 def test_the_third_line_of_the_readme_is_the_sentence_that_opens_its_description():
     lines = (ROOT / "README.md").read_text().splitlines()
-    assert lines[0] == "# transitgpu" and lines[2] == "transitgpu searches light curves for transiting planets on the GPU, with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch on CUDA and ROCm."
+    assert lines[0] == "# transitgpu" and lines[2] == "transitgpu searches light curves for transiting planets with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch. It runs on CUDA and ROCm GPUs and on the CPU."
 
 
-def test_the_readme_says_what_gpu_pl_is_and_that_it_needs_equal_errors():
+def test_the_readme_says_what_gpu_pl_is_that_it_needs_equal_errors_and_runs_only_on_a_gpu():
     text = (ROOT / "README.md").read_text()
-    assert '`backend="gpu-pl"` is TLS\'s default backend (`fused-pl`) on the GPU and needs equal errors.' in text
+    assert '`backend="gpu-pl"` is TLS\'s default backend (`fused-pl`) on the GPU and needs equal errors. It runs only on a GPU.' in text
+
+
+def test_the_readme_does_not_say_that_the_package_needs_a_gpu():
+    """The searches run on the CPU without a GPU; the README names the CPU build of torch and says nothing that sends a user without a GPU elsewhere."""
+    text = (ROOT / "README.md").read_text()
+    for phrase in ("needs a GPU", "refuse to run without a GPU", "a CUDA or ROCm GPU.", "Without a GPU, use"):
+        assert phrase not in text, phrase
+    assert "`cpu` for the CPU" in text and 'device="cpu"' in text

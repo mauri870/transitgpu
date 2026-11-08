@@ -1,6 +1,6 @@
 # transitgpu
 
-transitgpu searches light curves for transiting planets on the GPU, with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch on CUDA and ROCm.
+transitgpu searches light curves for transiting planets with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch. It runs on CUDA and ROCm GPUs and on the CPU.
 
 If you use transitgpu, please cite [Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection](paper/main.pdf).
 
@@ -22,16 +22,16 @@ WASP-18 b in 13 days of TESS data. Top: the box search; bottom: TLS on the GPU. 
 
 ## Installation
 
-transitgpu is not on PyPI yet; install it from this repository. Install a GPU build of torch first, then transitgpu ([uv's PyTorch guide](https://docs.astral.sh/uv/guides/integration/pytorch/)). Use the index of your torch build (`rocm7.2` here, `cu128` for NVIDIA); `[tls]` adds `transitgpu.tls` and its dependency, TLS 2.0.1:
+transitgpu is not on PyPI yet; install it from this repository. Install the torch build for your device first, then transitgpu ([uv's PyTorch guide](https://docs.astral.sh/uv/guides/integration/pytorch/)). Use the index of your torch build (`rocm7.2` here, `cu128` for NVIDIA, `cpu` for the CPU); `[tls]` adds `transitgpu.tls` and its dependency, TLS 2.0.1:
 
 ```text
 uv pip install torch --index-url https://download.pytorch.org/whl/rocm7.2
 uv pip install "transitgpu[tls] @ git+https://github.com/mauri870/transitgpu"
 ```
 
-transitgpu needs Python 3.12+, torch 2.5+ and a CUDA or ROCm GPU. Without a GPU, use astropy's `BoxLeastSquares` or `transitleastsquares`.
+transitgpu needs Python 3.12+ and torch 2.5+.
 
-On ROCm, `search_many` accumulates in a HIP kernel that is compiled with `hipcc` on the first call (about 20 s, once per environment; `TORCH_EXTENSIONS_DIR` moves the build). Without `hipcc` a warning is shown once and the Triton kernel is used, as it is on NVIDIA. Without Triton, the search folds into a table and compiles the fold with `torch.compile`. Please report problems at https://github.com/mauri870/transitgpu/issues.
+On ROCm, `search_many` accumulates in a HIP kernel that is compiled with `hipcc` on the first call (about 20 s, once per environment; `TORCH_EXTENSIONS_DIR` moves the build). Without `hipcc` a warning is shown once and the Triton kernel is used, as it is on NVIDIA. Without Triton, the search folds into a table and compiles the fold with `torch.compile`. On the CPU, the first search of a process compiles the box search with `torch.compile`, which needs a C++ compiler; without one a warning is shown once and the search runs uncompiled. Please report problems at https://github.com/mauri870/transitgpu/issues.
 
 ## Getting started
 
@@ -42,7 +42,7 @@ git clone https://github.com/mauri870/transitgpu
 cd transitgpu
 ```
 
-`uv run --group rocm python examples/wasp18_b.py` runs all the examples below and prints their output.
+`uv run --group rocm python examples/wasp18_b.py` runs all the examples below and prints their output (`--group cu128` for NVIDIA, `--group cpu` for the CPU).
 
 ```python
 import numpy as np
@@ -51,7 +51,7 @@ import transitgpu
 
 data = np.load("examples/data/wasp18_s2.npz")  # time in days (BTJD), flattened PDCSAP flux, error of the flux
 t, y, dy = data["time"], data["flux"], data["flux_err"]
-results = transitgpu.box_search(t, y, dy).power(period_min=0.5, period_max=5.0)
+results = transitgpu.box_search(t, y, dy).power(period_min=0.5, period_max=5.0)  # on the first GPU, else the CPU
 print(f"period    {results.period:.5f} d")
 print(f"duration  {results.duration * 24:.2f} h")
 print(f"depth     {(1 - results.depth) * 1e6:.0f} ppm")
@@ -103,7 +103,7 @@ depth     10915 ppm
 SDE       25.9
 ```
 
-The default backend is `"gpu"`, which gives the same χ² as TLS's exact backend. `backend="gpu-binned"` is faster and approximate: it folds the points into phase bins, needs equal errors, and can find a different best period on light curves with gaps or few points. `backend="gpu-pl"` is TLS's default backend (`fused-pl`) on the GPU and needs equal errors. Any other TLS backend can be selected by name, and the environment variable `TLS_BACKEND` sets the backend when the call gives none.
+The default backend is `"gpu"`, which gives the same χ² as TLS's exact backend. `backend="gpu-binned"` is faster and approximate: it folds the points into phase bins, needs equal errors, and can find a different best period on light curves with gaps or few points. `backend="gpu-pl"` is TLS's default backend (`fused-pl`) on the GPU and needs equal errors. It runs only on a GPU. Any other TLS backend can be selected by name, and the environment variable `TLS_BACKEND` sets the backend when the call gives none.
 
 The two SDEs above are different statistics: the box search's is a plain z-score of its periodogram, and TLS's is computed after removing a running median. Compare each one only with a threshold made for the same search.
 
@@ -128,13 +128,17 @@ To estimate whether a signal that transitgpu finds is a false positive (an eclip
 
 ### Choosing the device
 
-`transitgpu.search` and `transitgpu.search_many` refuse to run without a GPU. `transitgpu.engine` has the same searches without that check, so you can pick the device yourself or run on the CPU (slowly):
+Every search runs on the first GPU that torch finds, or on the CPU without one. `device` picks the device, and a TLS backend takes it the same way:
 
 ```python
 from transitgpu import engine
 
-found = engine.search(t, y, 0.5, 14.0, device="cpu")
+results = transitgpu.box_search(t, y, dy).power(period_min=0.5, period_max=5.0, device="cpu")
+found = transitgpu.search(t, y, 0.5, 14.0, device="cuda")
+results = transitleastsquares(t, y, dy).power(period_min=0.5, period_max=5.0, backend=engine.WindowBackend(device="cpu"))
 ```
+
+On the CPU the examples above print the same output in 35 s on an AMD Ryzen 9 9950X3D, 28 s of it in TLS.
 
 ## Performance
 

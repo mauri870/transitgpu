@@ -1,6 +1,6 @@
-"""Find WASP-18 b in 13 days of TESS 2-minute photometry from sector 2, flattened (see examples/data/README.md), with the box search, the box search with bumps, TLS on the GPU and the hybrid search.
+"""Find WASP-18 b in 13 days of TESS 2-minute photometry from sector 2, flattened (see examples/data/README.md), with the box search, the box search with bumps, TLS and the hybrid search.
 
-Needs a GPU:
+On a GPU, or on the CPU with --group cpu:
 
     uv run --group rocm python examples/wasp18_b.py
 """

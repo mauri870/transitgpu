@@ -1,6 +1,6 @@
-"""Plot WASP-18 b as the box search and TLS on the GPU find it: one row per search, each with the light curve, the periodogram and the folded transit.
+"""Plot WASP-18 b as the box search and TLS find it: one row per search, each with the light curve, the periodogram and the folded transit.
 
-The data are 13 days of TESS 2-minute photometry from sector 2, flattened (see examples/data/README.md). Needs matplotlib and a GPU:
+The data are 13 days of TESS 2-minute photometry from sector 2, flattened (see examples/data/README.md). Needs matplotlib; runs on a GPU, or on the CPU with --group cpu:
 
     uv run --group rocm --extra examples python examples/plot_wasp18.py [docs/wasp18.png]
 """

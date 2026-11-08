@@ -1,6 +1,6 @@
 """Recover a synthetic transit: a 3,000 ppm, 2.5 h box every 3.18 days in 27 days of 30-minute data with 300 ppm of white noise.
 
-Needs a GPU and takes a few seconds:
+On a GPU, or on the CPU with --group cpu:
 
     uv run --group rocm python examples/synthetic_transit.py
 """
