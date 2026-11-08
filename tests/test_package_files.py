@@ -46,7 +46,7 @@ def test_the_metadata_names_the_author_the_addresses_and_the_lower_bounds_the_co
     assert set(project["urls"]) == {"Homepage", "Source", "Issues"} and {value.split("/issues")[0] for value in project["urls"].values()} == {"https://github.com/mauri870/transitgpu"}
     assert "https://github.com/mauri870/transitgpu" in (ROOT / "CITATION.cff").read_text(), "the citation file points at the address of the project metadata"
     bounds = {requirement.split(">=")[0]: requirement.split(">=")[1] for requirement in project["dependencies"]}
-    assert bounds == {"numpy": "2.2", "numba": "0.61.2", "torch": "2.5"}, "torch 2.5 for torch.OutOfMemoryError; numpy 2.2 and numba 0.61.2 (its lowest release that supports numpy 2.2) by SPEC 0 (W319)"
+    assert bounds == {"numpy": "2.2", "numba": "0.61.2", "torch": "2.5"}, "torch 2.5 for torch.OutOfMemoryError; numpy 2.2 and numba 0.61.2 (its lowest release that supports numpy 2.2) by SPEC 0"
     assert metadata["build-system"]["requires"] == ["hatchling>=1.27", "hatch-fancy-pypi-readme>=24.1.0"] and project["dynamic"] == ["readme"]
     assert any(classifier == "Programming Language :: Python :: 3.12" for classifier in project["classifiers"]) and project["requires-python"] == ">=3.12"
     assert set(project["optional-dependencies"]) == {"tls", "examples", "bench"}, "the extras are what a user installs; the tests and the builds of torch are dependency groups, which a wheel does not publish"
