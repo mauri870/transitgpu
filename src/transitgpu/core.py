@@ -90,7 +90,7 @@ def raise_recompile_limit():
         setattr(config, name, RECOMPILE_LIMIT)
 
 
-# The compiled fold_index: None until its first use on a GPU, False when compilation is not available.
+# The compiled fold_index: None until its first use, False when compilation is not available.
 _COMPILED = None
 
 
@@ -272,14 +272,14 @@ def accumulate(t, p, bins, quantized, weight):
 
 
 def fold(t, p, bins, shifts=None):
-    """Return `fold_index(t, p, bins, shifts)`, compiled by torch.compile into one kernel on a GPU.
+    """Return `fold_index(t, p, bins, shifts)`, compiled by torch.compile into one kernel.
 
-    On a CPU, or when compilation fails (with a warning, once), the eager `fold_index` is used; the table is the same.
+    When compilation fails (with a warning, once), the eager `fold_index` is used; the table is the same.
     """
     global _COMPILED
     import torch
 
-    if t.device.type != "cpu" and _COMPILED is not False:
+    if _COMPILED is not False:
         raise_recompile_limit()
         try:
             if _COMPILED is None:
@@ -293,7 +293,7 @@ def fold(t, p, bins, shifts=None):
     return fold_index(t, p, bins, shifts)
 
 
-# The compiled score_steps: None until its first use on a GPU, False when compilation is not available.
+# The compiled score_steps: None until its first use, False when compilation is not available.
 _SCORE_COMPILED = None
 
 
@@ -333,16 +333,15 @@ def score_steps(s2, c2, position, width, ok, n_points, bins, single=False, packe
 
 
 def score(s2, c2, position, width, ok, n_points, bins, single=False, packed_total=None, bumps=False):
-    """Return `score_steps(...)`, compiled by torch.compile into one kernel on a GPU.
+    """Return `score_steps(...)`, compiled by torch.compile into one kernel.
 
     The compiled kernel orders the floating-point operations differently, so the z-scores differ from the eager
-    passes in the last digits (about 2e-15). On a CPU, or when compilation fails (with a warning, once), the eager
-    passes are used.
+    passes in the last digits (about 2e-15). When compilation fails (with a warning, once), the eager passes are used.
     """
     global _SCORE_COMPILED
     import torch
 
-    if s2.device.type != "cpu" and _SCORE_COMPILED is not False:
+    if _SCORE_COMPILED is not False:
         raise_recompile_limit()
         try:
             if _SCORE_COMPILED is None:
@@ -356,7 +355,7 @@ def score(s2, c2, position, width, ok, n_points, bins, single=False, packed_tota
     return score_steps(s2, c2, position, width, ok, n_points, bins, single, packed_total, bumps)
 
 
-# The compiled advance_winner: None until its first use on a GPU, False when compilation is not available.
+# The compiled advance_winner: None until its first use, False when compilation is not available.
 _ADVANCE_COMPILED = None
 
 
@@ -381,11 +380,11 @@ def advance_winner(winner, start, width_of, number_in, sum_in, value_of_step, wh
 
 
 def advance(winner, start, width_of, number_in, sum_in, value_of_step, where_of_step, width, s2, c2, rows_index, packed):
-    """Return `advance_winner(...)`, compiled by torch.compile into a few kernels on a GPU (the eager passes launch about twenty); the integers are the same and so are the doubles, which are products and differences of exact values."""
+    """Return `advance_winner(...)`, compiled by torch.compile into a few kernels (the eager passes launch about twenty); the integers are the same and so are the doubles, which are products and differences of exact values."""
     global _ADVANCE_COMPILED
     import torch
 
-    if s2.device.type != "cpu" and _ADVANCE_COMPILED is not False:
+    if _ADVANCE_COMPILED is not False:
         raise_recompile_limit()
         try:
             if _ADVANCE_COMPILED is None:

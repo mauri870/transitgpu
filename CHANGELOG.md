@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The fold, the scoring and the update of the best boxes are compiled by torch.compile on the CPU as well as on a GPU. On a CPU, a second search of 4,000 points from 1 to 6 days takes 0.02 s and not 0.43 s, after a first call of 9 s that compiles (about 2 s from torch's compile cache), and the test suite takes 157 s and not about 355 s (AMD Ryzen 9 9950X3D, torch 2.14.1+cpu). Where torch cannot compile, for example without a C++ compiler, a warning is shown once and the eager passes are used, as on a GPU.
+
 ## 0.2.0 (2026-11-05)
 
 ### Added

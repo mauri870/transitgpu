@@ -10,6 +10,9 @@ from transitgpu.core import search
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 
+# The compiled fold and scoring run on the CPU and on a GPU; a test of them runs on each device that torch finds.
+DEVICES = ["cpu", pytest.param("cuda", marks=pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU"))]
+
 RESULT_FIELDS = (
     "period_min_searched_days", "period_max_searched_days", "period_days", "t0_days", "duration_hr", "duration_corrected_hr", "fill_factor",
     "depth_ppm", "depth_mean_ppm", "sde", "snr", "transit_count",
@@ -171,20 +174,20 @@ def test_a_barycentric_time_offset_does_not_hide_the_signal():
         assert abs(error) < 2.5 / 48, f"offset {offset}: the time is {error * 24:.2f} h off"
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
-def test_the_fused_fold_gives_the_indices_of_the_passes_it_replaces():
-    """The fold is one compiled kernel on a GPU; it must give the bin of every point for every period exactly as the eager passes do."""
+@pytest.mark.parametrize("device", DEVICES)
+def test_the_fused_fold_gives_the_indices_of_the_passes_it_replaces(device):
+    """The fold is one compiled kernel; it must give the bin of every point for every period exactly as the eager passes do."""
     from transitgpu import core as gpu
 
     generator = np.random.default_rng(3)
-    t = torch.as_tensor(np.sort(generator.uniform(0, 1900, 20000)), device="cuda")
-    p = torch.as_tensor(np.sort(generator.uniform(0.6, 14, 37)), device="cuda")
+    t = torch.as_tensor(np.sort(generator.uniform(0, 1900, 20000)), device=device)
+    p = torch.as_tensor(np.sort(generator.uniform(0.6, 14, 37)), device=device)
     for bins in (128, 1024, 4096):
         assert torch.equal(gpu.fold(t, p, bins), gpu.fold_index(t, p, bins))
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
-def test_a_compilation_that_fails_falls_back_to_the_eager_fold_with_a_warning(monkeypatch):
+@pytest.mark.parametrize("device", DEVICES)
+def test_a_compilation_that_fails_falls_back_to_the_eager_fold_with_a_warning(monkeypatch, device):
     from transitgpu import core as gpu
 
     def refuse(*arguments, **keywords):
@@ -192,13 +195,13 @@ def test_a_compilation_that_fails_falls_back_to_the_eager_fold_with_a_warning(mo
 
     monkeypatch.setattr(gpu, "_COMPILED", None)
     monkeypatch.setattr(torch, "compile", refuse)
-    t = torch.linspace(0, 100, 5000, dtype=torch.float64, device="cuda")
-    p = torch.tensor([1.5, 2.5], dtype=torch.float64, device="cuda")
+    t = torch.linspace(0, 100, 5000, dtype=torch.float64, device=device)
+    p = torch.tensor([1.5, 2.5], dtype=torch.float64, device=device)
     with pytest.warns(UserWarning, match="compil"):
         index = gpu.fold(t, p, 256)
     assert torch.equal(index, gpu.fold_index(t, p, 256))
     time, flux = light_curve(seed=2)
-    assert recovered(search(time, flux, 0.5, 14)), "the search still works on the eager path"
+    assert recovered(search(time, flux, 0.5, 14, device=device)), "the search still works on the eager path"
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
@@ -238,34 +241,35 @@ def test_the_number_of_duration_steps_scored_together_changes_the_time_and_not_t
     assert np.array_equal(chunked["power"], expected["power"]) and all(chunked[name] == expected[name] for name in RESULT_FIELDS)
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
-def test_the_fused_scoring_of_the_duration_steps_gives_the_spectrum_of_the_eager_passes_to_rounding(monkeypatch):
+@pytest.mark.parametrize("device", DEVICES)
+def test_the_fused_scoring_of_the_duration_steps_gives_the_spectrum_of_the_eager_passes_to_rounding(monkeypatch, device):
     """Fusing the passes changes the order of the floating-point operations, so the z-scores differ in the last digits
     and the best period, time, duration, depth and SNR are those of the eager passes."""
     from transitgpu import core as gpu
 
     time, flux = light_curve(seed=3)
     precision = {"statistic": "float64"}  # to rounding at 64 bits; the default statistic is in 32 bits
-    fused = search(time, flux, 0.5, 14, spectrum=True, precision=precision)
+    fused = search(time, flux, 0.5, 14, spectrum=True, precision=precision, device=device)
     monkeypatch.setattr(gpu, "_SCORE_COMPILED", False)
-    eager = search(time, flux, 0.5, 14, spectrum=True, precision=precision)
+    eager = search(time, flux, 0.5, 14, spectrum=True, precision=precision, device=device)
     assert np.allclose(fused["power"], eager["power"], rtol=1e-12, atol=1e-12)
     assert all(fused[name] == pytest.approx(eager[name], rel=1e-12) for name in RESULT_FIELDS)
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs a GPU")
-def test_a_scoring_compilation_that_fails_falls_back_to_the_eager_passes_with_a_warning(monkeypatch):
+@pytest.mark.parametrize("device", DEVICES)
+def test_a_scoring_compilation_that_fails_falls_back_to_the_eager_passes_with_a_warning(monkeypatch, device):
+    """The warning also shows that the search tries to compile the scoring on the device, the CPU included."""
     from transitgpu import core as gpu
 
     def refuse(*arguments, **keywords):
         raise RuntimeError("no compiler")
 
     time, flux = light_curve(seed=2)
-    expected = search(time, flux, 0.5, 14)
+    expected = search(time, flux, 0.5, 14, device=device)
     monkeypatch.setattr(gpu, "_SCORE_COMPILED", None)
     monkeypatch.setattr(torch, "compile", refuse)
     with pytest.warns(UserWarning, match="compil"):
-        found = search(time, flux, 0.5, 14)
+        found = search(time, flux, 0.5, 14, device=device)
     assert recovered(found) and found["period_days"] == pytest.approx(expected["period_days"], rel=1e-12)
 
 
