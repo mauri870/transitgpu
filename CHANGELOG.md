@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changed
+
+- The minimum versions of `numpy` and `numba` follow [SPEC 0](https://scientific-python.org/specs/spec-0000/): `numpy>=2.2`, `numba>=0.61.2` (the lowest numba release that supports numpy 2.2). CI installs the lowest version of every direct dependency on Python 3.12 and runs the tests against it.
+
 ## 0.3.0 (2026-11-08)
 
 ### Added

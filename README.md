@@ -1,5 +1,7 @@
 # transitgpu
 
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
+
 transitgpu searches light curves for transiting planets with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch. It runs on CUDA and ROCm GPUs and on the CPU.
 
 If you use transitgpu, please cite [Parallel Search for Alien Worlds: GPU-Accelerated BLS and TLS for Exoplanet Transit Detection](paper/main.pdf).

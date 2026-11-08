@@ -28,6 +28,22 @@ jobs:
       - name: Tests
         run: uv run --group cpu pytest tests -q
 
+  lowest:
+    # SPEC 0 (W319): the lowest versions the dependencies declare must still work, not only the newest uv resolves.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.11.2"
+          python-version: "3.12"
+          enable-cache: true
+      - name: Install transitgpu at the lowest version of every direct dependency
+        run: uv sync --resolution lowest-direct --group cpu
+      - name: Tests
+        run: uv run --group cpu pytest tests -q
+
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
