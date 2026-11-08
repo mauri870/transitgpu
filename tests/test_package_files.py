@@ -46,7 +46,7 @@ def test_the_metadata_names_the_author_the_addresses_and_the_lower_bounds_the_co
     assert set(project["urls"]) == {"Homepage", "Source", "Issues"} and {value.split("/issues")[0] for value in project["urls"].values()} == {"https://github.com/mauri870/transitgpu"}
     assert "https://github.com/mauri870/transitgpu" in (ROOT / "CITATION.cff").read_text(), "the citation file points at the address of the project metadata"
     bounds = {requirement.split(">=")[0]: requirement.split(">=")[1] for requirement in project["dependencies"]}
-    assert bounds == {"numpy": "1.26", "numba": "0.59", "torch": "2.5"}, "torch 2.5 for torch.OutOfMemoryError, numba 0.59 and numpy 1.26 for Python 3.12"
+    assert bounds == {"numpy": "2.2", "numba": "0.61.2", "torch": "2.5"}, "torch 2.5 for torch.OutOfMemoryError; numpy 2.2 and numba 0.61.2 (its lowest release that supports numpy 2.2) by SPEC 0 (W319)"
     assert metadata["build-system"]["requires"] == ["hatchling>=1.27", "hatch-fancy-pypi-readme>=24.1.0"] and project["dynamic"] == ["readme"]
     assert any(classifier == "Programming Language :: Python :: 3.12" for classifier in project["classifiers"]) and project["requires-python"] == ">=3.12"
     assert set(project["optional-dependencies"]) == {"tls", "examples", "bench"}, "the extras are what a user installs; the tests and the builds of torch are dependency groups, which a wheel does not publish"
@@ -116,9 +116,10 @@ def test_every_relative_image_and_link_of_the_readme_exists_in_the_tree():
     assert [target for target in relative if not (ROOT / target.split("#")[0]).exists()] == []
 
 
-def test_the_third_line_of_the_readme_is_the_sentence_that_opens_its_description():
+def test_the_sentence_that_opens_the_description_follows_the_title_and_the_spec_0_badge():
     lines = (ROOT / "README.md").read_text().splitlines()
-    assert lines[0] == "# transitgpu" and lines[2] == "transitgpu searches light curves for transiting planets with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch. It runs on CUDA and ROCm GPUs and on the CPU."
+    assert lines[0] == "# transitgpu" and lines[2] == "[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)"
+    assert lines[4] == "transitgpu searches light curves for transiting planets with Box Least Squares (BLS) and Transit Least Squares (TLS) written for PyTorch. It runs on CUDA and ROCm GPUs and on the CPU."
 
 
 def test_the_readme_says_what_gpu_pl_is_that_it_needs_equal_errors_and_runs_only_on_a_gpu():
