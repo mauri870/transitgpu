@@ -70,6 +70,13 @@ def test_configurations_run_one_by_one_and_merged_give_the_table_of_one_run(tmp_
     assert bench.table(merged).splitlines()[0].count("0.75 d") == 2
 
 
+def test_a_merge_keeps_the_checks_of_each_part_in_its_order(tmp_path):
+    part = {"versions": {"torch": "a"}, "repeats": 7, "kernel_width_limit": 2048, "configurations": []}
+    (tmp_path / "a.json").write_text(json.dumps({**part, "checks": {"label": "config0", "passed": True}}))
+    (tmp_path / "b.json").write_text(json.dumps({**part, "checks": {"label": "config1", "passed": True}}))
+    assert [checks["label"] for checks in bench.merge([tmp_path / "a.json", tmp_path / "b.json"])["checks"]] == ["config0", "config1"]
+
+
 def test_files_of_different_versions_are_not_merged(tmp_path):
     part = {"versions": {"torch": "a"}, "repeats": 7, "kernel_width_limit": 2048, "configurations": []}
     (tmp_path / "a.json").write_text(json.dumps(part))

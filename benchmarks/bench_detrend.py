@@ -132,7 +132,11 @@ def cell(row):
     if "skipped" in row:
         return "skipped"
     seconds = row["seconds"]
-    return f"{1000 * row['median']:.3g} ({1000 * min(seconds):.3g}–{1000 * max(seconds):.3g})"
+
+    def milliseconds(value):
+        return f"{1000 * value:,.0f}" if value >= 1 else f"{1000 * value:.3g}"
+
+    return f"{milliseconds(row['median'])} ({milliseconds(min(seconds))}–{milliseconds(max(seconds))})"
 
 
 def heading(entry):
@@ -140,13 +144,11 @@ def heading(entry):
 
 
 def table(results):
-    """The table of the milliseconds a call takes after the first, median with the minimum and maximum of the repeats; the first call of the device rows; and the largest relative difference from wotan's trend."""
+    """The table of the milliseconds a call takes after the first, median with the minimum and maximum of the repeats, and the largest relative difference from wotan's trend. The first calls are in the results, not in the table."""
     entries = results["configurations"]
     lines = ["| detrend of one sector | " + " | ".join(heading(entry) for entry in entries) + " |", "| --- |" + " --- |" * len(entries)]
     for key, name in ROWS:
         lines.append(f"| {name} | " + " | ".join(cell(entry["rows"].get(key)) for entry in entries) + " |")
-    for key, name in ROWS[2:]:
-        lines.append(f"| first call, {name.split(', ', 1)[1]} (s) | " + " | ".join(f"{entry['rows'][key]['first']:.3g}" if "first" in entry["rows"].get(key, {}) else "-" for entry in entries) + " |")
     rows = [row for entry in entries for row in entry["rows"].values()]
     worst = max((row["largest_relative_difference"] for row in rows if "largest_relative_difference" in row), default=0.0)
     equal = all(row["nan_equal"] for row in rows if "nan_equal" in row)
@@ -163,7 +165,10 @@ def merge(paths):
         for key in ("versions", "repeats", "kernel_width_limit"):
             if part[key] != first[key]:
                 raise ValueError(f"the files differ in {key}: {first[key]!r} and {part[key]!r}")
-    return {**first, "configurations": [entry for part in parts for entry in part["configurations"]]}
+    merged = {**first, "configurations": [entry for part in parts for entry in part["configurations"]]}
+    if any("checks" in part for part in parts):
+        merged["checks"] = [part.get("checks") for part in parts]  # the checks of the job of each part, in its order
+    return merged
 
 
 def main(arguments=None):
