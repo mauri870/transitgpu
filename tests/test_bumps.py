@@ -9,18 +9,18 @@ import pytest
 
 pytest.importorskip("torch")
 
-from transitgpu.core import grid_of, search, search_many
+from transitgpu.core import grid_of, raise_recompile_limit, search, search_many
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 
 
 @pytest.fixture(autouse=True)
-def fresh_compiler(monkeypatch):
+def fresh_compiler():
     """Each test starts with an empty cache of compiled scorers and room for every variant it uses. After more variants than torch's cache limit (8) a process runs the scorer eagerly, whose float32 statistic differs from the compiled one in the 7th digit, and the equality between two searches that the tests state is of two searches made the same way (the package's README says so of long processes)."""
     import torch
 
     torch._dynamo.reset()
-    monkeypatch.setattr(torch._dynamo.config, "cache_size_limit", 64)
+    raise_recompile_limit()
 
 EXACT = ("period_days", "t0_days", "duration_hr", "duration_corrected_hr", "fill_factor", "transit_count", "period_min_searched_days", "period_max_searched_days", "period_uncertainty_days")
 CLOSE = ("sde", "depth_ppm", "depth_mean_ppm", "snr")

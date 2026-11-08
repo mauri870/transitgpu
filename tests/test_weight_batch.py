@@ -8,17 +8,17 @@ import pytest
 
 pytest.importorskip("torch")
 
-from transitgpu.core import search, search_many
+from transitgpu.core import raise_recompile_limit, search, search_many
 
 pytestmark = pytest.mark.gpu  # every test of this module may search on the device
 
 
 @pytest.fixture(autouse=True)
-def fresh_compiler(monkeypatch):
+def fresh_compiler():
     import torch
 
     torch._dynamo.reset()
-    monkeypatch.setattr(torch._dynamo.config, "recompile_limit" if hasattr(torch._dynamo.config, "recompile_limit") else "cache_size_limit", 64)
+    raise_recompile_limit()
 
 
 def stack():
