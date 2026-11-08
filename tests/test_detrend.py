@@ -171,6 +171,14 @@ def test_on_the_cpu_the_default_is_wotans_own_trend_and_the_torch_version_withou
         detrend.biweight(time, flux, WINDOW, device="cpu", method="wotan")
 
 
+def test_the_default_on_the_cpu_with_wotan_and_without_it_agree_to_rounding():
+    """The same default call gives wotan's trend where wotan is installed and the torch version's where it is not; the two agree to RELATIVE on light curves with gaps, NaN and a mask."""
+    for seed in range(3):
+        time, flux = curve(seed=seed)
+        mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
+        assert_same(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"))
+
+
 def test_the_default_on_the_cpu_keeps_an_all_nan_light_curve_and_the_order_check():
     assert np.isnan(detrend.biweight([0.0, 1.0], [np.nan, np.nan], WINDOW, device="cpu")).all()
     assert detrend.biweight_many([], WINDOW, device="cpu") == []
