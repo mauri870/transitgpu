@@ -25,16 +25,7 @@ jobs:
           enable-cache: true
       - name: Install transitgpu with its test dependencies and the CPU build of torch
         run: uv sync --group cpu
-      # torch.compile's code from earlier runs, so that the tests do not compile the searches again: a new key for each
-      # lock file and source, and the closest earlier cache when the key is new (https://github.com/actions/cache)
-      - uses: actions/cache@v6
-        with:
-          path: ${{ runner.temp }}/torchinductor
-          key: torchinductor-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}-${{ hashFiles('src/**/*.py') }}
-          restore-keys: torchinductor-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}-
       - name: Tests
-        env:
-          TORCHINDUCTOR_CACHE_DIR: ${{ runner.temp }}/torchinductor
         run: uv run --group cpu pytest tests -q
 
   lint:
