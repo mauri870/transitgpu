@@ -152,7 +152,7 @@ flattened = flux / trend
 trends = detrend.biweight_many([(time_1, flux_1), (time_2, flux_2)], 0.75)
 ```
 
-On a GPU a Triton kernel computes the trend when the widest window, rounded up to a power of two, holds at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window, such as 0.75 d at 20 s cadence, runs the torch version on the GPU. The first call of the kernel at a width compiles it, longer for wider windows (the detrend table under Performance), and Triton keeps the compiled kernel on disk for later processes. `method="kernel"` or `method="torch"` chooses the path.
+On a GPU a Triton kernel computes the trend when the widest window, rounded up to a power of two, holds at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window, such as 0.75 d at 20 s cadence, runs the torch version on the GPU. The first call of the kernel at a width compiles it, longer for wider windows (the detrend table under Performance), and Triton keeps the compiled kernel on disk for later processes. On the CPU the trend is wotan's own when wotan is installed, since wotan is faster there; without it the torch version runs. `method="kernel"`, `"torch"` or `"wotan"` chooses the path.
 
 ## Performance
 

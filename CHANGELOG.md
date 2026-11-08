@@ -6,7 +6,7 @@
 
 - `transitgpu.detrend.biweight(time, flux, window, mask=None)` returns the trend of wotan's biweight filter, with wotan's windows, its mask and its stopping step. On a CUDA or ROCm device where Triton can be imported a kernel with one program for each point computes it, reading each window from the flux array; elsewhere torch operations on a matrix of windows do, on the CPU too. The tests compare both with wotan 1.10, and `benchmarks/bench_detrend.py` times them against it on light curves of 30 minutes to 20 seconds of cadence.
 - `transitgpu.detrend.biweight_many(sectors, window, masks=None)` returns the trends of a list of (time, flux) light curves from one sequence of launches; each equals the trend of `biweight` of that light curve alone.
-- The kernel computes the trend of windows padded to at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window runs the torch version on the same device. `method="kernel"` or `method="torch"` on `biweight` and `biweight_many` chooses the path.
+- The kernel computes the trend of windows padded to at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window runs the torch version on the same device. On the CPU the trend is wotan's own when wotan can be imported, which is faster there than the torch version at 2-minute cadence (`benchmarks/bench_detrend.py`). `method="kernel"`, `"torch"` or `"wotan"` on `biweight` and `biweight_many` chooses the path.
 
 ### Changed
 

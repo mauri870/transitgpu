@@ -105,7 +105,7 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
         if before is not None and "median" in before and before["median"] * len(time_values) * width / (previous["points"] * previous["padded_width"]) > max_seconds:  # the work is the points times the window
             entry["rows"]["torch-cpu"] = {"skipped": f"over {max_seconds:g} s a call by scaling the configuration before it"}
         else:
-            trend, first, seconds = timed(lambda: detrend.biweight(time_values, flux, window, mask=mask, device="cpu"), repeats if len(time_values) < 50000 else 3)
+            trend, first, seconds = timed(lambda: detrend.biweight(time_values, flux, window, mask=mask, device="cpu", method="torch"), repeats if len(time_values) < 50000 else 3)
             entry["rows"]["torch-cpu"] = {"first": first, "seconds": seconds, "median": statistics.median(seconds), **agreement(trend, reference)}
         if use_device:
             for key, method in (("kernel", "kernel"), ("torch-device", "torch")):

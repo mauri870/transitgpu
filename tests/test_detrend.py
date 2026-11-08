@@ -42,13 +42,13 @@ def assert_same(ours, theirs):
 
 def test_the_trend_of_a_light_curve_with_gaps_and_nan_is_wotans():
     time, flux = curve()
-    assert_same(detrend.biweight(time, flux, WINDOW, device="cpu"), reference(time, flux))
+    assert_same(detrend.biweight(time, flux, WINDOW, device="cpu", method="torch"), reference(time, flux))
 
 
 def test_the_trend_with_a_mask_of_known_transits_is_wotans():
     time, flux = curve(seed=1)
     mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
-    assert_same(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), reference(time, flux, mask))
+    assert_same(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"), reference(time, flux, mask))
 
 
 def test_a_mask_that_empties_a_window_gives_nan_where_wotan_does():
@@ -56,7 +56,7 @@ def test_a_mask_that_empties_a_window_gives_nan_where_wotan_does():
     flux = 1 + 0.001 * np.arange(40) % 3
     mask = np.zeros(40, dtype=bool)
     mask[:] = True
-    ours = detrend.biweight(time, flux, 0.1, mask=mask, device="cpu")
+    ours = detrend.biweight(time, flux, 0.1, mask=mask, device="cpu", method="torch")
     theirs = wotan.flatten(time, flux, method="biweight", window_length=0.1, return_trend=True, mask=mask)[1]
     assert np.isnan(theirs).all() and np.isnan(ours).all()
 
@@ -64,21 +64,21 @@ def test_a_mask_that_empties_a_window_gives_nan_where_wotan_does():
 def test_a_flux_with_no_spread_has_its_median_for_trend():
     time = np.arange(300) * 0.01
     flux = np.full(300, 1.25)
-    assert_same(detrend.biweight(time, flux, 0.5, device="cpu"), wotan.flatten(time, flux, method="biweight", window_length=0.5, return_trend=True)[1])
+    assert_same(detrend.biweight(time, flux, 0.5, device="cpu", method="torch"), wotan.flatten(time, flux, method="biweight", window_length=0.5, return_trend=True)[1])
 
 
 @pytest.mark.parametrize("points", [1, 2, 3])
 def test_a_segment_of_one_two_or_three_points_has_wotans_trend(points):
     time = np.concatenate([np.arange(200) * 0.01, 10 + np.arange(points) * 0.01])
     flux = 1 + 0.01 * np.sin(np.arange(200 + points))
-    assert_same(detrend.biweight(time, flux, 0.5, device="cpu"), wotan.flatten(time, flux, method="biweight", window_length=0.5, return_trend=True)[1])
+    assert_same(detrend.biweight(time, flux, 0.5, device="cpu", method="torch"), wotan.flatten(time, flux, method="biweight", window_length=0.5, return_trend=True)[1])
 
 
 def test_the_last_point_of_a_segment_is_in_no_window():
     time = np.arange(20) * 0.01
     flux = np.ones(20)
     flux[-1] = 5.0
-    trend = detrend.biweight(time, flux, 0.1, device="cpu")
+    trend = detrend.biweight(time, flux, 0.1, device="cpu", method="torch")
     assert trend[-1] == 1.0 and trend[-2] == 1.0, trend[-3:]
     assert_same(trend, wotan.flatten(time, flux, method="biweight", window_length=0.1, return_trend=True)[1])
 
@@ -88,26 +88,26 @@ def test_a_gap_of_half_the_window_splits_the_light_curve_where_wotan_splits_it(g
     first = np.arange(60) * 0.01
     time = np.concatenate([first, first[-1] + gap + np.arange(60) * 0.01])
     flux = 1 + 0.01 * np.sin(np.arange(120) / 3)
-    assert_same(detrend.biweight(time, flux, 0.1, device="cpu"), wotan.flatten(time, flux, method="biweight", window_length=0.1, return_trend=True)[1])
+    assert_same(detrend.biweight(time, flux, 0.1, device="cpu", method="torch"), wotan.flatten(time, flux, method="biweight", window_length=0.1, return_trend=True)[1])
 
 
 def test_values_at_or_below_minus_1e_12_are_in_no_window_as_in_wotan():
     time = np.arange(100) * 0.01
     flux = 0.001 * np.sin(np.arange(100))
     flux[10:20] = -1.0
-    assert_same(detrend.biweight(time, flux, 0.3, device="cpu"), wotan.flatten(time, flux, method="biweight", window_length=0.3, return_trend=True)[1])
+    assert_same(detrend.biweight(time, flux, 0.3, device="cpu", method="torch"), wotan.flatten(time, flux, method="biweight", window_length=0.3, return_trend=True)[1])
 
 
 def test_a_window_longer_than_the_light_curve_is_one_window():
     time, flux = curve(points=200)
-    assert_same(detrend.biweight(time, flux, 30.0, device="cpu"), wotan.flatten(time, flux, method="biweight", window_length=30.0, return_trend=True)[1])
+    assert_same(detrend.biweight(time, flux, 30.0, device="cpu", method="torch"), wotan.flatten(time, flux, method="biweight", window_length=30.0, return_trend=True)[1])
 
 
 def test_empty_and_all_nan_inputs_give_nan_and_an_unsorted_time_is_refused():
-    assert detrend.biweight([], [], WINDOW, device="cpu").size == 0
-    assert np.isnan(detrend.biweight([0.0, 1.0], [np.nan, np.nan], WINDOW, device="cpu")).all()
+    assert detrend.biweight([], [], WINDOW, device="cpu", method="torch").size == 0
+    assert np.isnan(detrend.biweight([0.0, 1.0], [np.nan, np.nan], WINDOW, device="cpu", method="torch")).all()
     with pytest.raises(ValueError, match="increasing"):
-        detrend.biweight([1.0, 0.0], [1.0, 1.0], WINDOW, device="cpu")
+        detrend.biweight([1.0, 0.0], [1.0, 1.0], WINDOW, device="cpu", method="torch")
 
 
 def test_the_launch_slice_shrinks_as_the_window_widens_and_stays_in_bounds():
@@ -122,7 +122,7 @@ def test_the_module_works_where_triton_cannot_be_imported(monkeypatch):
     try:
         assert module.triton is None
         time, flux = curve(points=400)
-        assert_same(module.biweight(time, flux, WINDOW, device="cpu"), reference(time, flux))
+        assert_same(module.biweight(time, flux, WINDOW, device="cpu", method="torch"), reference(time, flux))
     finally:
         monkeypatch.undo()
         importlib.reload(detrend)
@@ -136,7 +136,7 @@ def test_the_kernel_gives_the_trend_of_the_torch_version_and_of_wotan():
     time, flux = curve(seed=2)
     mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
     device = detrend.biweight(time, flux, WINDOW, mask=mask, device="cuda")
-    assert_same(device, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"))
+    assert_same(device, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"))
     assert_same(device, reference(time, flux, mask))
 
 
@@ -156,6 +156,26 @@ def test_an_unknown_method_and_the_kernel_without_a_device_are_refused_and_the_t
     with pytest.raises(ValueError, match="needs a CUDA or ROCm device"):
         detrend.biweight(time, flux, WINDOW, device="cpu", method="kernel")
     assert_same(detrend.biweight(time, flux, WINDOW, device="cpu", method="torch"), reference(time, flux))
+
+
+def test_on_the_cpu_the_default_is_wotans_own_trend_and_the_torch_version_without_wotan_or_with_another_tolerance(monkeypatch):
+    time, flux = curve(seed=4)
+    mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
+    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), reference(time, flux, mask), equal_nan=True), "the default on the CPU is wotan's trend itself"
+    torch_version = detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch")
+    tighter = detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch", tolerance=1e-7)
+    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", tolerance=1e-7), tighter, equal_nan=True), "a tolerance other than wotan's takes the torch version"
+    monkeypatch.setattr(detrend, "_wotan", lambda: None)
+    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), torch_version, equal_nan=True), "without wotan the default on the CPU is the torch version"
+    with pytest.raises(ValueError, match="needs wotan"):
+        detrend.biweight(time, flux, WINDOW, device="cpu", method="wotan")
+
+
+def test_the_default_on_the_cpu_keeps_an_all_nan_light_curve_and_the_order_check():
+    assert np.isnan(detrend.biweight([0.0, 1.0], [np.nan, np.nan], WINDOW, device="cpu")).all()
+    assert detrend.biweight_many([], WINDOW, device="cpu") == []
+    with pytest.raises(ValueError, match="increasing"):
+        detrend.biweight([1.0, 0.0], [1.0, 1.0], WINDOW, device="cpu")
 
 
 @needs_kernel
@@ -199,25 +219,25 @@ def sectors_of_a_star():
 
 def test_the_trends_of_many_light_curves_in_one_call_are_those_of_each_alone_and_wotans():
     sectors, masks = sectors_of_a_star()
-    together = detrend.biweight_many(sectors, WINDOW, masks=masks, device="cpu")
+    together = detrend.biweight_many(sectors, WINDOW, masks=masks, device="cpu", method="torch")
     assert len(together) == len(sectors)
     for (time, flux), mask, trend in zip(sectors, masks, together):
-        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"))
+        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"))
         if len(time) > 2 and not np.isnan(flux).all():
             assert_same(trend, reference(time, flux, mask))
 
 
 def test_many_light_curves_with_no_list_or_with_no_masks_and_a_mask_list_of_the_wrong_length():
-    assert detrend.biweight_many([], WINDOW, device="cpu") == []
+    assert detrend.biweight_many([], WINDOW, device="cpu", method="torch") == []
     time, flux = curve(points=300)
-    assert_same(detrend.biweight_many([(time, flux)], WINDOW, device="cpu")[0], reference(time, flux))
+    assert_same(detrend.biweight_many([(time, flux)], WINDOW, device="cpu", method="torch")[0], reference(time, flux))
     with pytest.raises(ValueError, match="one entry"):
-        detrend.biweight_many([(time, flux)], WINDOW, masks=[None, None], device="cpu")
+        detrend.biweight_many([(time, flux)], WINDOW, masks=[None, None], device="cpu", method="torch")
 
 
 def test_a_batch_of_only_nan_light_curves_gives_nan_for_each():
     nan = (np.array([0.0, 1.0]), np.array([np.nan, np.nan]))
-    out = detrend.biweight_many([nan, nan], WINDOW, device="cpu")
+    out = detrend.biweight_many([nan, nan], WINDOW, device="cpu", method="torch")
     assert len(out) == 2 and all(np.isnan(trend).all() and len(trend) == 2 for trend in out)
 
 
@@ -226,4 +246,4 @@ def test_the_kernel_on_many_light_curves_in_one_call_equals_the_torch_version_on
     sectors, masks = sectors_of_a_star()
     together = detrend.biweight_many(sectors, WINDOW, masks=masks, device="cuda")
     for (time, flux), mask, trend in zip(sectors, masks, together):
-        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"))
+        assert_same(trend, detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"))

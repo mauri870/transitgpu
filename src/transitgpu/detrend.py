@@ -32,7 +32,7 @@ BARRIER = 1e-12  # a point whose value is at or below -BARRIER is dropped, as wo
 TORCH_ROWS = 8192  # the rows of one chunk of the torch version
 KERNEL_ROWS = 16384  # the programs of one launch of the kernel at a window of 1,024 points or fewer
 KERNEL_WIDTH_LIMIT = 2048  # the widest padded window the kernel takes; its compile grows about four times for each doubling (benchmarks/bench_detrend.py), and a wider window runs the torch version on the device
-METHODS = ("kernel", "torch")
+METHODS = ("kernel", "torch", "wotan")
 
 
 def windows(time, flux, keep, window):
@@ -137,12 +137,28 @@ def uses_kernel(device, width, method=None):
     """Whether the trend of windows padded to `width` points on `device` is computed by the Triton kernel: `method` "kernel" or "torch" chooses, and None takes the kernel on a CUDA or ROCm device where Triton
     can be imported and `width` is at most KERNEL_WIDTH_LIMIT."""
     if method not in (None, *METHODS):
-        raise ValueError(f"method must be None, 'kernel' or 'torch', not {method!r}")
+        raise ValueError(f"method must be None, 'kernel', 'torch' or 'wotan', not {method!r}")
     if method == "kernel" and (device.type != "cuda" or triton is None):
         raise ValueError("method='kernel' needs a CUDA or ROCm device and Triton")
     if method is not None:
         return method == "kernel"
     return device.type == "cuda" and triton is not None and width <= KERNEL_WIDTH_LIMIT
+
+
+def _wotan():
+    """wotan's flatten, or None where wotan cannot be imported."""
+    try:
+        from wotan import flatten
+    except ImportError:
+        return None
+    return flatten
+
+
+def uses_wotan(device, tolerance, method=None):
+    """Whether the trend is wotan's own: `method` "wotan" asks for it, and None takes it on the CPU where wotan can be imported and `tolerance` is wotan's, since wotan is faster there than the torch version."""
+    if method == "wotan" and _wotan() is None:
+        raise ValueError("method='wotan' needs wotan installed")
+    return method == "wotan" or (method is None and device.type == "cpu" and tolerance == TOLERANCE and _wotan() is not None)
 
 
 def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE, method=None):
@@ -154,7 +170,11 @@ def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE,
     masks = [None] * len(sectors) if masks is None else list(masks)
     if len(masks) != len(sectors):
         raise ValueError("masks must have one entry for each light curve")
-    prepared, offset, parts = [], 0, ([], [], [])
+    if method not in (None, *METHODS):
+        raise ValueError(f"method must be None, 'kernel', 'torch' or 'wotan', not {method!r}")
+    device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+    wotan = uses_wotan(device, tolerance, method)
+    prepared, offset, parts, own = [], 0, ([], [], []), []
     for (time, flux), mask in zip(sectors, masks):
         time = np.array(time, dtype=np.float64)
         flux = np.array(flux, dtype=np.float64)
@@ -162,20 +182,23 @@ def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE,
         good = ~np.isnan(time * flux)
         if good.any() and np.any(np.diff(time[good]) < 0):
             raise ValueError("time must be in increasing order")
-        if good.any():
+        if wotan:
+            own.append(_wotan()(time, flux, method="biweight", window_length=window, return_trend=True, mask=None if mask is None else ~keep)[1] if good.any() else np.full(len(time), np.nan))
+        elif good.any():
             values, start, end = windows(time[good], flux[good], keep[good], window)
             parts[0].append(values)
             parts[1].append(start + offset)
             parts[2].append(end + offset)
             offset += len(values)
         prepared.append((len(time), good))
+    if wotan:
+        return own
     if offset == 0:
         return [np.full(size, np.nan) for size, _ in prepared]
     values, start, end = (np.concatenate(part) for part in parts)
     width = int((end - start).max())
     result = np.full(len(start), np.nan)
     if width > 0:
-        device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         values_d, start_d, end_d = (torch.as_tensor(array, device=device) for array in (values, start, end))
         if uses_kernel(device, 1 << (width - 1).bit_length(), method):
             computed = trend_kernel(values_d, start_d, end_d, 1 << (width - 1).bit_length(), tolerance)
@@ -198,6 +221,7 @@ def biweight(time, flux, window, mask=None, device=None, tolerance=TOLERANCE, me
 
     `mask` is True for the points that the trend must leave out of its windows (the points of known transits), as wotan's `mask`. `device` is a torch device name: the default is "cuda" where torch finds a CUDA or ROCm
     device and "cpu" otherwise. On a CUDA or ROCm device the Triton kernel is used when Triton can be imported and the widest window, padded to a power of two, holds at most KERNEL_WIDTH_LIMIT points;
-    otherwise the torch version runs on the same device. `method` "kernel" or "torch" chooses instead. `tolerance` is the stopping step of the iteration.
+    otherwise the torch version runs on the same device. On the CPU the trend is wotan's own, which is faster there, when wotan can be imported and `tolerance` is wotan's; otherwise the torch version runs.
+    `method` "kernel", "torch" or "wotan" chooses instead. `tolerance` is the stopping step of the iteration.
     """
     return biweight_many([(time, flux)], window, masks=[mask], device=device, tolerance=tolerance, method=method)[0]
