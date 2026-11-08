@@ -8,13 +8,14 @@ Tested on one AMD GPU (gfx1100, ROCm 7.2); not yet tested on NVIDIA. On other de
 
 ## Why
 
-A transiting planet dims its star by a fraction of a percent for a few hours per orbit, so finding one means folding the light curve at tens of thousands of trial periods and scoring every plausible dip at each. The cost adds up with multi-year light curves, with injection–recovery tests and with false-alarm thresholds built from many shuffled copies of each light curve.
+A transiting planet dims its star by a fraction of a percent for a few hours per orbit, so finding one means detrending the light curve, folding it at tens of thousands of trial periods and scoring every plausible dip at each. The cost adds up with multi-year light curves, with injection–recovery tests and with false-alarm thresholds built from many shuffled copies of each light curve.
 
-transitgpu moves these searches to the GPU:
+transitgpu moves these steps to the GPU:
 
 - **`transitgpu.tls`**: TLS 2.0.1 with the search over trial periods running on the GPU. Change the import and the rest of a TLS script works as before. The default `gpu` backend reproduces TLS's exact backend; `gpu-binned` is faster but approximate.
 - **Box search**: a phase-binned BLS on TLS's period grid with integer sums. It returns its results under TLS's attribute names.
 - **Hybrid search**: the box search over the whole grid, then exact TLS on a narrow window around each of the strongest peaks.
+- **Detrending**: wotan's biweight trend computed on the GPU, with `biweight_many` for a list of light curves such as the sectors of one star. It gives the trend wotan gives; see [Detrending](#detrending).
 
 ![WASP-18 b found by the box search and by TLS](docs/wasp18.png)
 
