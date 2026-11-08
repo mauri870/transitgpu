@@ -8,7 +8,7 @@ day in the middle and 0.2 days on each side of it removed, and 1 point in 500 a 
 in points rounded up to a power of two. A row is timed after one first call as the median of --repeats calls, from the numpy arrays of the call to the numpy trend, so the device rows include building the windows, both transfers
 and the launches; the first call is given apart, since for the kernel it includes the compile when the Triton cache does not hold that width. Each row also gives its largest difference from wotan's trend, relative to the trend,
 and whether the NaN positions are equal. The kernel row is not run where the padded width is over --kernel-max-width, whose compile does not end in bounded time; a torch row on the CPU that would take over --max-seconds a call,
-scaled by the points times the padded width from the configuration before it, is skipped, and so is a row that --rows leaves out. Every skip is said in the table.
+scaled by the points times the padded width from the configuration before it, is skipped, and so is a row that --rows leaves out. A skipped cell says "over the limit" for the kernel above KERNEL_WIDTH_LIMIT and "not run" otherwise.
 --configuration runs only the configurations of those indices of CONFIGURATIONS, so that each can run as a job of its own; --merge joins such files, in the order given, into one.
 """
 import argparse
@@ -23,7 +23,7 @@ import numpy as np
 
 CONFIGURATIONS = (("30 min", 1800, 0.75), ("10 min", 600, 0.75), ("200 s", 200, 0.75), ("2 min", 120, 0.75), ("2 min", 120, 1.5), ("20 s", 20, 0.75))
 DAYS = 27.4
-ROWS = (("wotan", "wotan 1.10, CPU, 1 thread"), ("torch-cpu", "transitgpu.detrend, torch on the CPU"), ("kernel", "transitgpu.detrend, Triton kernel on the GPU"), ("torch-device", "transitgpu.detrend, torch on the GPU"))
+ROWS = (("wotan", "wotan 1.10, CPU, 1 thread"), ("torch-cpu", "transitgpu.detrend, torch on the CPU, torch's default threads"), ("kernel", "transitgpu.detrend, Triton kernel on the GPU"), ("torch-device", "transitgpu.detrend, torch on the GPU"))
 
 
 def light_curve(step_seconds, seed=0):
@@ -52,7 +52,7 @@ def padded_width(time_values, flux, mask, window):
 def versions():
     import torch
 
-    out = {"python": platform.python_version(), "numpy": np.__version__, "torch": torch.__version__}
+    out = {"python": platform.python_version(), "numpy": np.__version__, "torch": torch.__version__, "torch_threads": torch.get_num_threads()}
     for name in ("wotan", "numba", "triton", "triton-rocm"):
         try:
             out[name] = importlib.metadata.version(name)
@@ -126,11 +126,9 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
     return results
 
 
-def cell(row):
-    if row is None:
-        return "not run"
-    if "skipped" in row:
-        return "skipped"
+def cell(row, over_limit=False):
+    if row is None or "skipped" in row:
+        return "over the limit" if over_limit else "not run"
     seconds = row["seconds"]
 
     def milliseconds(value):
@@ -148,13 +146,11 @@ def table(results):
     entries = results["configurations"]
     lines = ["| detrend of one sector | " + " | ".join(heading(entry) for entry in entries) + " |", "| --- |" + " --- |" * len(entries)]
     for key, name in ROWS:
-        lines.append(f"| {name} | " + " | ".join(cell(entry["rows"].get(key)) for entry in entries) + " |")
+        lines.append(f"| {name} | " + " | ".join(cell(entry["rows"].get(key), key == "kernel" and entry["padded_width"] > results["kernel_width_limit"]) for entry in entries) + " |")
     rows = [row for entry in entries for row in entry["rows"].values()]
     worst = max((row["largest_relative_difference"] for row in rows if "largest_relative_difference" in row), default=0.0)
     equal = all(row["nan_equal"] for row in rows if "nan_equal" in row)
-    skipped = sorted({row["skipped"] for row in rows if "skipped" in row})
-    text = "\n".join(lines) + f"\n\nLargest difference from wotan's trend, relative to the trend: {worst:.2g}; the NaN positions are {'equal' if equal else 'NOT equal'} in every row."
-    return text + "".join(f"\nSkipped: {reason}." for reason in skipped)
+    return "\n".join(lines) + f"\n\nLargest difference from wotan's trend, relative to the trend: {worst:.2g}; the NaN positions are {'equal' if equal else 'NOT equal'} in every row."
 
 
 def merge(paths):

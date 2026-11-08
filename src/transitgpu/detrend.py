@@ -31,7 +31,7 @@ TOLERANCE = 1e-6  # wotan's stopping step (its FTOL)
 BARRIER = 1e-12  # a point whose value is at or below -BARRIER is dropped, as wotan does
 TORCH_ROWS = 8192  # the rows of one chunk of the torch version
 KERNEL_ROWS = 16384  # the programs of one launch of the kernel at a window of 1,024 points or fewer
-KERNEL_WIDTH_LIMIT = 2048  # the widest padded window the kernel takes; its compile grows about four times for each doubling (benchmarks/bench_detrend.py), and a wider window runs the torch version on the device
+KERNEL_WIDTH_LIMIT = 2048  # the widest padded window the kernel takes; its compile is longer for wider windows (benchmarks/results-detrend.json), and a wider window runs the torch version on the device
 METHODS = ("kernel", "torch", "wotan")
 
 
@@ -155,7 +155,7 @@ def _wotan():
 
 
 def uses_wotan(device, tolerance, method=None):
-    """Whether the trend is wotan's own: `method` "wotan" asks for it, and None takes it on the CPU where wotan can be imported and `tolerance` is wotan's, since wotan is faster there than the torch version."""
+    """Whether the trend is wotan's own: `method` "wotan" asks for it, and None takes it on the CPU where wotan can be imported and `tolerance` is wotan's: it is wotan's trend itself, and faster than the torch version at 2-minute cadence."""
     if method == "wotan" and _wotan() is None:
         raise ValueError("method='wotan' needs wotan installed")
     return method == "wotan" or (method is None and device.type == "cpu" and tolerance == TOLERANCE and _wotan() is not None)
@@ -221,7 +221,7 @@ def biweight(time, flux, window, mask=None, device=None, tolerance=TOLERANCE, me
 
     `mask` is True for the points that the trend must leave out of its windows (the points of known transits), as wotan's `mask`. `device` is a torch device name: the default is "cuda" where torch finds a CUDA or ROCm
     device and "cpu" otherwise. On a CUDA or ROCm device the Triton kernel is used when Triton can be imported and the widest window, padded to a power of two, holds at most KERNEL_WIDTH_LIMIT points;
-    otherwise the torch version runs on the same device. On the CPU the trend is wotan's own, which is faster there, when wotan can be imported and `tolerance` is wotan's; otherwise the torch version runs.
+    otherwise the torch version runs on the same device. On the CPU the trend is wotan's own when wotan can be imported and `tolerance` is wotan's (faster than the torch version at 2-minute cadence, slower at 10 minutes); otherwise the torch version runs.
     `method` "kernel", "torch" or "wotan" chooses instead. `tolerance` is the stopping step of the iteration.
     """
     return biweight_many([(time, flux)], window, masks=[mask], device=device, tolerance=tolerance, method=method)[0]

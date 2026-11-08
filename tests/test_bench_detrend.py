@@ -41,7 +41,7 @@ def test_a_small_run_on_the_cpu_has_a_row_for_wotan_and_for_the_torch_version_th
 def test_a_row_that_would_take_too_long_is_skipped_and_said():
     results = bench.run(configurations=(("30 min", 1800, 0.75), ("10 min", 600, 0.75)), repeats=1, max_seconds=1e-9, device="cpu")
     assert "skipped" in results["configurations"][1]["rows"]["torch-cpu"]
-    assert "Skipped: over" in bench.table(results)
+    assert cells(bench.table(results), 3)[2] == "not run"
 
 
 def test_the_skip_of_a_slow_row_scales_by_the_points_times_the_padded_width(monkeypatch):
@@ -55,10 +55,23 @@ def test_the_skip_of_a_slow_row_scales_by_the_points_times_the_padded_width(monk
     assert "skipped" in second["rows"]["torch-cpu"], "1 s times about 3 times the points and twice the width is 6 s, over the 4 s limit"
 
 
+def cells(text, line):
+    """The cells of one line of a markdown table, the label first."""
+    return [cell.strip() for cell in text.splitlines()[line].strip().strip("|").split("|")]
+
+
+def test_the_kernel_over_the_width_limit_reads_over_the_limit_and_another_skip_not_run():
+    row = {"seconds": [0.001], "median": 0.001, "largest_relative_difference": 0.0, "nan_equal": True}
+    results = {"kernel_width_limit": 2048, "configurations": [{"cadence": "20 s", "window_days": 0.75, "points": 10, "padded_width": 4096,
+               "rows": {"wotan": row, "torch-cpu": {"skipped": "not run: left out by --rows"}, "kernel": {"skipped": "not run: left out by --rows"}, "torch-device": row}}]}
+    text = bench.table(results)
+    assert cells(text, 3)[1] == "not run" and cells(text, 4)[1] == "over the limit" and "Skipped" not in text
+
+
 def test_a_row_left_out_by_rows_is_skipped_and_said():
     results = bench.run(configurations=(("30 min", 1800, 0.75),), repeats=1, device="cpu", rows=[])
     assert results["configurations"][0]["rows"]["torch-cpu"] == {"skipped": "not run: left out by --rows"}
-    assert "Skipped: not run: left out by --rows." in bench.table(results)
+    assert "not run" in bench.table(results).splitlines()[3]
 
 
 def test_configurations_run_one_by_one_and_merged_give_the_table_of_one_run(tmp_path):

@@ -15,7 +15,7 @@
 
 ### Known limits
 
-- The compile of the detrend kernel grows about four times for each doubling of the padded window, because the kernel sorts the whole window in registers; above `detrend.KERNEL_WIDTH_LIMIT` the torch version is used instead. A sort that does not unroll the window would let the kernel take wider windows.
+- The compile of the detrend kernel is longer for wider padded windows, 34.3 s at 2,048 points from an empty cache, because the kernel sorts the whole window in registers; above `detrend.KERNEL_WIDTH_LIMIT` the torch version is used instead. A sort that does not unroll the window would let the kernel take wider windows.
 - On a Radeon RX 7900 XTX that also drives the display, 8 processes launching the detrend kernel at once timed out the graphics ring twice within 10 s, and the driver reset it; one process did not. Bounding the work of each launch, as the box search does, is not built and not measured.
 - The torch version of the detrend on a GPU makes 220 kernel launches a call at a width of 64 points and 178 at 128 (torch.profiler), so at the narrowest windows it straddles wotan on the CPU: for a 30-minute sector with a 0.75-day window its median is 2.36 ms, with calls from 1.57 to 2.51 ms, against wotan's 1.97 ms (`benchmarks/results-detrend.json`). Below `detrend.KERNEL_WIDTH_LIMIT` a call on the GPU takes the kernel (0.249 ms there); the torch version runs on a GPU for wider windows and when `method="torch"` asks for it.
 
