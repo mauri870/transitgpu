@@ -42,7 +42,7 @@ jobs:
       - name: Install transitgpu at the lowest version of every direct dependency
         run: uv sync --resolution lowest-direct --group cpu
       - name: Tests
-        run: uv run --group cpu pytest tests -q
+        run: uv run --no-sync --group cpu pytest tests -q
 
   lint:
     runs-on: ubuntu-latest
