@@ -34,6 +34,6 @@ def test_the_times_the_first_calls_the_widths_the_speedups_the_difference_the_li
 
 def test_a_skipped_row_and_a_run_without_the_device_define_nothing_for_them():
     text = fill.detrend_macros(results(device=False))
-    assert "dt@torch-cpu@20-0.75" not in text and "dt@wotan@20-0.75\\endcsname{1200}" in text
+    assert "dt@torch-cpu@20-0.75" not in text and "dt@wotan@20-0.75\\endcsname{1\\,200}" in text
     assert "dt@kernel@" not in text and "dt@speedup-" not in text
     assert "dt@triton@version" not in text

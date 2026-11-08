@@ -110,7 +110,8 @@ def detrend_macros(results):
         define("width", key, f"{entry['padded_width']:,}".replace(",", "\\,"))
         for name, row in rows.items():
             if "median" in row:
-                define(name, key, seconds(1000 * row["median"]))
+                milliseconds = 1000 * row["median"]
+                define(name, key, f"{milliseconds:,.0f}".replace(",", "\\,") if milliseconds >= 1000 else seconds(milliseconds))  # four digits and more with a thin space, as the paper writes them
                 define(f"first-{name}", key, seconds(row["first"]))
             worst = max(worst, row.get("largest_relative_difference", 0.0))
         for name in ("kernel", "torch-device"):
