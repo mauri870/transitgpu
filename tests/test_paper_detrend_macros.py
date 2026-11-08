@@ -13,27 +13,31 @@ spec.loader.exec_module(fill)
 
 
 def results(device=True, shared=True):
-    rows = {"wotan": {"median": 0.1913, "largest_relative_difference": 0.0}, "torch-cpu": {"median": 0.5, "largest_relative_difference": 3.3e-16, "nan_equal": True}}
+    rows = {"wotan": {"first": 0.2, "median": 0.1913, "largest_relative_difference": 0.0}, "torch-cpu": {"first": 0.6, "median": 0.5, "largest_relative_difference": 3.3e-16, "nan_equal": True}}
     if device:
-        rows["device"] = {"median": 0.0121, "largest_relative_difference": 2.2e-16, "nan_equal": True}
-    found = {"versions": {"torch": "2.12.0+rocm7.2", "wotan": "1.10", "triton": None}, "cadences": [{"step_seconds": 120, "points": 18934, "rows": rows},
-                                                                                                     {"step_seconds": 20, "points": 113600, "rows": {"wotan": {"median": 1.2}, "torch-cpu": {"skipped": "over 60 s"}}}]}
+        rows["kernel"] = {"first": 33.4, "median": 0.0121, "largest_relative_difference": 2.2e-16, "nan_equal": True}
+        rows["torch-device"] = {"first": 0.9, "median": 0.0382, "largest_relative_difference": 2.2e-16, "nan_equal": True}
+    found = {"versions": {"torch": "2.12.0+rocm7.2", "wotan": "1.10", "triton": None}, "kernel_width_limit": 2048,
+             "configurations": [{"step_seconds": 120, "window_days": 1.5, "points": 18934, "padded_width": 2048, "rows": rows},
+                                {"step_seconds": 20, "window_days": 0.75, "points": 113600, "padded_width": 4096, "rows": {"wotan": {"first": 1.3, "median": 1.2}, "torch-cpu": {"skipped": "over 60 s"}}}]}
     if shared:
         found["shared"] = [{"processes": 1, "per_second": 347.2}, {"processes": 4, "per_second": 420.4}]
+        found["cold"] = {"processes": 16, "first": [31.24, 40.06, 35.0]}
     return found
 
 
-def test_the_times_the_points_the_speedup_the_difference_the_shared_rates_and_the_versions():
+def test_the_times_the_first_calls_the_widths_the_speedups_the_difference_the_shared_rates_the_cold_start_and_the_versions():
     text = fill.detrend_macros(results())
     assert "\\providecommand{\\Dt}" in text
-    for expected in ("dt@wotan@120\\endcsname{191}", "dt@device@120\\endcsname{12.1}", "dt@torch-cpu@120\\endcsname{500}", "dt@points@120\\endcsname{18\\,934}",
-                     "dt@speedup@120\\endcsname{16}", "dt@difference@all\\endcsname{$3.3\\times10^{-16}$}", "dt@shared@4\\endcsname{420}", "dt@each@4\\endcsname{105}",
-                     "dt@torch@version\\endcsname{2.12.0+rocm7.2}", "dt@wotan@version\\endcsname{1.10}"):
+    for expected in ("dt@wotan@120-1.5\\endcsname{191}", "dt@kernel@120-1.5\\endcsname{12.1}", "dt@torch-device@120-1.5\\endcsname{38.2}", "dt@first-kernel@120-1.5\\endcsname{33.4}",
+                     "dt@points@120-1.5\\endcsname{18\\,934}", "dt@width@120-1.5\\endcsname{2\\,048}", "dt@speedup-kernel@120-1.5\\endcsname{16}", "dt@speedup-torch-device@120-1.5\\endcsname{5}",
+                     "dt@difference@all\\endcsname{$3.3\\times10^{-16}$}", "dt@limit@all\\endcsname{2\\,048}", "dt@shared@4\\endcsname{420}", "dt@each@4\\endcsname{105}",
+                     "dt@cold@min\\endcsname{31.2}", "dt@cold@max\\endcsname{40.1}", "dt@cold@processes\\endcsname{16}", "dt@torch@version\\endcsname{2.12.0+rocm7.2}", "dt@wotan@version\\endcsname{1.10}"):
         assert "\\csname " + expected in text, expected
 
 
 def test_a_skipped_row_a_run_without_the_device_and_one_without_shared_processes_define_nothing_for_them():
     text = fill.detrend_macros(results(device=False, shared=False))
-    assert "dt@torch-cpu@20" not in text and "dt@wotan@20\\endcsname{1200}" in text
-    assert "dt@device@" not in text and "dt@speedup@" not in text and "dt@shared@" not in text
+    assert "dt@torch-cpu@20-0.75" not in text and "dt@wotan@20-0.75\\endcsname{1200}" in text
+    assert "dt@kernel@" not in text and "dt@speedup-" not in text and "dt@shared@" not in text and "dt@cold@" not in text
     assert "dt@triton@version" not in text

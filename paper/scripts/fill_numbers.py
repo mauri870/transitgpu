@@ -94,30 +94,40 @@ def gtls_macros(results):
 
 
 def detrend_macros(results):
-    """The macros of benchmarks/results-detrend.json: \\Dt{ROW}{STEP} the median milliseconds of a detrend of the light curve of STEP seconds of cadence
-    (ROW wotan, torch-cpu or device; three significant figures), \\Dt{points}{STEP} its points, \\Dt{speedup}{STEP} wotan's median over the device's
-    (two significant figures), \\Dt{difference}{all} the largest relative difference from wotan's trend over every row, \\Dt{shared}{N} and
-    \\Dt{each}{N} the detrends a second of N processes sharing the device together and each, and \\Dt{NAME}{version} the versions."""
+    """The macros of benchmarks/results-detrend.json, for a configuration KEY of STEP-WINDOW (seconds of cadence and days of window, as 120-1.5): \\Dt{ROW}{KEY} the median milliseconds of a detrend
+    after the first call (ROW wotan, torch-cpu, kernel or torch-device; three significant figures), \\Dt{first-ROW}{KEY} the seconds of the first call, \\Dt{points}{KEY} and \\Dt{width}{KEY} the points and the
+    padded width, \\Dt{speedup-ROW}{KEY} wotan's median over that of the device row ROW (two significant figures), \\Dt{difference}{all} the largest relative difference from wotan's trend over every row,
+    \\Dt{limit}{all} the kernel's width limit, \\Dt{shared}{N} and \\Dt{each}{N} the detrends a second of N processes sharing the device together and each, \\Dt{cold}{min}, \\Dt{cold}{max} and
+    \\Dt{cold}{processes} the first calls of the processes that start with an empty Triton cache, and \\Dt{NAME}{version} the versions."""
     lines = ["\\providecommand{\\Dt}[2]{\\ifcsname dt@#1@#2\\endcsname\\csname dt@#1@#2\\endcsname\\else[\\texttt{#1,#2}]\\fi}"]
 
     def define(name, key, text):
         lines.append(f"\\expandafter\\def\\csname dt@{name}@{key}\\endcsname{{{text}}}")
 
     worst = 0.0
-    for entry in results["cadences"]:
-        step, rows = entry["step_seconds"], entry["rows"]
-        define("points", step, f"{entry['points']:,}".replace(",", "\\,"))
+    for entry in results["configurations"]:
+        key, rows = f"{entry['step_seconds']}-{entry['window_days']:g}", entry["rows"]
+        define("points", key, f"{entry['points']:,}".replace(",", "\\,"))
+        define("width", key, f"{entry['padded_width']:,}".replace(",", "\\,"))
         for name, row in rows.items():
             if "median" in row:
-                define(name, step, seconds(1000 * row["median"]))
+                define(name, key, seconds(1000 * row["median"]))
+                define(f"first-{name}", key, seconds(row["first"]))
             worst = max(worst, row.get("largest_relative_difference", 0.0))
-        if "median" in rows.get("wotan", {}) and "median" in rows.get("device", {}):
-            define("speedup", step, ratio(rows["wotan"]["median"] / rows["device"]["median"]))
+        for name in ("kernel", "torch-device"):
+            if "median" in rows.get("wotan", {}) and "median" in rows.get(name, {}):
+                define(f"speedup-{name}", key, ratio(rows["wotan"]["median"] / rows[name]["median"]))
     mantissa, exponent = f"{worst:.1e}".split("e")
     define("difference", "all", f"${mantissa}\\times10^{{{int(exponent)}}}$")
+    if "kernel_width_limit" in results:
+        define("limit", "all", f"{results['kernel_width_limit']:,}".replace(",", "\\,"))
     for row in results.get("shared", []):
         define("shared", row["processes"], f"{row['per_second']:.0f}")
         define("each", row["processes"], f"{row['per_second'] / row['processes']:.0f}")
+    if "cold" in results:
+        define("cold", "min", f"{min(results['cold']['first']):.1f}")
+        define("cold", "max", f"{max(results['cold']['first']):.1f}")
+        define("cold", "processes", str(results["cold"]["processes"]))
     for name, value in results.get("versions", {}).items():
         if value is not None:
             define(name, "version", str(value).replace("_", "\\_"))
