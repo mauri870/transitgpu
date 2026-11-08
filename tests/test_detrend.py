@@ -158,32 +158,13 @@ def test_an_unknown_method_and_the_kernel_without_a_device_are_refused_and_the_t
     assert_same(detrend.biweight(time, flux, WINDOW, device="cpu", method="torch"), reference(time, flux))
 
 
-def test_on_the_cpu_the_default_is_wotans_own_trend_and_the_torch_version_without_wotan_or_with_another_tolerance(monkeypatch):
+def test_the_default_on_the_cpu_is_the_torch_version_whatever_is_installed():
+    """A default call gives the same numbers in every environment: on the CPU it is the torch version, with or without wotan installed."""
     time, flux = curve(seed=4)
     mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
-    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), reference(time, flux, mask), equal_nan=True), "the default on the CPU is wotan's trend itself"
-    torch_version = detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch")
-    tighter = detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch", tolerance=1e-7)
-    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", tolerance=1e-7), tighter, equal_nan=True), "a tolerance other than wotan's takes the torch version"
-    monkeypatch.setattr(detrend, "_wotan", lambda: None)
-    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), torch_version, equal_nan=True), "without wotan the default on the CPU is the torch version"
-    with pytest.raises(ValueError, match="needs wotan"):
+    assert np.array_equal(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"), equal_nan=True)
+    with pytest.raises(ValueError, match="method must be"):
         detrend.biweight(time, flux, WINDOW, device="cpu", method="wotan")
-
-
-def test_the_default_on_the_cpu_with_wotan_and_without_it_agree_to_rounding():
-    """The same default call gives wotan's trend where wotan is installed and the torch version's where it is not; the two agree to RELATIVE on light curves with gaps, NaN and a mask."""
-    for seed in range(3):
-        time, flux = curve(seed=seed)
-        mask = (time % 2.3 > 1.0) & (time % 2.3 < 1.06)
-        assert_same(detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu"), detrend.biweight(time, flux, WINDOW, mask=mask, device="cpu", method="torch"))
-
-
-def test_the_default_on_the_cpu_keeps_an_all_nan_light_curve_and_the_order_check():
-    assert np.isnan(detrend.biweight([0.0, 1.0], [np.nan, np.nan], WINDOW, device="cpu")).all()
-    assert detrend.biweight_many([], WINDOW, device="cpu") == []
-    with pytest.raises(ValueError, match="increasing"):
-        detrend.biweight([1.0, 0.0], [1.0, 1.0], WINDOW, device="cpu")
 
 
 @needs_kernel
