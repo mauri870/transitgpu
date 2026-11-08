@@ -138,7 +138,7 @@ found = transitgpu.search(t, y, 0.5, 14.0, device="cuda")
 results = transitleastsquares(t, y, dy).power(period_min=0.5, period_max=5.0, backend=engine.WindowBackend(device="cpu"))
 ```
 
-On the CPU the examples above print the same output in 35 s on an AMD Ryzen 9 9950X3D, 28 s of it in TLS.
+On the CPU the examples above print the same output in about 40 s on an AMD Ryzen 9 9950X3D, 28 s of it in TLS.
 
 ## Performance
 
