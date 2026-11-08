@@ -16,6 +16,7 @@
 ### Known limits
 
 - The compile of the detrend kernel grows about four times for each doubling of the padded window, because the kernel sorts the whole window in registers; above `detrend.KERNEL_WIDTH_LIMIT` the torch version is used instead. A sort that does not unroll the window would let the kernel take wider windows.
+- On a Radeon RX 7900 XTX that also drives the display, 8 processes launching the detrend kernel at once timed out the graphics ring twice within 10 s, and the driver reset it; one process did not. Bounding the work of each launch, as the box search does, is not built and not measured.
 
 ## 0.2.0 (2026-11-05)
 
