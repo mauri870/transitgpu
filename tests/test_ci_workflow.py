@@ -32,7 +32,7 @@ def test_the_workflow_installs_the_cpu_build_of_torch_with_uv_runs_the_tests_and
     runs = [step["run"] for step in load()["jobs"]["test"]["steps"] if "run" in step]
     assert any(run == "uv sync --group cpu" for run in runs)
     assert any(run.startswith("uv run --group cpu pytest tests") for run in runs)
-    assert not any("examples/" in run for run in runs), "the examples search on a GPU and the runner has none"
+    assert not any("examples/" in run for run in runs), "the examples are not run"
     assert "pip" not in text and "whl/" not in text, "uv installs it, from the index the cpu group names"
     assert "--group cu" not in text and "--group rocm" not in text and "cuda" not in text.lower() and "rocm" not in text.lower(), "no wheel or runner of a device"
     assert "continue-on-error" not in text, "a step that fails fails the job"
@@ -45,6 +45,19 @@ def test_the_actions_are_pinned_to_a_major_version_uv_has_a_version_and_the_job_
     setup = [step for step in steps if step["uses"].startswith("astral-sh/setup-uv@")]
     assert len(setup) == 1 and setup[0]["with"]["version"] == "0.11.2" and setup[0]["with"]["enable-cache"] is True
     assert workflow["permissions"] == {"contents": "read"} and workflow["jobs"]["test"]["timeout-minutes"] <= 60
+
+
+def test_the_tests_compile_into_the_directory_that_the_cache_restores_under_a_key_of_the_lock_and_the_source():
+    """torch.compile's cache is kept between runs; a key without the lock or the source would restore code of another torch or another search as an exact hit and never save the new one."""
+    steps = load()["jobs"]["test"]["steps"]
+    cache = [step for step in steps if step.get("uses", "").startswith("actions/cache@")]
+    tests = [step for step in steps if step.get("run", "").startswith("uv run --group cpu pytest tests")]
+    assert len(cache) == 1 and len(tests) == 1
+    assert steps.index(cache[0]) < steps.index(tests[0]), "the cache is restored before the tests run"
+    assert tests[0]["env"]["TORCHINDUCTOR_CACHE_DIR"] == cache[0]["with"]["path"]
+    key = cache[0]["with"]["key"]
+    assert "hashFiles('uv.lock')" in key and "hashFiles('src/**/*.py')" in key and "matrix.python-version" in key
+    assert key.startswith(cache[0]["with"]["restore-keys"]), "a new key restores the closest earlier cache"
 
 
 def test_the_lint_job_runs_ruff_from_the_locked_dev_group_without_installing_the_package():
