@@ -32,7 +32,7 @@ uv pip install torch --index-url https://download.pytorch.org/whl/rocm7.2
 uv pip install "transitgpu[tls] @ git+https://github.com/mauri870/transitgpu"
 ```
 
-transitgpu needs Python 3.12+ and torch 2.5+.
+transitgpu needs Python 3.13+ and torch 2.5+.
 
 On ROCm, `search_many` accumulates in a HIP kernel that is compiled with `hipcc` on the first call (about 20 s, once per environment; `TORCH_EXTENSIONS_DIR` moves the build). Without `hipcc` a warning is shown once and the Triton kernel is used, as it is on NVIDIA. Without Triton, the search folds into a table and compiles the fold with `torch.compile`. On the CPU, the first search of a process compiles the box search with `torch.compile`, which needs a C++ compiler; without one a warning is shown once and the search runs uncompiled. Please report problems at https://github.com/mauri870/transitgpu/issues.
 

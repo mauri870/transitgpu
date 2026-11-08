@@ -4,7 +4,8 @@
 
 ### Changed
 
-- The minimum versions of `numpy` and `numba` follow [SPEC 0](https://scientific-python.org/specs/spec-0000/): `numpy>=2.2`, `numba>=0.61.2` (the lowest numba release that supports numpy 2.2). CI installs the lowest version of every direct dependency on Python 3.12 and runs the tests against it.
+- The minimum versions of `numpy` and `numba` follow [SPEC 0](https://scientific-python.org/specs/spec-0000/): `numpy>=2.2`, `numba>=0.61.2` (the lowest numba release that supports numpy 2.2). CI installs the lowest version of every direct dependency on Python 3.13 and runs the tests against it.
+- `requires-python` becomes `>=3.13` (SPEC 0 dropped 3.12 on 2026-10-01). CI's matrix moves from 3.12/3.13 to 3.13 alone; 3.14 is not added because batman-package 2.5.3, a test dependency, ships no wheel and no sdist for it.
 
 ## 0.3.0 (2026-11-08)
 

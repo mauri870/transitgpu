@@ -48,7 +48,7 @@ def test_the_metadata_names_the_author_the_addresses_and_the_lower_bounds_the_co
     bounds = {requirement.split(">=")[0]: requirement.split(">=")[1] for requirement in project["dependencies"]}
     assert bounds == {"numpy": "2.2", "numba": "0.61.2", "torch": "2.5"}, "torch 2.5 for torch.OutOfMemoryError; numpy 2.2 and numba 0.61.2 (its lowest release that supports numpy 2.2) by SPEC 0"
     assert metadata["build-system"]["requires"] == ["hatchling>=1.27", "hatch-fancy-pypi-readme>=24.1.0"] and project["dynamic"] == ["readme"]
-    assert any(classifier == "Programming Language :: Python :: 3.12" for classifier in project["classifiers"]) and project["requires-python"] == ">=3.12"
+    assert any(classifier == "Programming Language :: Python :: 3.13" for classifier in project["classifiers"]) and project["requires-python"] == ">=3.13"
     assert set(project["optional-dependencies"]) == {"tls", "examples", "bench"}, "the extras are what a user installs; the tests and the builds of torch are dependency groups, which a wheel does not publish"
     groups = metadata["dependency-groups"]
     assert {"dev", "test"} <= set(groups) <= {"dev", "test", "validation", "cpu", "cu128", "rocm"}  # cpu, cu128 and rocm are added by the export

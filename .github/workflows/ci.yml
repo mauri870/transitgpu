@@ -15,7 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        # 3.14 is not in the matrix: batman-package 2.5.3 (the test group) ships no cp314 wheel and no sdist.
+        python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -37,7 +38,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.11.2"
-          python-version: "3.12"
+          python-version: "3.13"
           enable-cache: true
       - name: Install transitgpu at the lowest version of every direct dependency
         run: uv sync --resolution lowest-direct --group cpu
