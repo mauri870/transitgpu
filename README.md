@@ -152,7 +152,7 @@ flattened = flux / trend
 trends = detrend.biweight_many([(time_1, flux_1), (time_2, flux_2)], 0.75)
 ```
 
-On a GPU a Triton kernel computes the trend when the widest window, rounded up to a power of two, holds at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window, such as 0.75 d at 20 s cadence, runs the torch version on the GPU. The first call of the kernel at a width compiles it, longer for wider windows (the detrend table under Performance), and Triton keeps the compiled kernel on disk for later processes. On the CPU the trend is wotan's own when wotan is installed, since wotan is faster there; without it the torch version runs. `method="kernel"`, `"torch"` or `"wotan"` chooses the path.
+On a GPU a Triton kernel computes the trend when the widest window, rounded up to a power of two, holds at most `detrend.KERNEL_WIDTH_LIMIT` points; a wider window, such as 0.75 d at 20 s cadence, runs the torch version on the GPU. The first call of the kernel at a width compiles it, longer for wider windows: 34.3 s at 2,048 points from an empty cache (the sixth table under Performance). Triton keeps the compiled kernel on disk for later processes. On the CPU the trend is wotan's own when wotan is installed, since wotan is faster there; without it the torch version runs. `method="kernel"`, `"torch"` or `"wotan"` chooses the path.
 
 On a GPU that also drives a display, several processes launching the kernel at once can time out the GPU's graphics ring and reset it; detrend from one process per such GPU.
 
@@ -235,6 +235,24 @@ The fifth table times the search of stacks of 312,500 to 2,525,000 points (25 s 
 
 ```
 uv run --group rocm python benchmarks/launch_compare.py --sizes 312500 350000 450000 1000000 1300000 2000000 2525000 --repeats 7 --json results-launches.json
+```
+
+The sixth table times one biweight detrend of a sector of 27.4 days (Gaussian noise of 1,000 ppm, a sine of 2,000 ppm, transits of 3,000 ppm that are masked, a gap of a day, 1 point in 500 a NaN) at each cadence and window, from the arrays on the host to the trend on the host. A cell is the median of seven calls after the first, in milliseconds, with the minimum and maximum in brackets. The width is the widest window in points, rounded up to a power of two; the kernel takes widths up to `detrend.KERNEL_WIDTH_LIMIT`, and at 20 s the call takes the torch version on the GPU. The first call of the kernel at 2,048 points from an empty Triton cache took 34.3 s. The rows are from one session of 2026-11-08 on the machine of the third table, the GPU to itself, each configuration its own process, with ROCm 7.2.53211, Python 3.12.13, numpy 2.5.4, torch 2.12.0+rocm7.2, triton-rocm 3.7.0, numba 0.68.0 and wotan 1.10, on an AMD Radeon RX 7900 XTX. `benchmarks/results-detrend.json` has every call.
+
+| detrend of one sector | 30 min, 0.75 d (1,249 points, width 64) | 10 min, 0.75 d (3,745 points, width 128) | 200 s, 0.75 d (11,233 points, width 512) | 2 min, 0.75 d (18,721 points, width 1,024) | 2 min, 1.5 d (18,721 points, width 2,048) | 20 s, 0.75 d (112,321 points, width 4,096) |
+| --- | --- | --- | --- | --- | --- | --- |
+| wotan 1.10, CPU, 1 thread | 1.97 (1.96–2.04) | 10.8 (10.8–11) | 80.4 (80.2–82.2) | 219 (219–219) | 400 (400–401) | 6,855 (6,854–6,861) |
+| transitgpu.detrend, torch on the CPU | 1.96 (1.95–2.24) | 6.21 (5.89–6.27) | 61.9 (57.2–67.2) | 353 (348–379) | 766 (752–773) | skipped |
+| transitgpu.detrend, Triton kernel on the GPU | 0.249 (0.231–0.514) | 0.487 (0.425–0.93) | 2.39 (1.28–2.75) | 3.59 (3.33–5.85) | 8.58 (8.33–8.76) | skipped |
+| transitgpu.detrend, torch on the GPU | 2.36 (1.57–2.51) | 2.5 (1.72–2.67) | 7.73 (6.66–10.5) | 13.7 (13.5–18.5) | 37.3 (36.9–40.1) | 612 (611–612) |
+
+Largest difference from wotan's trend, relative to the trend: 2.2e-16; the NaN positions are equal in every row.
+Skipped: not run: left out by --rows.
+
+```
+for index in 0 1 2 3 4; do uv run --group rocm python benchmarks/bench_detrend.py --repeats 7 --configuration $index --json part$index.json; done
+uv run --group rocm python benchmarks/bench_detrend.py --repeats 7 --configuration 5 --rows torch-device --json part5.json
+uv run --group rocm python benchmarks/bench_detrend.py --merge benchmarks/results-detrend.json part0.json part1.json part2.json part3.json part4.json part5.json
 ```
 
 ## Tests
