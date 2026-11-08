@@ -1,24 +1,22 @@
 """Time the biweight detrend of transitgpu.detrend against wotan's, on synthetic light curves, and print the tables.
 
-    uv run --group rocm --group test python benchmarks/bench_detrend.py [--repeats 7] [--processes 1 2 4 8 16] [--cold 16] [--json benchmarks/results-detrend.json]
+    uv run --group rocm --group test python benchmarks/bench_detrend.py [--repeats 7] [--configuration N ...] [--rows ROW ...] [--json FILE]
+    uv run --group rocm --group test python benchmarks/bench_detrend.py --merge OUT.json IN.json [IN.json ...]
 
 The light curves are made here with a fixed seed: 27.4 days of a cadence, flux of 1 with Gaussian noise of 1,000 ppm, a sine of 2,000 ppm with a period of 3.7 days, a transit of 3,000 ppm and 3 hours every 5.3 days, a gap of one
 day in the middle and 0.2 days on each side of it removed, and 1 point in 500 a NaN. The transits are the mask of the filter. Each configuration is a cadence and a window (CONFIGURATIONS), and its padded width is the widest window
 in points rounded up to a power of two. A row is timed after one first call as the median of --repeats calls, from the numpy arrays of the call to the numpy trend, so the device rows include building the windows, both transfers
 and the launches; the first call is given apart, since for the kernel it includes the compile when the Triton cache does not hold that width. Each row also gives its largest difference from wotan's trend, relative to the trend,
 and whether the NaN positions are equal. The kernel row is not run where the padded width is over --kernel-max-width, whose compile does not end in bounded time; a torch row on the CPU that would take over --max-seconds a call,
-scaled by the points times the padded width from the configuration before it, is skipped. Every skip is said in the table.
-With --processes, that many processes each detrend the 2-minute light curve with the 0.75-day window on the device for --seconds after a common start, once for each count given. With --cold N, N processes start together with
-an empty Triton cache and detrend the 2-minute light curve with the 1.5-day window once, and the table gives the time of that first call, which includes the compile of each process.
+scaled by the points times the padded width from the configuration before it, is skipped, and so is a row that --rows leaves out. Every skip is said in the table.
+--configuration runs only the configurations of those indices of CONFIGURATIONS, so that each can run as a job of its own; --merge joins such files, in the order given, into one.
 """
 import argparse
 import importlib.metadata
 import json
-import os
 import platform
 import statistics
 import sys
-import tempfile
 import time
 
 import numpy as np
@@ -26,8 +24,6 @@ import numpy as np
 CONFIGURATIONS = (("30 min", 1800, 0.75), ("10 min", 600, 0.75), ("200 s", 200, 0.75), ("2 min", 120, 0.75), ("2 min", 120, 1.5), ("20 s", 20, 0.75))
 DAYS = 27.4
 ROWS = (("wotan", "wotan 1.10, CPU, 1 thread"), ("torch-cpu", "transitgpu.detrend, torch on the CPU"), ("kernel", "transitgpu.detrend, Triton kernel on the GPU"), ("torch-device", "transitgpu.detrend, torch on the GPU"))
-SHARED = (120, 0.75)  # the light curve of the processes sharing the device
-COLD = (120, 1.5)  # the light curve of the cold start
 
 
 def light_curve(step_seconds, seed=0):
@@ -62,6 +58,11 @@ def versions():
             out[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             out[name] = None
+    try:  # the CPU scheduler, which the times depend on: sched_ext disabled is the kernel's default
+        with open("/sys/kernel/sched_ext/state") as handle:
+            out["sched_ext"] = handle.read().strip()
+    except OSError:
+        out["sched_ext"] = None
     if torch.cuda.is_available():
         out["device"] = torch.cuda.get_device_name(0)
         out["hip"] = torch.version.hip
@@ -86,7 +87,7 @@ def agreement(trend, reference):
     return {"nan_equal": bool(np.array_equal(np.isnan(trend), np.isnan(reference))), "largest_relative_difference": float((np.abs(trend[both] - reference[both]) / np.abs(reference[both])).max()) if both.any() else 0.0}
 
 
-def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_width=2048, device="auto"):
+def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_width=2048, device="auto", rows=None):
     import torch
     from wotan import flatten
 
@@ -102,13 +103,18 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
         reference, first, seconds = timed(lambda: flatten(time_values, flux, method="biweight", window_length=window, return_trend=True, mask=mask)[1], repeats)
         entry["rows"]["wotan"] = {"first": first, "seconds": seconds, "median": statistics.median(seconds)}
         before = previous["rows"].get("torch-cpu") if previous else None
-        if before is not None and "median" in before and before["median"] * len(time_values) * width / (previous["points"] * previous["padded_width"]) > max_seconds:  # the work is the points times the window
+        if rows is not None and "torch-cpu" not in rows:
+            entry["rows"]["torch-cpu"] = {"skipped": "not run: left out by --rows"}
+        elif before is not None and "median" in before and before["median"] * len(time_values) * width / (previous["points"] * previous["padded_width"]) > max_seconds:  # the work is the points times the window
             entry["rows"]["torch-cpu"] = {"skipped": f"over {max_seconds:g} s a call by scaling the configuration before it"}
         else:
             trend, first, seconds = timed(lambda: detrend.biweight(time_values, flux, window, mask=mask, device="cpu", method="torch"), repeats if len(time_values) < 50000 else 3)
             entry["rows"]["torch-cpu"] = {"first": first, "seconds": seconds, "median": statistics.median(seconds), **agreement(trend, reference)}
         if use_device:
             for key, method in (("kernel", "kernel"), ("torch-device", "torch")):
+                if rows is not None and key not in rows:
+                    entry["rows"][key] = {"skipped": "not run: left out by --rows"}
+                    continue
                 if method == "kernel" and width > kernel_max_width:
                     entry["rows"][key] = {"skipped": f"padded width {width} over {kernel_max_width}: the compile does not end in bounded time"}
                     continue
@@ -118,72 +124,6 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
         print(f"{heading(entry)}: " + ", ".join(f"{key} {cell(row)}" for key, row in entry["rows"].items()), file=sys.stderr, flush=True)
         previous = entry
     return results
-
-
-def _say(text):
-    print(f"process {os.getpid()}: {text}", file=sys.stderr, flush=True)
-
-
-def _worker(step_seconds, window, seconds, device, barrier, queue, wait_seconds):
-    """One process of `shared`: detrend the light curve of `step_seconds` once (the first call), wait for the others at most `wait_seconds`, then detrend it for `seconds`, and put (pid, first, calls,
-    elapsed) on `queue`, or (pid, the traceback) if it fails. Each stage is said on standard error."""
-    import traceback
-
-    try:
-        _say("started")
-        from transitgpu import detrend
-
-        time_values, flux, mask = light_curve(step_seconds)
-        began = time.perf_counter()
-        detrend.biweight(time_values, flux, window, mask=mask, device=device)
-        first = time.perf_counter() - began
-        _say(f"first call {first:.1f} s")
-        barrier.wait(wait_seconds)
-        began, calls = time.perf_counter(), 0
-        while time.perf_counter() - began < seconds:
-            detrend.biweight(time_values, flux, window, mask=mask, device=device)
-            calls += 1
-        queue.put((os.getpid(), first, calls, time.perf_counter() - began))
-        _say(f"{calls} calls")
-    except BaseException:
-        queue.put((os.getpid(), traceback.format_exc()))
-
-
-def shared(processes, step_seconds=SHARED[0], window=SHARED[1], seconds=10.0, device="cuda", cache_dir=None, wait_seconds=300.0):
-    """Detrends a second of `processes` processes that detrend the light curve of `step_seconds` with `window` at once on one device, each for `seconds` after a common start, with the first call of each.
-    `cache_dir` is the Triton cache of the processes (TRITON_CACHE_DIR), for a start with an empty cache. A process that has not reported `wait_seconds` after the run should have ended, or that fails,
-    stops the measurement with a RuntimeError that names it, and every process is ended."""
-    import multiprocessing
-    import queue as queues
-
-    context = multiprocessing.get_context("spawn")  # a fork of a process that has used the device is not safe
-    barrier, queue = context.Barrier(processes), context.Queue()
-    saved = os.environ.get("TRITON_CACHE_DIR")
-    if cache_dir is not None:
-        os.environ["TRITON_CACHE_DIR"] = str(cache_dir)  # the spawned processes take the environment at their start
-    try:
-        workers = [context.Process(target=_worker, args=(step_seconds, window, seconds, device, barrier, queue, wait_seconds)) for _ in range(processes)]
-        for worker in workers:
-            worker.start()
-    finally:
-        if cache_dir is not None:
-            os.environ.pop("TRITON_CACHE_DIR") if saved is None else os.environ.__setitem__("TRITON_CACHE_DIR", saved)
-    finished, failed = [], []
-    try:
-        while len(finished) + len(failed) < processes:
-            report = queue.get(timeout=wait_seconds + seconds)
-            (failed if len(report) == 2 else finished).append(report)
-    except queues.Empty:
-        failed.append(("?", f"{processes - len(finished) - len(failed)} of {processes} processes did not report within {wait_seconds + seconds:g} s"))
-    finally:
-        for worker in workers:
-            worker.join(5)
-            if worker.is_alive():
-                worker.terminate()
-    if failed:
-        raise RuntimeError(f"{len(failed)} of {processes} processes sharing the device failed: " + "; ".join(f"process {pid}: {text}" for pid, text in failed))
-    return {"processes": processes, "step_seconds": step_seconds, "window_days": window, "seconds": seconds, "first": [first for _, first, _, _ in finished], "calls": [calls for _, _, calls, _ in finished],
-            "per_second": sum(calls / max(elapsed, 1e-9) for _, _, calls, elapsed in finished)}
 
 
 def cell(row):
@@ -215,23 +155,15 @@ def table(results):
     return text + "".join(f"\nSkipped: {reason}." for reason in skipped)
 
 
-def shared_table(rows):
-    """The table of the detrends a second that processes sharing one device reach together and each."""
-    lines = ["| processes sharing the device | detrends a second, all processes | detrends a second, each process |", "| --- | --- | --- |"]
-    for row in rows:
-        if "failed" in row:
-            lines.append(f"| {row['processes']} | failed | failed |")
-        else:
-            lines.append(f"| {row['processes']} | {row['per_second']:.0f} | {row['per_second'] / row['processes']:.0f} |")
-    return "\n".join(lines)
-
-
-def cold_table(row):
-    """The first call of processes that start together with an empty Triton cache."""
-    if "failed" in row:
-        return f"{row['processes']} processes starting together with an empty Triton cache: failed ({row['failed']})."
-    first = row["first"]
-    return f"{row['processes']} processes starting together with an empty Triton cache, {row['window_days']:g} d window at {row['step_seconds']} s: first call {min(first):.1f} to {max(first):.1f} s (median {statistics.median(first):.1f} s)."
+def merge(paths):
+    """The results of several files of this script joined into one: the configurations in the order of the files, and the versions, repeats and limit of the first, which all must share."""
+    parts = [json.loads(open(path).read()) for path in paths]
+    first = parts[0]
+    for part in parts[1:]:
+        for key in ("versions", "repeats", "kernel_width_limit"):
+            if part[key] != first[key]:
+                raise ValueError(f"the files differ in {key}: {first[key]!r} and {part[key]!r}")
+    return {**first, "configurations": [entry for part in parts for entry in part["configurations"]]}
 
 
 def main(arguments=None):
@@ -240,44 +172,24 @@ def main(arguments=None):
     parser.add_argument("--max-seconds", type=float, default=60.0)
     parser.add_argument("--kernel-max-width", type=int, default=2048, help="the widest padded window whose kernel row is run")
     parser.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")
-    parser.add_argument("--processes", type=int, nargs="*", default=[], help="also measure this many processes detrending at once on the device, for each count given")
-    parser.add_argument("--seconds", type=float, default=10.0, help="how long each process of --processes detrends")
-    parser.add_argument("--cold", type=int, default=0, help="also measure the first call of this many processes starting together with an empty Triton cache")
+    parser.add_argument("--configuration", type=int, nargs="*", help="the indices of CONFIGURATIONS to run (all when not given)")
+    parser.add_argument("--rows", nargs="*", choices=[key for key, _ in ROWS[1:]], help="the rows to run beside wotan's (all when not given)")
+    parser.add_argument("--merge", nargs="+", metavar="FILE", help="write the first file from the configurations of the others, and print its table")
     parser.add_argument("--json", help="write the results here")
     options = parser.parse_args(arguments)
-    def save():
+    if options.merge:
+        results = merge(options.merge[1:])
+        with open(options.merge[0], "w") as handle:
+            json.dump(results, handle, indent=1)
+            handle.write("\n")
+    else:
+        chosen = CONFIGURATIONS if options.configuration is None else tuple(CONFIGURATIONS[index] for index in options.configuration)
+        results = run(chosen, repeats=options.repeats, max_seconds=options.max_seconds, kernel_max_width=options.kernel_max_width, device=options.device, rows=options.rows)
         if options.json:
             with open(options.json, "w") as handle:
                 json.dump(results, handle, indent=1)
                 handle.write("\n")
-
-    def attempt(processes, **keywords):
-        try:
-            return shared(processes, **keywords)
-        except RuntimeError as error:  # the measurement says what failed, and the other rows are kept
-            print(error, file=sys.stderr, flush=True)
-            return {"processes": processes, "failed": str(error).split(": ", 1)[0]}
-
-    results = run(repeats=options.repeats, max_seconds=options.max_seconds, kernel_max_width=options.kernel_max_width, device=options.device)
-    save()
-    device = "cpu" if options.device == "cpu" else "cuda"
-    if options.processes:
-        results["shared"] = []
-        for count in options.processes:
-            results["shared"].append(attempt(count, seconds=options.seconds, device=device))
-            save()
-            print(f"{count} processes sharing the device: {results['shared'][-1].get('per_second', 'failed')} detrends a second", file=sys.stderr, flush=True)
-    if options.cold:
-        with tempfile.TemporaryDirectory() as empty:
-            results["cold"] = attempt(options.cold, step_seconds=COLD[0], window=COLD[1], seconds=0.0, device=device, cache_dir=empty)
-        save()
     print(table(results))
-    if options.processes:
-        print()
-        print(shared_table(results["shared"]))
-    if options.cold:
-        print()
-        print(cold_table(results["cold"]))
     print(json.dumps(results["versions"]))
     return 0
 

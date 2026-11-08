@@ -55,35 +55,27 @@ def test_the_skip_of_a_slow_row_scales_by_the_points_times_the_padded_width(monk
     assert "skipped" in second["rows"]["torch-cpu"], "1 s times about 3 times the points and twice the width is 6 s, over the 4 s limit"
 
 
-def test_two_processes_sharing_a_device_both_detrend_and_their_rate_is_the_sum_of_theirs(monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))  # the spawned processes import the worker by its module name
-    import bench_detrend
-
-    row = bench_detrend.shared(2, step_seconds=1800, seconds=0.5, device="cpu")
-    assert row["processes"] == 2 and len(row["calls"]) == 2 and all(calls > 0 for calls in row["calls"]) and len(row["first"]) == 2, row
-    assert row["per_second"] > 0
-    assert bench_detrend.shared_table([row]).splitlines()[2].startswith("| 2 | ")
+def test_a_row_left_out_by_rows_is_skipped_and_said():
+    results = bench.run(configurations=(("30 min", 1800, 0.75),), repeats=1, device="cpu", rows=[])
+    assert results["configurations"][0]["rows"]["torch-cpu"] == {"skipped": "not run: left out by --rows"}
+    assert "Skipped: not run: left out by --rows." in bench.table(results)
 
 
-def test_processes_that_fail_stop_the_measurement_with_an_error_that_names_them_and_none_is_left(monkeypatch):
-    monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))
-    import bench_detrend
+def test_configurations_run_one_by_one_and_merged_give_the_table_of_one_run(tmp_path):
+    for index in (0, 1):
+        assert bench.main(["--device", "cpu", "--repeats", "1", "--configuration", str(index), "--json", str(tmp_path / f"part{index}.json")]) == 0
+    assert bench.main(["--merge", str(tmp_path / "all.json"), str(tmp_path / "part0.json"), str(tmp_path / "part1.json")]) == 0
+    merged = json.loads((tmp_path / "all.json").read_text())
+    assert [entry["step_seconds"] for entry in merged["configurations"]] == [1800, 600]
+    assert bench.table(merged).splitlines()[0].count("0.75 d") == 2
 
-    with pytest.raises(RuntimeError, match="2 of 2 processes sharing the device failed"):
-        bench_detrend.shared(2, step_seconds=1800, seconds=0.1, device="no-such-device", wait_seconds=5.0)
 
-
-def test_a_cold_start_reports_the_first_call_of_each_process_and_restores_the_cache_variable(monkeypatch, tmp_path):
-    monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))
-    monkeypatch.setenv("TRITON_CACHE_DIR", "kept")
-    import bench_detrend
-
-    row = bench_detrend.shared(2, step_seconds=1800, seconds=0.0, device="cpu", cache_dir=tmp_path)
-    assert len(row["first"]) == 2 and all(first > 0 for first in row["first"])
-    assert "2 processes starting together with an empty Triton cache" in bench_detrend.cold_table(row)
-    import os
-
-    assert os.environ["TRITON_CACHE_DIR"] == "kept"
+def test_files_of_different_versions_are_not_merged(tmp_path):
+    part = {"versions": {"torch": "a"}, "repeats": 7, "kernel_width_limit": 2048, "configurations": []}
+    (tmp_path / "a.json").write_text(json.dumps(part))
+    (tmp_path / "b.json").write_text(json.dumps({**part, "versions": {"torch": "b"}}))
+    with pytest.raises(ValueError, match="differ in versions"):
+        bench.merge([tmp_path / "a.json", tmp_path / "b.json"])
 
 
 def test_the_table_of_the_readme_is_the_table_of_the_stored_results_and_the_readme_gives_the_command():
