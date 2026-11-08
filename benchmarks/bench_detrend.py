@@ -120,26 +120,41 @@ def run(configurations=CONFIGURATIONS, repeats=7, max_seconds=60.0, kernel_max_w
     return results
 
 
-def _worker(step_seconds, window, seconds, device, barrier, queue):
-    """One process of `shared`: detrend the light curve of `step_seconds` once (the first call), wait for the others, then detrend it for `seconds`, and put (first, calls, elapsed) on `queue`."""
-    from transitgpu import detrend
+def _say(text):
+    print(f"process {os.getpid()}: {text}", file=sys.stderr, flush=True)
 
-    time_values, flux, mask = light_curve(step_seconds)
-    began = time.perf_counter()
-    detrend.biweight(time_values, flux, window, mask=mask, device=device)
-    first = time.perf_counter() - began
-    barrier.wait()
-    began, calls = time.perf_counter(), 0
-    while time.perf_counter() - began < seconds:
+
+def _worker(step_seconds, window, seconds, device, barrier, queue, wait_seconds):
+    """One process of `shared`: detrend the light curve of `step_seconds` once (the first call), wait for the others at most `wait_seconds`, then detrend it for `seconds`, and put (pid, first, calls,
+    elapsed) on `queue`, or (pid, the traceback) if it fails. Each stage is said on standard error."""
+    import traceback
+
+    try:
+        _say("started")
+        from transitgpu import detrend
+
+        time_values, flux, mask = light_curve(step_seconds)
+        began = time.perf_counter()
         detrend.biweight(time_values, flux, window, mask=mask, device=device)
-        calls += 1
-    queue.put((first, calls, time.perf_counter() - began))
+        first = time.perf_counter() - began
+        _say(f"first call {first:.1f} s")
+        barrier.wait(wait_seconds)
+        began, calls = time.perf_counter(), 0
+        while time.perf_counter() - began < seconds:
+            detrend.biweight(time_values, flux, window, mask=mask, device=device)
+            calls += 1
+        queue.put((os.getpid(), first, calls, time.perf_counter() - began))
+        _say(f"{calls} calls")
+    except BaseException:
+        queue.put((os.getpid(), traceback.format_exc()))
 
 
-def shared(processes, step_seconds=SHARED[0], window=SHARED[1], seconds=10.0, device="cuda", cache_dir=None):
+def shared(processes, step_seconds=SHARED[0], window=SHARED[1], seconds=10.0, device="cuda", cache_dir=None, wait_seconds=300.0):
     """Detrends a second of `processes` processes that detrend the light curve of `step_seconds` with `window` at once on one device, each for `seconds` after a common start, with the first call of each.
-    `cache_dir` is the Triton cache of the processes (TRITON_CACHE_DIR), for a start with an empty cache."""
+    `cache_dir` is the Triton cache of the processes (TRITON_CACHE_DIR), for a start with an empty cache. A process that has not reported `wait_seconds` after the run should have ended, or that fails,
+    stops the measurement with a RuntimeError that names it, and every process is ended."""
     import multiprocessing
+    import queue as queues
 
     context = multiprocessing.get_context("spawn")  # a fork of a process that has used the device is not safe
     barrier, queue = context.Barrier(processes), context.Queue()
@@ -147,17 +162,28 @@ def shared(processes, step_seconds=SHARED[0], window=SHARED[1], seconds=10.0, de
     if cache_dir is not None:
         os.environ["TRITON_CACHE_DIR"] = str(cache_dir)  # the spawned processes take the environment at their start
     try:
-        workers = [context.Process(target=_worker, args=(step_seconds, window, seconds, device, barrier, queue)) for _ in range(processes)]
+        workers = [context.Process(target=_worker, args=(step_seconds, window, seconds, device, barrier, queue, wait_seconds)) for _ in range(processes)]
         for worker in workers:
             worker.start()
     finally:
         if cache_dir is not None:
             os.environ.pop("TRITON_CACHE_DIR") if saved is None else os.environ.__setitem__("TRITON_CACHE_DIR", saved)
-    finished = [queue.get() for _ in workers]
-    for worker in workers:
-        worker.join()
-    return {"processes": processes, "step_seconds": step_seconds, "window_days": window, "seconds": seconds, "first": [first for first, _, _ in finished], "calls": [calls for _, calls, _ in finished],
-            "per_second": sum(calls / max(elapsed, 1e-9) for _, calls, elapsed in finished)}
+    finished, failed = [], []
+    try:
+        while len(finished) + len(failed) < processes:
+            report = queue.get(timeout=wait_seconds + seconds)
+            (failed if len(report) == 2 else finished).append(report)
+    except queues.Empty:
+        failed.append(("?", f"{processes - len(finished) - len(failed)} of {processes} processes did not report within {wait_seconds + seconds:g} s"))
+    finally:
+        for worker in workers:
+            worker.join(5)
+            if worker.is_alive():
+                worker.terminate()
+    if failed:
+        raise RuntimeError(f"{len(failed)} of {processes} processes sharing the device failed: " + "; ".join(f"process {pid}: {text}" for pid, text in failed))
+    return {"processes": processes, "step_seconds": step_seconds, "window_days": window, "seconds": seconds, "first": [first for _, first, _, _ in finished], "calls": [calls for _, _, calls, _ in finished],
+            "per_second": sum(calls / max(elapsed, 1e-9) for _, _, calls, elapsed in finished)}
 
 
 def cell(row):
@@ -193,12 +219,17 @@ def shared_table(rows):
     """The table of the detrends a second that processes sharing one device reach together and each."""
     lines = ["| processes sharing the device | detrends a second, all processes | detrends a second, each process |", "| --- | --- | --- |"]
     for row in rows:
-        lines.append(f"| {row['processes']} | {row['per_second']:.0f} | {row['per_second'] / row['processes']:.0f} |")
+        if "failed" in row:
+            lines.append(f"| {row['processes']} | failed | failed |")
+        else:
+            lines.append(f"| {row['processes']} | {row['per_second']:.0f} | {row['per_second'] / row['processes']:.0f} |")
     return "\n".join(lines)
 
 
 def cold_table(row):
     """The first call of processes that start together with an empty Triton cache."""
+    if "failed" in row:
+        return f"{row['processes']} processes starting together with an empty Triton cache: failed ({row['failed']})."
     first = row["first"]
     return f"{row['processes']} processes starting together with an empty Triton cache, {row['window_days']:g} d window at {row['step_seconds']} s: first call {min(first):.1f} to {max(first):.1f} s (median {statistics.median(first):.1f} s)."
 
@@ -214,20 +245,32 @@ def main(arguments=None):
     parser.add_argument("--cold", type=int, default=0, help="also measure the first call of this many processes starting together with an empty Triton cache")
     parser.add_argument("--json", help="write the results here")
     options = parser.parse_args(arguments)
+    def save():
+        if options.json:
+            with open(options.json, "w") as handle:
+                json.dump(results, handle, indent=1)
+                handle.write("\n")
+
+    def attempt(processes, **keywords):
+        try:
+            return shared(processes, **keywords)
+        except RuntimeError as error:  # the measurement says what failed, and the other rows are kept
+            print(error, file=sys.stderr, flush=True)
+            return {"processes": processes, "failed": str(error).split(": ", 1)[0]}
+
     results = run(repeats=options.repeats, max_seconds=options.max_seconds, kernel_max_width=options.kernel_max_width, device=options.device)
+    save()
     device = "cpu" if options.device == "cpu" else "cuda"
     if options.processes:
         results["shared"] = []
         for count in options.processes:
-            results["shared"].append(shared(count, seconds=options.seconds, device=device))
-            print(f"{count} processes sharing the device: {results['shared'][-1]['per_second']:.0f} detrends a second", file=sys.stderr, flush=True)
+            results["shared"].append(attempt(count, seconds=options.seconds, device=device))
+            save()
+            print(f"{count} processes sharing the device: {results['shared'][-1].get('per_second', 'failed')} detrends a second", file=sys.stderr, flush=True)
     if options.cold:
         with tempfile.TemporaryDirectory() as empty:
-            results["cold"] = shared(options.cold, step_seconds=COLD[0], window=COLD[1], seconds=0.0, device=device, cache_dir=empty)
-    if options.json:
-        with open(options.json, "w") as handle:
-            json.dump(results, handle, indent=1)
-            handle.write("\n")
+            results["cold"] = attempt(options.cold, step_seconds=COLD[0], window=COLD[1], seconds=0.0, device=device, cache_dir=empty)
+        save()
     print(table(results))
     if options.processes:
         print()

@@ -65,6 +65,14 @@ def test_two_processes_sharing_a_device_both_detrend_and_their_rate_is_the_sum_o
     assert bench_detrend.shared_table([row]).splitlines()[2].startswith("| 2 | ")
 
 
+def test_processes_that_fail_stop_the_measurement_with_an_error_that_names_them_and_none_is_left(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))
+    import bench_detrend
+
+    with pytest.raises(RuntimeError, match="2 of 2 processes sharing the device failed"):
+        bench_detrend.shared(2, step_seconds=1800, seconds=0.1, device="no-such-device", wait_seconds=5.0)
+
+
 def test_a_cold_start_reports_the_first_call_of_each_process_and_restores_the_cache_variable(monkeypatch, tmp_path):
     monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))
     monkeypatch.setenv("TRITON_CACHE_DIR", "kept")
