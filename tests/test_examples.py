@@ -13,7 +13,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "examples" / "plot_wasp18.py"
 
 @pytest.mark.gpu
 def test_the_plot_example_writes_a_small_png_of_the_shipped_light_curve_and_both_searches_find_the_period_of_wasp_18_b(tmp_path):
-    """The examples search on a device: the box search and the template search of transitgpu.tls raise without one."""
+    """Run on a GPU only, so that the suite on a CPU does not run the example's template search."""
     if not torch.cuda.is_available():
         pytest.skip("no device")
     spec = importlib.util.spec_from_file_location("plot_wasp18", SCRIPT)

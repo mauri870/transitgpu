@@ -1,4 +1,4 @@
-"""Transit Least Squares (TLS 2.0.1, Hippke & Heller 2019) with its search of the trial periods on a GPU.
+"""Transit Least Squares (TLS 2.0.1, Hippke & Heller 2019) with its search of the trial periods on a GPU or the CPU.
 
 The grids, the transit model, the statistics and the final fit are TLS's. Only the import changes:
 

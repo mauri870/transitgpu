@@ -1,6 +1,6 @@
 name: tests
 
-# transitgpu alone, on the CPU: the CPU build of torch (the `cpu` group) and the tests (the ones that may search on a device run their CPU path). The examples are not run: they search with the public call, which needs a GPU, and the runner has none.
+# transitgpu alone, on the CPU: the CPU build of torch (the `cpu` group) and the tests (the ones that may search on a device run their CPU path). The examples are not run.
 on:
   push:
   pull_request:

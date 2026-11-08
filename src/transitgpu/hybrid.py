@@ -1,4 +1,4 @@
-"""Box search on the GPU over the whole period grid, then Transit Least Squares around the highest peaks.
+"""Box search over the whole period grid, then Transit Least Squares around the highest peaks.
 
     found = bls_tls_hybrid(t, y, dy, period_min=0.5, period_max=14, peaks=5, window=0.01)
     found.sde, found.periods, found.power        # the box spectrum, whose maximum is the SDE
@@ -7,8 +7,7 @@
 
 The SDE of a peak is the box search's: TLS's SDE of a window is a z-score over the periods of that window only. A
 peak that TLS cannot refine (no period grid in the window, too few points) keeps the box period and SDE, has no TLS
-results and records the reason. The refinement needs the extra `tls` (`uv pip install "transitgpu[tls] @ git+https://github.com/mauri870/transitgpu"`). Without a
-GPU the call raises.
+results and records the reason. The refinement needs the extra `tls` (`uv pip install "transitgpu[tls] @ git+https://github.com/mauri870/transitgpu"`).
 """
 from dataclasses import dataclass
 from typing import Any
@@ -95,6 +94,6 @@ def bls_tls_hybrid(t, y, dy, period_min, period_max, peaks=5, window=0.01, backe
     `box_options` those of `box_search(...).power()` (oversampling_factor, n_transits_min, duration_grid_step,
     minimum_bins, device). Return HybridResults.
     """
-    box = box_search(t, y, dy).power(period_min=period_min, period_max=period_max, **box_options)  # raises without a GPU, before TLS is imported
+    box = box_search(t, y, dy).power(period_min=period_min, period_max=period_max, **box_options)
     found = list(refine_peaks(t, y, dy, box.periods, box.power, peaks=peaks, window=window, backend=backend, tls_options=tls_options))
     return HybridResults(periods=box.periods, power=box.power, sde=float(box.SDE), box=box, peaks=found)

@@ -18,13 +18,15 @@ from transitgpu.core import on_device
 from .fold import counting_order
 from .prefix import prefix_arrays
 from .screen import SIGNAL_DEPTH
-from .window import NO_TLS_DEVICE, allowed_widths, default_batch
+from .window import allowed_widths, default_batch
 
 try:
     import triton
     import triton.language as tl
 except ImportError:  # the torch operations are then used
     triton = None
+
+NO_PL_DEVICE = 'the backend "gpu-pl" runs only on a CUDA or ROCm GPU; on a CPU use the backend "gpu" or "gpu-binned"'
 
 
 FIT_TOLERANCE = 2e-2  # the tolerance of the fit of TLS's "fused-pl" backend
@@ -271,7 +273,7 @@ def pl_power(t, y, dy, periods, lc_arr, overview, transit_depth_min, r_star_min,
     tolerance of the fit and the shortest template that is fitted; eps 0 takes every sample of the template as a knot, which is the exact correlation (for the tests). `coarsen` is the ratio of the coarse grid of
     starts to the fine one (1: every start is searched); `scout_every` is the spacing of the scout durations (0: every duration is a scout)."""
     if triton is None or torch.device(device).type != "cuda":
-        raise RuntimeError(NO_TLS_DEVICE)
+        raise RuntimeError(NO_PL_DEVICE)
     t, y, dy = (np.asarray(x, dtype=np.float64) for x in (t, y, dy))
     periods = np.asarray(periods, dtype=np.float64)
     n = len(t)
@@ -340,7 +342,7 @@ class PLBackend:
             def search(self, problem, periods, use_threads=1, progress=None):
                 started = time.perf_counter()
                 if torch.device(self.device).type == "cpu":
-                    raise RuntimeError(NO_TLS_DEVICE)
+                    raise RuntimeError(NO_PL_DEVICE)
                 chi2, rows, depths = pl_power(problem.t, problem.y, problem.dy, periods, problem.lc_arr, problem.lc_cache_overview, problem.transit_depth_min, problem.R_star_min, problem.R_star_max, problem.M_star_min,
                                               problem.M_star_max, problem.T0_search_margin, device=self.device, batch=self.batch, eps=self.eps, min_length=self.min_length)
                 self.seconds = time.perf_counter() - started

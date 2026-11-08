@@ -74,16 +74,16 @@ def test_the_results_fold_the_light_curve_at_the_best_period_and_give_the_box_th
     assert (results.model_folded_model[np.abs(results.model_folded_phase - 0.5) <= half] == results.depth).all() and (results.model_folded_model[np.abs(results.model_folded_phase - 0.5) > half + 1e-9] == 1.0).all()
 
 
-def test_the_public_call_raises_without_a_device_and_names_astropys_box_least_squares(monkeypatch):
-    """transitgpu searches on a GPU: box_search(...).power() raises without one, or for the device "cpu", and names the library to use on a CPU. The search itself on a CPU stays callable under a private name (`_power`), which these tests use as the oracle."""
+def test_without_a_device_the_public_call_searches_on_the_cpu_and_gives_the_results_of_the_private_oracle(monkeypatch):
+    """box_search(...).power() searches on the CPU without a GPU and for the device "cpu"; `_power`, which these tests use as the oracle, is the same search without the check of a requested CUDA device."""
     import torch
 
-    time, flux = light_curve(2000, 60.0)
+    time, flux = light_curve()
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    oracle = transitgpu.box_search(time, flux)._power(period_min=0.5, period_max=14)
     for options in ({}, {"device": "cpu"}):
-        with pytest.raises(RuntimeError, match="BoxLeastSquares"):
-            transitgpu.box_search(time, flux).power(period_min=0.5, period_max=14, **options)
-    assert transitgpu.box_search(time, flux)._power(period_min=0.5, period_max=14).period > 0, "the private oracle searches on a CPU"
+        public = transitgpu.box_search(time, flux).power(period_min=0.5, period_max=14, **options)
+        assert (public.period, public.SDE) == (oracle.period, oracle.SDE), options
 
 
 @pytest.mark.gpu

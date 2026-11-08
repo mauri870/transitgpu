@@ -1,4 +1,4 @@
-"""Box least squares period search on a GPU, with PyTorch.
+"""Box least squares period search on a GPU or the CPU, with PyTorch.
 
 For each trial period the points are folded into phase bins, the flux and the number of points of each bin are
 summed, and every window of a few widths over the bins is scored as a box dip with the statistic of a box search
@@ -22,8 +22,8 @@ SDE (TLS detrends its spectrum) and has no threshold of its own; one can be esti
 shuffles of the light curve, which `search_many` searches together on one time axis.
 
 This module is the engine and not the public interface: `transitgpu.box_search`, `transitgpu.search` and
-`transitgpu.search_many` call it after checking for a GPU. The functions here also run on a CPU, slowly. Callers
-that choose the device themselves import from `transitgpu.engine`, whose names and signatures are stable.
+`transitgpu.search_many` call it after checking that a requested CUDA device exists. Callers that use the engine
+directly import from `transitgpu.engine`, whose names and signatures are stable.
 """
 
 import warnings

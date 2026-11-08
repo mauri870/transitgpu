@@ -1,5 +1,5 @@
 """transitgpu.bls_tls_hybrid: the box search over the whole grid, then TLS's power() on a window around each of the highest peaks. Function tests: the inputs are light curves made here and the checks are on structure,
-on a period against the exact template search over the whole grid, and on the reason a peak records when TLS cannot refine it. Tests marked gpu search on the device; without one the public call raises."""
+on a period against the exact template search over the whole grid, and on the reason a peak records when TLS cannot refine it. Tests marked gpu search on the device when there is one, and on the CPU otherwise."""
 import numpy as np
 import pytest
 
@@ -42,11 +42,13 @@ def test_a_spectrum_without_a_local_maximum_gives_its_highest_point_and_a_bad_co
         top_peaks(periods, power, window=0.6)
 
 
-def test_without_a_device_the_public_call_raises_and_names_astropys_box_least_squares_before_it_imports_tls(monkeypatch):
+def test_without_a_device_the_public_call_searches_on_the_cpu_and_tls_refines_the_highest_peak(monkeypatch):
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
     t, y, dy = light_curve()
-    with pytest.raises(RuntimeError, match="BoxLeastSquares"):
-        transitgpu.bls_tls_hybrid(t, y, dy, 0.5, 14)
+    found = transitgpu.bls_tls_hybrid(t, y, dy, 0.5, 14, peaks=1)
+    peak = found.peaks[0]
+    assert peak.tls is not None, peak.reason
+    assert abs(peak.tls.period / 3.18 - 1) < 0.01 and abs(peak.box_period / 3.18 - 1) < 0.01
 
 
 def test_a_peak_that_tls_cannot_refine_keeps_the_box_values_and_records_the_reason():

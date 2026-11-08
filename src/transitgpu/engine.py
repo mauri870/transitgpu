@@ -1,8 +1,8 @@
-"""The search engine of transitgpu for callers that choose the device themselves.
+"""The search engine of transitgpu, with its constants and helpers.
 
-`transitgpu.search` and `transitgpu.search_many` refuse to run without a GPU. The functions here are the same engine
-without that check, for a caller that names its device (the CPU is slow but works), with the constants and helpers
-that reproduce the grids and the boxes of a search and the Transit Least Squares parts of the hybrid search:
+`transitgpu.search` and `transitgpu.search_many` are these searches with a check that a requested CUDA device exists.
+The functions here are the engine itself, with the constants and helpers that reproduce the grids and the boxes of a
+search and the Transit Least Squares parts of the hybrid search:
 
     from transitgpu import engine
     found = engine.search_many(time, [flux], 0.5, 14.0, device="cpu", template=template, cuts=[7.0, 14.0])

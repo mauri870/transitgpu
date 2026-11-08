@@ -4,6 +4,7 @@
 
 ### Changed
 
+- `search`, `search_many`, `box_search(...).power`, `bls_tls_hybrid` and the `gpu` and `gpu-binned` backends of `transitgpu.tls` run on the CPU when torch finds no GPU or when `device="cpu"` is given, and no longer raise a `RuntimeError`. The CPU is slower than a GPU: TLS's exact statistic of 3,000 points from 1 to 6 days takes 1.6 s with `gpu` on 16 threads against 0.16 s with TLS's `fused`, and `gpu-binned` takes 0.18 s. `gpu-pl` has only Triton kernels and raises on a CPU with a message that names `gpu` and `gpu-binned`. Asking for `device="cuda"` where torch finds no GPU still raises, with the link to the torch build for the driver.
 - The fold, the scoring and the update of the best boxes are compiled by torch.compile on the CPU as well as on a GPU. On a CPU, a second search of 4,000 points from 1 to 6 days takes 0.02 s and not 0.43 s, after a first call of 9 s that compiles (about 2 s from torch's compile cache), and the test suite takes 157 s and not about 355 s (AMD Ryzen 9 9950X3D, torch 2.14.1+cpu). Where torch cannot compile, for example without a C++ compiler, a warning is shown once and the eager passes are used, as on a GPU.
 
 ## 0.2.0 (2026-11-05)

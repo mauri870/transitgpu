@@ -1,4 +1,4 @@
-"""transitgpu.engine, the interface for callers that choose the device: its names, the signatures they are called with, that the engine is the one of transitgpu.core without the check of the public searches, and that
+"""transitgpu.engine, the stable interface of the engine: its names, the signatures they are called with, that the engine is the one of transitgpu.core without the check of the public searches, and that
 importing it does not import Transit Least Squares. Function tests: they check names, signatures and an import, which no data archive describes."""
 import inspect
 import subprocess
@@ -24,7 +24,7 @@ def test_the_engine_lists_the_names_it_keeps_and_every_one_resolves():
         assert getattr(engine, name) is not None, name
 
 
-def test_the_searches_of_the_engine_are_those_of_core_and_not_the_public_ones_that_refuse_a_cpu():
+def test_the_searches_of_the_engine_are_those_of_core_and_not_the_checked_public_ones():
     assert engine.search is core.search and engine.search_many is core.search_many
     assert transitgpu.search is not engine.search and transitgpu.search_many is not engine.search_many
 
@@ -50,12 +50,12 @@ def test_the_constants_have_the_types_and_the_keys_that_callers_read():
     assert engine.PRECISION == {"statistic": "float32"}
 
 
-def test_the_engine_searches_on_the_cpu_where_the_public_search_refuses():
+def test_the_engine_and_the_public_search_give_the_same_result_on_the_cpu():
     time, flux = light_curve()
     found = engine.search(time, flux, 0.5, 14.0, device="cpu")
     assert found["period_days"] > 0 and found["sde"] > 0
-    with pytest.raises(RuntimeError):
-        transitgpu.search(time, flux, 0.5, 14.0, device="cpu")
+    public = transitgpu.search(time, flux, 0.5, 14.0, device="cpu")
+    assert (public["period_days"], public["sde"]) == (found["period_days"], found["sde"])
 
 
 def test_importing_the_engine_does_not_import_transit_least_squares_and_its_tls_names_do():

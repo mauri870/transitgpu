@@ -222,14 +222,28 @@ def test_a_template_with_fewer_samples_than_its_box_gives_the_chi_square_of_tls_
 
 
 @pytest.mark.parametrize("backend", ["gpu", "gpu-binned"])
-def test_without_a_device_the_backends_refuse_and_name_transitleastsquares_as_the_library_for_a_cpu(backend, monkeypatch):
-    """transitgpu.tls is for a GPU: without one its backends raise an error that names transitleastsquares, and do not search on a CPU (torch's operations on a CPU are the oracle of the kernels, not a method)."""
+def test_without_a_device_the_backends_search_on_the_cpu_and_find_tls_period(backend, monkeypatch):
+    """Without a GPU the backends search on the CPU: the default "gpu" with the chi squares of TLS's exact backend and the approximate "gpu-binned" with its best period."""
     import transitgpu.tls
 
     monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
     t, y, dy = light_curve(points=2000, seed=12)
-    with pytest.raises(RuntimeError, match="transitleastsquares"):
-        transitgpu.tls.transitleastsquares(t, y).power(period_min=2.97, period_max=3.03, show_progress_bar=False, verbose=False, use_threads=1, backend=backend)
+    options = dict(period_min=2.97, period_max=3.03, show_progress_bar=False, verbose=False, use_threads=1)
+    exact = transitleastsquares(t, y, dy).power(backend="fused", **options)
+    found = transitgpu.tls.transitleastsquares(t, y, dy).power(backend=backend, **options)
+    assert found.period == exact.period, (found.period, exact.period)
+    if backend == "gpu":
+        assert np.max(np.abs(found.chi2 - exact.chi2) / np.abs(exact.chi2)) < 1e-9
+
+
+def test_without_a_device_gpu_pl_refuses_and_names_the_backends_that_run_on_a_cpu(monkeypatch):
+    """gpu-pl has only Triton kernels, so on a CPU it raises and names the backends that search there."""
+    import transitgpu.tls
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    t, y, dy = light_curve(points=2000, seed=12)
+    with pytest.raises(RuntimeError, match='"gpu" or "gpu-binned"'):
+        transitgpu.tls.transitleastsquares(t, y, dy).power(period_min=2.97, period_max=3.03, show_progress_bar=False, verbose=False, use_threads=1, backend="gpu-pl")
 
 
 def test_a_cpu_device_with_a_named_correlation_keeps_the_torch_search():

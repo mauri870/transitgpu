@@ -1,4 +1,4 @@
-"""Box search on a GPU with the interface of Transit Least Squares.
+"""Box search on a GPU or the CPU with the interface of Transit Least Squares.
 
     model = box_search(t, y, dy)
     results = model.power(period_min=0.5, period_max=14, oversampling_factor=3)
@@ -19,23 +19,15 @@ import torch
 from transitgpu import core
 
 NO_CUDA = "device 'cuda' requested but torch finds no CUDA or ROCm device; install the torch build for your driver: https://docs.astral.sh/uv/guides/integration/pytorch/"
-NO_DEVICE = "transitgpu needs a GPU; on a CPU use astropy.timeseries.BoxLeastSquares"
 
 
 def require_device(device=None):
-    """Raise RuntimeError unless the search would run on a GPU.
-
-    The message is NO_DEVICE for the CPU (asked for, or the only device) and NO_CUDA for a CUDA device that torch
-    does not find.
-    """
-    chosen = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
-    if chosen.type == "cpu":
-        raise RuntimeError(NO_DEVICE)
-    if chosen.type == "cuda" and not torch.cuda.is_available():
+    """Raise RuntimeError with NO_CUDA when `device` is a CUDA device and torch finds none; the CPU and a GPU that torch finds pass."""
+    if device is not None and torch.device(device).type == "cuda" and not torch.cuda.is_available():
         raise RuntimeError(NO_CUDA)
 
 
-def _on_a_gpu(function):
+def _checked(function):
     """Wrap an engine function of transitgpu.core so that it calls `require_device` first."""
     signature = inspect.signature(function)
 
@@ -47,8 +39,8 @@ def _on_a_gpu(function):
     return public
 
 
-search = _on_a_gpu(core.search)
-search_many = _on_a_gpu(core.search_many)
+search = _checked(core.search)
+search_many = _checked(core.search_many)
 
 
 class Results:
@@ -121,16 +113,16 @@ class box_search:
         period_min defaults to 0.5 d and period_max to half the time span. oversampling_factor and n_transits_min are
         the arguments of TLS's period grid, duration_grid_step is the ratio of consecutive durations, minimum_bins the
         number of bins across the shortest duration of a period, device a torch device name (by default the first
-        GPU), boxes=True adds the best box of each period to the results, and bumps=True also searches for brightenings from
+        GPU, else the CPU), boxes=True adds the best box of each period to the results, and bumps=True also searches for brightenings from
         the same fold: the results then have `bump`, the Results of that search. use_threads, show_progress_bar and
-        verbose are accepted for TLS's interface and ignored. Raise RuntimeError without a GPU or for the device "cpu".
+        verbose are accepted for TLS's interface and ignored. Raise RuntimeError for the device "cuda" where torch finds no GPU.
         """
         require_device(device)
         return self._power(period_min, period_max, oversampling_factor, n_transits_min, duration_grid_step, minimum_bins, use_threads, show_progress_bar, verbose, device, boxes, bumps)
 
     def _power(self, period_min=None, period_max=None, oversampling_factor=None, n_transits_min=None, duration_grid_step=core.DURATION_STEP, minimum_bins=core.MINIMUM_BINS,
               use_threads=None, show_progress_bar=False, verbose=False, device=None, boxes=False, bumps=False):
-        """Return `power(...)` without the GPU check: on the CPU by default when there is no GPU."""
+        """Return `power(...)` without the check of a requested CUDA device."""
         if period_min is None:
             period_min = 0.5
         if period_max is None:

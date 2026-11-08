@@ -33,7 +33,7 @@ except ImportError:  # the torch operations are used instead
 
 from .. import core
 from .screen import SIGNAL_DEPTH
-from .window import NO_TLS_DEVICE, allowed_widths
+from .window import allowed_widths
 
 if triton is not None:
 
@@ -261,7 +261,7 @@ def banded_power(t, y, dy, periods, lc_arr, overview, transit_depth_min, r_star_
 
 
 class BinnedBackend(SearchBackend):
-    """TLS's search of the trial periods on phase bins on a GPU, as a TLS backend.
+    """TLS's search of the trial periods on phase bins on a GPU or the CPU, as a TLS backend.
 
     `power(backend=BinnedBackend())` gives TLS's periodogram, statistics and uncertainties from the chi squares of
     `binned_power`. The light curve is searched as given: TLS's pre-binning in time would end bins at gaps and leave
@@ -276,8 +276,6 @@ class BinnedBackend(SearchBackend):
         self.bins_per_shortest, self.batch, self.banded = bins_per_shortest, batch, banded
 
     def search(self, problem, periods, use_threads=1, progress=None):
-        if torch.device(self.device).type == "cpu":
-            raise RuntimeError(NO_TLS_DEVICE)
         started = time.perf_counter()
         chi2, rows, depths = (banded_power if self.banded else binned_power)(problem.t, problem.y, problem.dy, periods, problem.lc_arr, problem.lc_cache_overview, problem.transit_depth_min, problem.R_star_min, problem.R_star_max, problem.M_star_min, problem.M_star_max,
                                           device=self.device, bins_per_shortest=self.bins_per_shortest, batch=self.batch)

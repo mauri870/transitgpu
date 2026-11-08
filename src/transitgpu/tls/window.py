@@ -30,8 +30,6 @@ from .fold import counting_order
 from .prefix import prefix_arrays
 from .screen import SEED_COARSEN, SIGNAL_DEPTH, Screen
 
-NO_TLS_DEVICE = "transitgpu.tls needs a GPU; on a CPU use transitleastsquares"
-
 
 def allowed_widths(periods, widths, points, length, r_star_min, r_star_max, m_star_min, m_star_max):
     """Return a (widths x periods) mask of the template widths, in samples, that TLS allows at each period.
@@ -281,11 +279,11 @@ def _screened_batch(screen, report, widths, first_row, stride, overshoot, allowe
 
 
 class WindowBackend(SearchBackend):
-    """TLS's exact search of the trial periods on a GPU, as a TLS backend.
+    """TLS's exact search of the trial periods on a GPU or the CPU, as a TLS backend.
 
     `power(backend=WindowBackend())` gives TLS's own periodogram, statistics and uncertainties from the chi squares
     of `window_power`. With correlate="auto" it uses the screened search for equal errors and the direct correlation
-    otherwise, and refuses a CPU device; a named correlation also runs on a CPU.
+    otherwise.
     """
 
     name = "torch-window"
@@ -297,8 +295,6 @@ class WindowBackend(SearchBackend):
 
     def search(self, problem, periods, use_threads=1, progress=None):
         started = time.perf_counter()
-        if self.correlate == "auto" and torch.device(self.device).type == "cpu":
-            raise RuntimeError(NO_TLS_DEVICE)
         periods = np.sort(np.asarray(periods))[::-1].copy()  # a batch holds the periods next to each other: TLS hands them over in a random order by default, a batch then needs the template widths of the whole range
         correlate, batch = self.correlate, self.batch or exact_batch(len(problem.t), torch.cuda.mem_get_info(self.device)[0] if torch.device(self.device).type == "cuda" else 0)
         if correlate == "auto":  # the screened search needs equal errors; otherwise the direct correlation in float64
