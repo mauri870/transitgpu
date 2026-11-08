@@ -1,11 +1,12 @@
 """Time the biweight detrend of transitgpu.detrend against wotan's, on synthetic light curves, and print a table.
 
-    uv run --group rocm --group test python benchmarks/bench_detrend.py [--repeats 7] [--json benchmarks/results-detrend.json]
+    uv run --group rocm --group test python benchmarks/bench_detrend.py [--repeats 7] [--processes 1 2 4 8 16] [--json benchmarks/results-detrend.json]
 
 The light curves are made here with a fixed seed: 27.4 days of a cadence (30 min, 10 min, 2 min, 20 s), flux of 1 with Gaussian noise of 1,000 ppm, a sine of 2,000 ppm with a period of 3.7 days, a transit of 3,000 ppm and 3 hours every
 5.3 days, a gap of one day in the middle and 0.2 days on each side of it removed, and 1 point in 500 a NaN. The transits are the mask of the filter. The window is 0.75 days. A row is timed after one warm-up call as the median of --repeats
 calls, from the numpy arrays of the call to the numpy trend, so the device rows include building the windows, both transfers and the launches. Each row also gives its largest difference from wotan's trend, relative to the trend, and whether the NaN
 positions are equal. A row that would take over --max-seconds a call, from the call before it at a shorter cadence scaled by the points, is skipped and said.
+With --processes, that many processes each detrend the 2-minute light curve on the device for --seconds after a common start, once for each count given, and a second table gives the detrends a second of all of them together.
 """
 import argparse
 import importlib.metadata
@@ -93,6 +94,43 @@ def run(cadences=CADENCES, repeats=7, max_seconds=60.0, device="auto"):
     return results
 
 
+def _worker(step_seconds, seconds, device, barrier, queue):
+    """One process of `shared`: detrend the light curve of `step_seconds` once to warm up, wait for the others, then detrend it for `seconds` and put (calls, elapsed) on `queue`."""
+    from transitgpu import detrend
+
+    time_values, flux, mask = light_curve(step_seconds)
+    detrend.biweight(time_values, flux, WINDOW, mask=mask, device=device)
+    barrier.wait()
+    began, calls = time.perf_counter(), 0
+    while time.perf_counter() - began < seconds:
+        detrend.biweight(time_values, flux, WINDOW, mask=mask, device=device)
+        calls += 1
+    queue.put((calls, time.perf_counter() - began))
+
+
+def shared(processes, step_seconds=120, seconds=10.0, device="cuda"):
+    """Detrends a second of `processes` processes that detrend the light curve of `step_seconds` at once on one device, each for `seconds` after a common start."""
+    import multiprocessing
+
+    context = multiprocessing.get_context("spawn")  # a fork of a process that has used the device is not safe
+    barrier, queue = context.Barrier(processes), context.Queue()
+    workers = [context.Process(target=_worker, args=(step_seconds, seconds, device, barrier, queue)) for _ in range(processes)]
+    for worker in workers:
+        worker.start()
+    finished = [queue.get() for _ in workers]
+    for worker in workers:
+        worker.join()
+    return {"processes": processes, "step_seconds": step_seconds, "seconds": seconds, "calls": [calls for calls, _ in finished], "per_second": sum(calls / elapsed for calls, elapsed in finished)}
+
+
+def shared_table(rows):
+    """The table of the detrends a second that processes sharing one device reach together."""
+    lines = ["| processes sharing the device | detrends a second, all processes | detrends a second, each process |", "| --- | --- | --- |"]
+    for row in rows:
+        lines.append(f"| {row['processes']} | {row['per_second']:.0f} | {row['per_second'] / row['processes']:.0f} |")
+    return "\n".join(lines)
+
+
 def cell(row):
     if row is None:
         return "not run"
@@ -118,14 +156,21 @@ def main(arguments=None):
     parser.add_argument("--repeats", type=int, default=7)
     parser.add_argument("--max-seconds", type=float, default=60.0)
     parser.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")
+    parser.add_argument("--processes", type=int, nargs="*", default=[], help="also measure this many processes detrending a 2-minute light curve at once on the device, for each count given")
+    parser.add_argument("--seconds", type=float, default=10.0, help="how long each process of --processes detrends")
     parser.add_argument("--json", help="write the results here")
     options = parser.parse_args(arguments)
     results = run(repeats=options.repeats, max_seconds=options.max_seconds, device=options.device)
+    if options.processes:
+        results["shared"] = [shared(count, seconds=options.seconds, device="cpu" if options.device == "cpu" else "cuda") for count in options.processes]
     if options.json:
         with open(options.json, "w") as handle:
             json.dump(results, handle, indent=1)
             handle.write("\n")
     print(table(results))
+    if options.processes:
+        print()
+        print(shared_table(results["shared"]))
     print(json.dumps(results["versions"]))
     return 0
 

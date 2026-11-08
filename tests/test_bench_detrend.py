@@ -39,6 +39,16 @@ def test_a_row_that_would_take_too_long_is_skipped_and_said():
     assert "skipped" in bench.table(results)
 
 
+def test_two_processes_sharing_a_device_both_detrend_and_their_rate_is_the_sum_of_theirs(monkeypatch):
+    monkeypatch.syspath_prepend(str(ROOT / "benchmarks"))  # the spawned processes import the worker by its module name
+    import bench_detrend
+
+    row = bench_detrend.shared(2, step_seconds=1800, seconds=0.5, device="cpu")
+    assert row["processes"] == 2 and len(row["calls"]) == 2 and all(calls > 0 for calls in row["calls"]), row
+    assert row["per_second"] > 0
+    assert bench_detrend.shared_table([row]).splitlines()[2].startswith("| 2 | ")
+
+
 def test_the_table_of_the_readme_is_the_table_of_the_stored_results_and_the_readme_gives_the_command():
     path = ROOT / "benchmarks" / "results-detrend.json"
     results = json.loads(path.read_text())
