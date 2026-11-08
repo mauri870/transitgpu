@@ -140,6 +140,18 @@ results = transitleastsquares(t, y, dy).power(period_min=0.5, period_max=5.0, ba
 
 On the CPU the examples above print the same output in about 40 s on an AMD Ryzen 9 9950X3D, 28 s of it in TLS.
 
+### Detrending
+
+`transitgpu.detrend.biweight` computes the trend of wotan's biweight filter on the GPU, or on the CPU without one. It uses the windows, the mask and the stopping step of `wotan.flatten(time, flux, method="biweight", window_length=window, return_trend=True)`, and its NaN positions are wotan's. `biweight_many` takes a list of light curves, for example the sectors of one star, and returns one trend for each.
+
+```python
+from transitgpu import detrend
+
+trend = detrend.biweight(time, flux, 0.75, mask=in_transit)  # window of 0.75 d; mask leaves the points of known transits out of the windows
+flattened = flux / trend
+trends = detrend.biweight_many([(time_1, flux_1), (time_2, flux_2)], 0.75)
+```
+
 ## Performance
 
 The benchmark input is N evenly spaced points over 1,000 days with 1,000 ppm of white noise and one injected box (3.18 d, 3,000 ppm, 2.5 h). Every search covers TLS's 91,607 trial periods from 0.5 to 14 days, and every one finds the injected period. A time is the median of seven runs in seconds; where a cell has brackets, they hold the first and third quartiles.
