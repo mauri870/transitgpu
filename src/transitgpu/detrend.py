@@ -12,7 +12,7 @@
   - A trend that is exactly 0 is NaN.
   - A masked point, which wotan gives the sign of its flux changed and then drops with every point whose value is at or below -1e-12, keeps that rule here: a point with a flux of -1e-12 or less is in no window.
 
-`biweight_many` does the same for a list of light curves in one sequence of launches. `time` must be in increasing order. The torch version runs on any torch device, the CPU included, and is the reference of the Triton kernel. The kernel is used on a CUDA or ROCm device where Triton can be imported; it builds
+`biweight_many` does the same for a list of light curves in one sequence of launches. `time` must be in increasing order. The torch version runs on any torch device, the CPU included, and is the reference of the Triton kernel. The kernel is used on a CUDA or ROCm device where Triton can be imported, for windows padded to at most KERNEL_WIDTH_LIMIT points; it builds
 no matrix of windows (each program reads its window from the flux array) and gives the same trend as the torch version up to rounding. Triton: https://triton-lang.org/main/python-api/triton.language.html
 """
 import numpy as np
@@ -31,6 +31,8 @@ TOLERANCE = 1e-6  # wotan's stopping step (its FTOL)
 BARRIER = 1e-12  # a point whose value is at or below -BARRIER is dropped, as wotan does
 TORCH_ROWS = 8192  # the rows of one chunk of the torch version
 KERNEL_ROWS = 16384  # the programs of one launch of the kernel at a window of 1,024 points or fewer
+KERNEL_WIDTH_LIMIT = 2048  # the widest padded window the kernel takes; its compile grows about four times for each doubling (benchmarks/bench_detrend.py), and a wider window runs the torch version on the device
+METHODS = ("kernel", "torch")
 
 
 def windows(time, flux, keep, window):
@@ -85,7 +87,7 @@ def trend_torch(values, start, end, width, tolerance=TOLERANCE, rows=TORCH_ROWS)
 
 if triton is not None:
 
-    @triton.jit
+    @triton.jit(do_not_specialize=["first"])  # a launch of a slice starts at any row: a specialization on the value of `first` would compile the kernel again for some of them
     def _kernel(values, start, end, out, first, width: tl.constexpr, tolerance, cval):
         i = first + tl.program_id(0)
         low = tl.load(start + i)
@@ -131,7 +133,19 @@ def trend_kernel(values, start, end, width, tolerance=TOLERANCE, rows=None):
     return out
 
 
-def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE):
+def uses_kernel(device, width, method=None):
+    """Whether the trend of windows padded to `width` points on `device` is computed by the Triton kernel: `method` "kernel" or "torch" chooses, and None takes the kernel on a CUDA or ROCm device where Triton
+    can be imported and `width` is at most KERNEL_WIDTH_LIMIT."""
+    if method not in (None, *METHODS):
+        raise ValueError(f"method must be None, 'kernel' or 'torch', not {method!r}")
+    if method == "kernel" and (device.type != "cuda" or triton is None):
+        raise ValueError("method='kernel' needs a CUDA or ROCm device and Triton")
+    if method is not None:
+        return method == "kernel"
+    return device.type == "cuda" and triton is not None and width <= KERNEL_WIDTH_LIMIT
+
+
+def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE, method=None):
     """Return the biweight trend of each light curve of `sectors`, a list of (time, flux) pairs, as a list of numpy arrays, with the windows of all of them in one sequence of launches.
 
     `masks` is None or a list with a mask (True for the points left out of the windows) or None for each light curve. The result of each equals `biweight` of that light curve alone; the batch pays the transfer and the
@@ -163,8 +177,8 @@ def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE)
     if width > 0:
         device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
         values_d, start_d, end_d = (torch.as_tensor(array, device=device) for array in (values, start, end))
-        if device.type == "cuda" and triton is not None:
-            computed = trend_kernel(values_d, start_d, end_d, triton.next_power_of_2(width), tolerance)
+        if uses_kernel(device, 1 << (width - 1).bit_length(), method):
+            computed = trend_kernel(values_d, start_d, end_d, 1 << (width - 1).bit_length(), tolerance)
         else:
             computed = trend_torch(values_d, start_d, end_d, width, tolerance)
         result = computed.cpu().numpy()
@@ -179,10 +193,11 @@ def biweight_many(sectors, window, masks=None, device=None, tolerance=TOLERANCE)
     return trends
 
 
-def biweight(time, flux, window, mask=None, device=None, tolerance=TOLERANCE):
+def biweight(time, flux, window, mask=None, device=None, tolerance=TOLERANCE, method=None):
     """Return the biweight trend of `flux` at `time` (days), a window of `window` days wide, as a numpy array of the length of `time`.
 
     `mask` is True for the points that the trend must leave out of its windows (the points of known transits), as wotan's `mask`. `device` is a torch device name: the default is "cuda" where torch finds a CUDA or ROCm
-    device and "cpu" otherwise. On a CUDA or ROCm device the Triton kernel is used when Triton can be imported, else the torch version. `tolerance` is the stopping step of the iteration.
+    device and "cpu" otherwise. On a CUDA or ROCm device the Triton kernel is used when Triton can be imported and the widest window, padded to a power of two, holds at most KERNEL_WIDTH_LIMIT points;
+    otherwise the torch version runs on the same device. `method` "kernel" or "torch" chooses instead. `tolerance` is the stopping step of the iteration.
     """
-    return biweight_many([(time, flux)], window, masks=[mask], device=device, tolerance=tolerance)[0]
+    return biweight_many([(time, flux)], window, masks=[mask], device=device, tolerance=tolerance, method=method)[0]

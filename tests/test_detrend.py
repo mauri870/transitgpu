@@ -140,15 +140,51 @@ def test_the_kernel_gives_the_trend_of_the_torch_version_and_of_wotan():
     assert_same(device, reference(time, flux, mask))
 
 
+def test_the_kernel_is_chosen_on_a_device_with_triton_up_to_the_width_limit_unless_a_method_is_given(monkeypatch):
+    cuda, cpu, limit = torch.device("cuda"), torch.device("cpu"), detrend.KERNEL_WIDTH_LIMIT
+    monkeypatch.setattr(detrend, "triton", object())  # the rule only: no device is used
+    assert detrend.uses_kernel(cuda, limit) and not detrend.uses_kernel(cuda, 2 * limit) and not detrend.uses_kernel(cpu, 64)
+    assert not detrend.uses_kernel(cuda, 64, "torch") and detrend.uses_kernel(cuda, 2 * limit, "kernel")
+    monkeypatch.setattr(detrend, "triton", None)
+    assert not detrend.uses_kernel(cuda, 64)
+
+
+def test_an_unknown_method_and_the_kernel_without_a_device_are_refused_and_the_torch_method_runs_on_the_cpu():
+    time, flux = curve(points=300)
+    with pytest.raises(ValueError, match="method must be"):
+        detrend.biweight(time, flux, WINDOW, device="cpu", method="fast")
+    with pytest.raises(ValueError, match="needs a CUDA or ROCm device"):
+        detrend.biweight(time, flux, WINDOW, device="cpu", method="kernel")
+    assert_same(detrend.biweight(time, flux, WINDOW, device="cpu", method="torch"), reference(time, flux))
+
+
 @needs_kernel
-def test_the_kernel_handles_a_window_wider_than_a_thousand_points_and_a_slice_of_one_program():
-    time, flux = curve(points=6000, step=20 / 86400)  # a window of 0.75 d holds 3,240 points
-    assert detrend.triton.next_power_of_2(3241) == 4096
+def test_a_window_wider_than_the_limit_runs_the_torch_version_on_the_device_with_wotans_trend(monkeypatch):
+    time, flux = curve(points=6000, step=20 / 86400)  # a window of 0.75 d holds 3,240 points, padded to 4,096
+    assert 4096 > detrend.KERNEL_WIDTH_LIMIT
+
+    def refused(*arguments, **keywords):
+        raise AssertionError("the kernel was launched for a window wider than the limit")
+
+    monkeypatch.setattr(detrend, "trend_kernel", refused)
     assert_same(detrend.biweight(time, flux, WINDOW, device="cuda"), reference(time, flux))
-    values, start, end = detrend.windows(time[~np.isnan(flux)], flux[~np.isnan(flux)], np.ones((~np.isnan(flux)).sum(), dtype=bool), WINDOW)
-    tensors = [torch.as_tensor(array, device="cuda") for array in (values, start, end)]
-    sliced = detrend.trend_kernel(*tensors, 4096, rows=1).cpu().numpy()
-    np.testing.assert_allclose(sliced, detrend.trend_kernel(*tensors, 4096).cpu().numpy(), rtol=0, atol=0)
+
+
+@needs_kernel
+def test_a_slice_of_one_program_gives_the_trend_of_one_launch_and_compiles_no_new_variant():
+    time, flux = curve()  # a window of 0.75 d at 2 minutes holds 540 points, padded to 1,024
+    good = ~np.isnan(flux)
+    values, start, end = detrend.windows(time[good], flux[good], np.ones(good.sum(), dtype=bool), WINDOW)
+    values, start, end = (torch.as_tensor(array, device="cuda") for array in (values, start[:40], end[:40]))
+    whole = detrend.trend_kernel(values, start, end, 1024).cpu().numpy()
+
+    def compiled():
+        return sum(len(caches[0]) for caches in detrend._kernel.device_caches.values())
+
+    before = compiled()
+    sliced = detrend.trend_kernel(values, start, end, 1024, rows=1).cpu().numpy()
+    assert compiled() == before, "a launch that starts at another row compiled the kernel again"
+    np.testing.assert_allclose(sliced, whole, rtol=0, atol=0)
 
 
 def sectors_of_a_star():
