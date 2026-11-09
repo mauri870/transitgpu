@@ -1,6 +1,6 @@
 [project]
 name = "transitgpu"
-version = "0.3.0"
+version = "0.4.0"
 description = "GPU-accelerated BLS and TLS for exoplanet transit detection."
 dynamic = ["readme"]
 license = "MIT"

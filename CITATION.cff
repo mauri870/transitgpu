@@ -8,7 +8,7 @@ authors:
 repository-code: "https://github.com/mauri870/transitgpu"
 url: "https://github.com/mauri870/transitgpu"
 license: MIT
-version: "0.3.0"
+version: "0.4.0"
 abstract: "A box least squares transit search and a Transit Least Squares search on a GPU, in PyTorch, for CUDA and ROCm."
 keywords:
   - astronomy
