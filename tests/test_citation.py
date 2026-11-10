@@ -27,7 +27,7 @@ def title_of(bibliography, key):
 
 def test_the_file_has_the_fields_cff_requires_for_software_and_the_licence_and_addresses_of_the_package():
     assert CFF["cff-version"] == "1.2.0" and CFF["type"] == "software" and CFF["title"] == "transitgpu" and CFF["message"]
-    assert CFF["authors"] == [{"family-names": "Meneguzzo", "given-names": "Mauri de Souza"}] and CFF["license"] == "MIT"
+    assert CFF["authors"] == [{"family-names": "Meneguzzo", "given-names": "Mauri de Souza", "orcid": "https://orcid.org/0009-0000-0032-3262"}] and CFF["license"] == "MIT"
     urls = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["urls"]
     assert CFF["repository-code"] == CFF["url"] == urls["Homepage"] == urls["Source"] == "https://github.com/mauri870/transitgpu"
 

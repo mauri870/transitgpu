@@ -5,6 +5,7 @@ type: software
 authors:
   - family-names: "Meneguzzo"
     given-names: "Mauri de Souza"
+    orcid: "https://orcid.org/0009-0000-0032-3262"
 repository-code: "https://github.com/mauri870/transitgpu"
 url: "https://github.com/mauri870/transitgpu"
 license: MIT
@@ -21,6 +22,7 @@ preferred-citation:
   authors:
     - family-names: "Meneguzzo"
       given-names: "Mauri de Souza"
+      orcid: "https://orcid.org/0009-0000-0032-3262"
   status: preprint
   year: 2026
   url: "https://github.com/mauri870/transitgpu/blob/main/paper/main.pdf"

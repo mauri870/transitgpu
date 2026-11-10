@@ -52,7 +52,7 @@
 \begin{document}
 
 \title{Parallel Search for Alien Worlds:\\ GPU-Accelerated BLS and TLS for Exoplanet Transit Detection}
-\author{Mauri de Souza Meneguzzo}
+\author[0009-0000-0032-3262]{Mauri de Souza Meneguzzo}
 
 \begin{abstract}
 A transit survey repeats its search on every star: with planets injected, to measure what it can find, and on shuffled or inverted copies, to measure its false alarms. The work is one operation repeated over stars, trial periods and copies, which a GPU executes efficiently. We present transitgpu, a Python package that runs three transit searches on a GPU through PyTorch and Triton (CUDA and ROCm): a box search (BLS) whose integer sums do not depend on the order of the additions, a port of Transit Least Squares (TLS) 2.0.1 that keeps its interface and results, and a hybrid that refines the highest peaks of the box spectrum with TLS. The TLS port has an exact mode, which reproduces the $\chi^2$ of TLS at every trial period to float64 rounding on 25 test light curves, and a faster binned mode that approximates it. On an AMD Radeon RX 7900 XTX at $2\times10^5$ points, exact mode takes \T{tls-gpu}{200000}\,s, binned mode \T{tls-gpu-binned}{200000}\,s and the box search \T{gpu}{200000}\,s; TLS on 16 CPU threads takes \T{tls16-exact}{200000}\,s with its exact backend and \T{tls16}{200000}\,s with its default one. In injection tests on three classes of synthetic noise and on one sector of each of 12 quiet TESS stars, at a matched false-alarm rate, binned mode finds as many planets as exact mode within \Pm{binned} points. The box search and the hybrid match exact mode in white noise and on the quiet stars and fall behind in correlated noise and on a rotating star. The code is public under the MIT licence.
